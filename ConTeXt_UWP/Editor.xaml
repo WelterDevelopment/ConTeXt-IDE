@@ -88,7 +88,7 @@
                     <x:Double x:Key="TabViewItemHeaderMaxWidth">200</x:Double>
                 </contr:TabView.Resources>
                 <contr:TabView.TabItemTemplate>
-                    <DataTemplate x:DataType="local:FileItem">
+                    <DataTemplate>
                         <contr:TabViewItem>
                             <contr:TabViewItem.Header>
                                 <TextBlock FontWeight="{Binding IsRoot, Converter={StaticResource BoolToFontWeight}}" FontFamily="Segoe" Text="{Binding FileName}"></TextBlock>
@@ -100,7 +100,7 @@
                                 <RowDefinition Height="Auto"></RowDefinition>
                             </Grid.RowDefinitions>
                             <Grid Grid.Row="0">
-                                <monaco:CodeEditor VerticalAlignment="Stretch" VerticalContentAlignment="Stretch" MinHeight="400" RequestedTheme="{Binding ElementName=EditorPage, Path=DataContext.Default.Theme , Mode=OneWay, Converter={StaticResource StringToTheme}}" x:Name="Edit" Loading="Edit_Loading" Loaded="Edit_Loaded" Text="{Binding FileContent,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" CodeLanguage="context">
+                                        <monaco:CodeEditor RequestedTheme="{Binding DataContext.Default.Theme, Mode=OneWay, Converter={StaticResource StringToTheme}}" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch" MinHeight="400"  x:Name="Edit" Loading="Edit_Loading" Loaded="Edit_Loaded" Text="{Binding FileContent,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" CodeLanguage="context">
 
                                     <monaco:CodeEditor.KeyboardAccelerators>
                                         <KeyboardAccelerator x:Name="ControlEnter" Key="F1" Modifiers="Control" Invoked="ControlEnter_Invoked" ></KeyboardAccelerator>
