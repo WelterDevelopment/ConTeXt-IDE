@@ -713,6 +713,7 @@ namespace ConTeXt_UWP
             // throw new NotImplementedException();
             return AsyncInfo.Run(async delegate (System.Threading.CancellationToken cancelationToken)
             {
+                item.InsertText = item.Label + "\nbla"; 
                 return item; // throw new NotImplementedException();
 
             });

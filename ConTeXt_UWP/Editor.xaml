@@ -94,7 +94,7 @@
                                 <TextBlock FontWeight="{Binding IsRoot, Converter={StaticResource BoolToFontWeight}}" FontFamily="Segoe" Text="{Binding FileName}"></TextBlock>
                             </contr:TabViewItem.Header>
                             <contr:TabViewItem.Content>
-                        <Grid>
+                        <Grid VerticalAlignment="Stretch">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"></RowDefinition>
                                 <RowDefinition Height="Auto"></RowDefinition>
