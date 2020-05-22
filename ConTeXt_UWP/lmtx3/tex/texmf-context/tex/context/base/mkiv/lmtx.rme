@@ -1,0 +1,16 @@
+Remark:
+
+This set of files is not for redistribution but for an experiment between
+Luigi and Hans regarding a luatex followup. The usage (after making a
+format) is:
+
+    context --lmtx ...
+
+or
+
+   \enablelmtx
+
+For sure there will be gliches and some code will be upgraded (like the
+img.* related functions). At this moment the test suite compiles without
+errors but the output has not been checked in detail. The luatex manual
+is one of the other test cases.

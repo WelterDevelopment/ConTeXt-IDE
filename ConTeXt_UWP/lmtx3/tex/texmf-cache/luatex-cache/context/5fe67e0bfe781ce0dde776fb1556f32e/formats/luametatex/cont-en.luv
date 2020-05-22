@@ -1,0 +1,9 @@
+return {
+ ["enginebanner"]="This is LuaMetaTeX, Version 2.05.01",
+ ["formatbanner"]="2020.04.03 10:31",
+ ["formatid"]=491,
+ ["functionality"]=20200402,
+ ["luaversion"]=0x1.599999999999ap+2,
+ ["sourcefile"]="context.mkxl",
+ ["sourcehash"]="04e72e54f06b0a558c5f185cd0a15518",
+}
