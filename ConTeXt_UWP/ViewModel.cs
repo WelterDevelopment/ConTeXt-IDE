@@ -21,6 +21,7 @@ using Windows.Storage;
 using Windows.Storage.AccessCache;
 using System.Diagnostics;
 using Windows.UI.Text;
+using Monaco.Editor;
 
 namespace ConTeXt_UWP
 {
@@ -74,6 +75,10 @@ namespace ConTeXt_UWP
             {
                 IsVisible = (bool)value ? Visibility.Visible : Visibility.Collapsed;
             }
+            //if((string)parameter == "tree" && IsVisible == Visibility.Visible)
+            //{
+            //    IsVisible =  App.AppViewModel.NVHeader == "Editor" ? Visibility.Visible : Visibility.Collapsed;
+            //}
             return IsVisible;
         }
 
@@ -82,7 +87,24 @@ namespace ConTeXt_UWP
             return ((Visibility)value) == Visibility.Visible ? true : false;
         }
     }
+public class PaneVisibiltyToMarginConverter : IValueConverter
+    {
 
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            Visibility IsVisible = Visibility.Visible;
+            if (!string.IsNullOrEmpty(value.ToString()))
+            {
+                IsVisible = (bool)value ? Visibility.Visible : Visibility.Collapsed;
+            }
+            return IsVisible;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            return ((Visibility)value) == Visibility.Visible ? true : false;
+        }
+    }
     public class BoolToWidthConverter : IValueConverter
     {
         GridLength closed = new GridLength(0, GridUnitType.Pixel);
@@ -100,6 +122,35 @@ namespace ConTeXt_UWP
         public object ConvertBack(object value, Type targetType, object parameter, string language)
         {
             return ((GridLength)value) == open ? true : false;
+        }
+    }
+
+    public class EnumToStringConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            int val = (int)value;
+            string enu = (string)parameter;
+            switch (enu)
+            {
+                case "LineNumbersType":
+                    return Enum.GetName(typeof(LineNumbersType), val);
+                default: return 0;
+
+            }
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            string val = (string)value;
+            string enu = (string)parameter;
+            switch (enu)
+            {
+                case "LineNumbersType":
+                    return (int)(LineNumbersType)Enum.Parse(typeof(LineNumbersType), val);
+                default: return 0;
+
+            }
         }
     }
 
@@ -311,16 +362,16 @@ namespace ConTeXt_UWP
             this.file = file;
             this.fileFolder = Path.GetDirectoryName(file.Path);
             if (file is StorageFile)
-            switch (((StorageFile)file).FileType)
-            {
-                case ".tex": this.fileLanguage = "context"; break;
-                case ".lua": this.fileLanguage = "lua"; break;
-                case ".json": this.fileLanguage = "javascript"; break;
-                case ".md": this.fileLanguage = "markdown"; break;
-                case ".html": this.fileLanguage = "html"; break;
-                case ".xml": this.fileLanguage = "xml"; break;
-                default: this.fileLanguage = "context"; break;
-            }
+                switch (((StorageFile)file).FileType)
+                {
+                    case ".tex": this.fileLanguage = "context"; break;
+                    case ".lua": this.fileLanguage = "lua"; break;
+                    case ".json": this.fileLanguage = "javascript"; break;
+                    case ".md": this.fileLanguage = "markdown"; break;
+                    case ".html": this.fileLanguage = "html"; break;
+                    case ".xml": this.fileLanguage = "xml"; break;
+                    default: this.fileLanguage = "context"; break;
+                }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -808,8 +859,9 @@ namespace ConTeXt_UWP
             list = new ObservableCollection<FileItem>();
             if (folder != null)
             {
-                DirSearch(folder);
+                DirWalk(folder);
                 LOG("Picked folder: " + folder.Name);
+
             }
             else
             {
@@ -820,13 +872,13 @@ namespace ConTeXt_UWP
 
         public FileItem InitializeFileItem(StorageFile File, string Content = "", bool IsRoot = true)
         {
-            return new FileItem(File, IsRoot) { FileContent=Content };
+            return new FileItem(File, IsRoot) { FileContent = Content };
         }
 
         public void LOG(string log)
         {
             Blocks = log;
-            Debug.WriteLine("LOG: "+log);
+            Debug.WriteLine("LOG: " + log);
         }
         public async void Message(string content, string title = "Error")
         {
@@ -859,7 +911,7 @@ namespace ConTeXt_UWP
                         var folder = await RecentAccessList.GetFolderAsync(Default.LastActiveProject);
                         CurrentProject = new Project(folder.Name, folder, GenerateTreeView(folder));
                         //Message(GenerateTreeView(folder).Count.ToString());
-                       // LOG(CurrentProject.Folder.Path);
+                        // LOG(CurrentProject.Folder.Path);
                         //LOG(CurrentProject.Directory.Count.ToString());
                         //var fileitem = CurrentProject.Directory.Where(x => x.FileName == Default.LastActiveFileName).FirstOrDefault();
                         //OpenFile(fileitem);
@@ -917,7 +969,7 @@ namespace ConTeXt_UWP
                 {
                     if (!d.Name.StartsWith("."))
                     {
-                        FileItem SubFolder = new FileItem(d) { Type = FileItem.ExplorerItemType.Folder, FileName = d.Name, IsRoot = true };
+                        FileItem SubFolder = new FileItem(d) { Type = FileItem.ExplorerItemType.Folder, FileName = d.Name, IsRoot = false };
                         foreach (StorageFile f in await d.GetFilesAsync())
                         {
                             if (!cancelWords.Contains(f.FileType))
@@ -945,6 +997,41 @@ namespace ConTeXt_UWP
                 Message(excpt.Message);
             }
         }
+        async void DirWalk(StorageFolder sDir, FileItem currFolder = null, int level = 0)
+        {
+            try
+            {
+                var folders = await sDir.GetFoldersAsync();
+                var files = await sDir.GetFilesAsync();
+                foreach (StorageFolder d in folders)
+                {
+                    if (!d.Name.StartsWith("."))
+                    {
+                        var SubFolder = new FileItem(d) { Type = FileItem.ExplorerItemType.Folder, FileName = d.Name, IsRoot = false };
+                        if (level > 0)
+                            currFolder.Children.Add(SubFolder);
+                        else
+                            list.Add(SubFolder);
+                        DirWalk(d, SubFolder, level + 1);
+                    }
+                }
+                foreach (StorageFile f in files)
+                {
+                    if (!f.Name.StartsWith(".") && !cancelWords.Contains(f.FileType))
+                    {
+                        var fi = new FileItem(f) { File = f, FilePath = f.Path, Type = FileItem.ExplorerItemType.File, FileName = f.Name, IsRoot = false };
+                        if (level > 0)
+                            currFolder.Children.Add(fi);
+                        else
+                            list.Add(fi);
+                    }
+                }
+            }
+            catch (Exception excpt)
+            {
+                Message(excpt.Message);
+            }
+        }
 
         private void FileItems_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
@@ -953,7 +1040,7 @@ namespace ConTeXt_UWP
                 case NotifyCollectionChangedAction.Add:
                     LOG("File opened.");
                     break;
-                default:break;
+                default: break;
             }
         }
     }

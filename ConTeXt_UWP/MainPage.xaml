@@ -6,11 +6,14 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:animations="using:Microsoft.Toolkit.Uwp.UI.Animations"
-    xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
+   
     mc:Ignorable="d" DataContext="{x:Bind currentViewModel}"
     RequestedTheme="{Binding Default.Theme, Mode=OneWay, Converter={StaticResource StringToTheme}}"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
     <Page.Resources>
+        <Thickness x:Key="NavigationViewMinimalHeaderMargin">50,0,0,0</Thickness>
+        <Thickness x:Key="NavigationViewHeaderMargin">50,0,0,0</Thickness>
+       
         <DataTemplate x:Key="FolderTemplate" x:DataType="local:FileItem">
             <TreeViewItem AllowDrop="True" HorizontalContentAlignment="Left" ItemsSource="{x:Bind Children}">
                 <TreeViewItem.ContextFlyout>
@@ -69,18 +72,21 @@
             <TextBlock Text="|" Grid.Column="1" Style="{StaticResource TitleTextBlockStyle}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="15,0,0,0" />
             <TextBlock Text="" x:Name="PageTitle" Grid.Column="2" Style="{StaticResource TitleTextBlockStyle}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,0,15,0" />
         </Grid>-->
-        <NavigationView IsPaneOpen="{Binding Default.NavigationViewPaneOpen, Mode=TwoWay}" IsSettingsVisible="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToBool}}" x:FieldModifier="public" Grid.Row="0" OpenPaneLength="{Binding Default.NavigationViewPaneOpenLength}" IsPaneToggleButtonVisible="True" IsPaneVisible="True" PaneDisplayMode="{Binding Default.NavigationViewPaneMode, Mode=TwoWay,Converter={StaticResource StringToNav}}" IsBackButtonVisible="Visible"  BackRequested="NvSample_BackRequested" ItemInvoked="NvSample_ItemInvoked" x:Name="nvSample"  Loaded="NvSample_Loaded" Margin="0,0,0,0" FontFamily="Segoe UI" >
-            <NavigationView.Header>
-                <Grid  Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToVisibility}}" Background="Transparent" Margin="-12,-4,0,0" Padding="12,4,0,0">
-                    <TextBlock Text="{Binding NVHeader}" Style="{ThemeResource HeaderTextBlockStyle}"  />
-                </Grid>
-            </NavigationView.Header>
+        <NavigationView  IsPaneOpen="{Binding Default.NavigationViewPaneOpen, Mode=TwoWay}" IsSettingsVisible="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToBool}}" x:FieldModifier="public" Grid.Row="0" OpenPaneLength="{Binding Default.NavigationViewPaneOpenLength}" IsPaneToggleButtonVisible="True" IsPaneVisible="True" PaneDisplayMode="{Binding Default.NavigationViewPaneMode, Mode=TwoWay,Converter={StaticResource StringToNav}}" IsBackButtonVisible="Collapsed"  BackRequested="NvSample_BackRequested" ItemInvoked="NvSample_ItemInvoked" x:Name="nvSample"  Loaded="NvSample_Loaded" FontFamily="Segoe UI" Margin="0,1,0,0" >
+
+            <!--<NavigationView.HeaderTemplate>
+                <DataTemplate>
+                <Grid  Height="38" Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToVisibility}}" Background="#3F858585" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="50,0,0,0">
+                    <TextBlock MaxHeight="38"  VerticalAlignment="Center"  Text="{Binding}" Style="{ThemeResource BodyTextBlockStyle}" Margin="40,0,0,0" HorizontalAlignment="Left"  />
+                    </Grid>
+                </DataTemplate>
+            </NavigationView.HeaderTemplate>-->
             <NavigationView.PaneHeader>
-                <TextBlock Text="ConTEXt IDE" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="Segoe UI" Margin="12,0,12,0"></TextBlock>
+                <TextBlock Text="ConTeXt IDE" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontFamily="Segoe UI" Margin="12,0,12,0"></TextBlock>
             </NavigationView.PaneHeader>
 
             <NavigationView.MenuItems>
-                <NavigationViewItem Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToNotVisibility}}" Tapped="Tree_Tapped" SelectsOnInvoked="False"  Tag="Tree" Content="{Binding CurrentProject.Name}" Padding="0,0,12,0" Margin="0,0,0,0">
+                <NavigationViewItem Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToNotVisibility}}" Tapped="Tree_Tapped" SelectsOnInvoked="False"  Tag="Tree" Content="{Binding CurrentProject.Name}" Icon="Folder" Padding="0,0,12,0" Margin="0,0,0,0">
                     <FlyoutBase.AttachedFlyout>
                         <Flyout>
                             <StackPanel Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
@@ -120,7 +126,7 @@
                 <NavigationViewItemSeparator></NavigationViewItemSeparator>
                 <NavigationViewItem Icon="Edit" Content="Editor" Tag="IDE"/>
                 <NavigationViewItemSeparator></NavigationViewItemSeparator>
-                <NavigationViewItem Icon="Folder" Content="Project" Tag="Projects" />
+                <NavigationViewItem Icon="Library" Content="Projects" Tag="Projects" />
 
                 <NavigationViewItemSeparator Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToNotVisibility}}"></NavigationViewItemSeparator>
                 <NavigationViewItem Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToNotVisibility}}" SelectsOnInvoked="True" Icon="Help" Tag="About" Content="About" ></NavigationViewItem>
@@ -135,70 +141,73 @@
                 <NavigationViewItem Icon="Permissions" Content="API Keys" Tag="APIKeys" />-->
             </NavigationView.MenuItems>
             <NavigationView.PaneCustomContent>
-                <Grid>
-                <StackPanel Visibility="{Binding Default.NavigationViewPaneOpen, Mode=OneWay,Converter={StaticResource BoolToVisibility}}" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                    <animations:Implicit.ShowAnimations>
-                        <animations:TranslationAnimation Duration="0:0:0.25" From="0, -50, 0" To="0" ></animations:TranslationAnimation>
-                        <animations:OpacityAnimation Duration="0:0:0.25" From="0" To="1.0"></animations:OpacityAnimation>
-                    </animations:Implicit.ShowAnimations>
+                <Grid HorizontalAlignment="Stretch">
+                    <StackPanel Visibility="{Binding Default.NavigationViewPaneOpen, Mode=OneWay,Converter={StaticResource BoolToVisibility}, ConverterParameter=tree}" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <animations:Implicit.ShowAnimations>
+                            <animations:TranslationAnimation Duration="0:0:0.25" From="0, -50, 0" To="0" ></animations:TranslationAnimation>
+                            <animations:OpacityAnimation Duration="0:0:0.25" From="0" To="1.0"></animations:OpacityAnimation>
+                        </animations:Implicit.ShowAnimations>
 
-                    <animations:Implicit.HideAnimations>
-                        <animations:ScalarAnimation Target="Opacity" Duration="0:0:0.25" To="0.0"></animations:ScalarAnimation>
-                        <animations:ScalarAnimation Target="Translation.Y" Duration="0:0:0.25" To="-50">
-                            <animations:ScalarKeyFrame Key="0.1" Value="20"></animations:ScalarKeyFrame>
-                            <animations:ScalarKeyFrame Key="0.5" Value="0.0"></animations:ScalarKeyFrame>
-                        </animations:ScalarAnimation>
-                    </animations:Implicit.HideAnimations>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"></ColumnDefinition>
-                            <ColumnDefinition Width="Auto"></ColumnDefinition>
-                            <ColumnDefinition Width="Auto"></ColumnDefinition>
-                        </Grid.ColumnDefinitions>
-                    <NavigationViewItemHeader Grid.Column="0" Content="{Binding CurrentProject.Name}"></NavigationViewItemHeader>
-                        <Button VerticalContentAlignment="Center" Grid.Column="1"  Click="AddFile_Click">
-                            <SymbolIcon Symbol="Document"/>
-                        </Button>
-                        <Button   Grid.Column="2" Click="AddFolder_Click" Margin="5,0,0,0">
-                            <SymbolIcon Symbol="Folder"/>
-                        </Button>
-                    </Grid>
-                    <TreeView ItemInvoked="NavigationTree_ItemInvoked" MaxHeight="300" ScrollViewer.VerticalScrollBarVisibility="Auto"  ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}" ItemsSource="{Binding CurrentProject.Directory}" 
+                        <!--<animations:Implicit.HideAnimations>
+                            <animations:ScalarAnimation Target="Opacity" Duration="0:0:0.25" To="0.0"></animations:ScalarAnimation>
+                            <animations:ScalarAnimation Target="Translation.Y" Duration="0:0:0.25" To="-50">
+                                <animations:ScalarKeyFrame Key="0.1" Value="20"></animations:ScalarKeyFrame>
+                                <animations:ScalarKeyFrame Key="0.5" Value="0.0"></animations:ScalarKeyFrame>
+                            </animations:ScalarAnimation>
+                        </animations:Implicit.HideAnimations>-->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <NavigationViewItemHeader Grid.Column="0" Content="{Binding CurrentProject.Name}"></NavigationViewItemHeader>
+                            <Button VerticalContentAlignment="Center" Grid.Column="1"  Click="AddFile_Click">
+                                <SymbolIcon Symbol="Document"/>
+                            </Button>
+                            <Button   Grid.Column="2" Click="AddFolder_Click" Margin="5,0,5,0">
+                                <SymbolIcon Symbol="Folder"/>
+                            </Button>
+                        </Grid>
+                        <TreeView ItemInvoked="NavigationTree_ItemInvoked" MaxHeight="300" ScrollViewer.VerticalScrollBarVisibility="Auto"  ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}" ItemsSource="{Binding CurrentProject.Directory}" 
                        CanDragItems="True" CanReorderItems="False" AllowDrop="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0" Margin="-20,0,0,0"
                          />
-                </StackPanel>
-                    <Grid></Grid>
+                    </StackPanel>
+                    <Grid Background="#3F858585" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToNotVisibility}}"></Grid>
                 </Grid>
             </NavigationView.PaneCustomContent>
             <NavigationView.PaneFooter>
                 <NavigationViewItem Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToVisibility}}" Tapped="About_Tapped" SelectsOnInvoked="True" Icon="Help" Tag="About" Content="About" Padding="0,0,12,0" Margin="0,0,0,0"></NavigationViewItem>
-               
-            </NavigationView.PaneFooter>
 
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="0"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <!--<TreeView Grid.Row="0" ItemsSource="{Binding CurrentWorkingDirectory}"  ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}" 
+            </NavigationView.PaneFooter>
+            <NavigationView.Content>
+                <Grid Margin="0,0,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid x:Name="Header" x:FieldModifier="public" Grid.Row="0"  Height="40" Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToVisibility}}" Background="#3F858585" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,0,0,0">
+                        <TextBlock  VerticalAlignment="Center"  Text="{Binding NVHeader}" Style="{ThemeResource BodyTextBlockStyle}" Margin="52,0,0,0"  />
+                    </Grid>
+                    <!--<TreeView Grid.Row="0" ItemsSource="{Binding CurrentWorkingDirectory}"  ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}" 
                        CanDragItems="True" AllowDrop="True" 
                          />-->
 
-                <Grid Grid.Row="1">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition MinWidth="400" Width="139*" />
-                        <ColumnDefinition Width="511*"/>
-                        <ColumnDefinition MinWidth="0" MaxWidth="400" Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Frame Grid.Column="0" Navigated="ContentFrame_Navigated"  Loaded="ContentFrame_Loaded" x:Name="contentFrame" x:FieldModifier="public" FontFamily="Segoe MDL2 Assets" Grid.ColumnSpan="2">
-                        <Frame.ContentTransitions>
-                            <TransitionCollection>
-                                <NavigationThemeTransition/>
-                            </TransitionCollection>
-                        </Frame.ContentTransitions>
-                    </Frame>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition MinWidth="400" Width="139*" />
+                            <ColumnDefinition Width="511*"/>
+                            <ColumnDefinition MinWidth="0" MaxWidth="400" Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Frame Grid.Column="0" Navigated="ContentFrame_Navigated"  Loaded="ContentFrame_Loaded" x:Name="contentFrame" x:FieldModifier="public" FontFamily="Segoe MDL2 Assets" Grid.ColumnSpan="2">
+                            <Frame.ContentTransitions>
+                                <TransitionCollection>
+                                    <NavigationThemeTransition/>
+                                </TransitionCollection>
+                            </Frame.ContentTransitions>
+                        </Frame>
 
-                    <!--<Grid Grid.Column="1">
+                        <!--<Grid Grid.Column="1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition  Width="Auto" />
                             <ColumnDefinition MinWidth="200" MaxWidth="400" Width="Auto" />
@@ -216,14 +225,14 @@
                             <TextBlock Grid.Row="2" x:Name="HelpTextBlock" TextWrapping="Wrap" Text=""></TextBlock>
                         </Grid>
                     </Grid>-->
+                    </Grid>
+
+
+
+
                 </Grid>
 
-
-
-
-            </Grid>
-
-
+            </NavigationView.Content>
         </NavigationView>
 
 

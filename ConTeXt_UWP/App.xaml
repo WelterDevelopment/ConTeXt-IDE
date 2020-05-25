@@ -24,7 +24,9 @@
             <local:NavViewToVisibilityConverter x:Key="NavToVisibility"></local:NavViewToVisibilityConverter>
             <local:NavViewToNotVisibilityConverter x:Key="NavToNotVisibility"></local:NavViewToNotVisibilityConverter>
             <local:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+            <local:PaneVisibiltyToMarginConverter x:Key="PaneVisibiltyToMargin" />
             <local:BoolToWidthConverter x:Key="BoolToWidth" />
+            <local:EnumToStringConverter x:Key="EnumToString" />
             <local:BoolToFontWeightConverter x:Key="BoolToFontWeight" />
             <local:BoolInverter x:Key="BoolInverter" />
             

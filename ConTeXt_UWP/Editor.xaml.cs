@@ -434,16 +434,20 @@ namespace ConTeXt_UWP
         private void Edit_Loaded(object sender, RoutedEventArgs e)
         {
             var edit = (sender as CodeEditor);
+            edit.Options.DetectIndentation = false;
             edit.Options.UseTabStops = true;
+            edit.Options.TabSize = 2;
+            edit.Options.CopyWithSyntaxHighlighting = true;
+            edit.Options.InsertSpaces = false;
             edit.Options.WordWrap = WordWrap.On;
             edit.Options.WordBasedSuggestions = true;
             edit.Options.SuggestOnTriggerCharacters = true;
             edit.Options.AcceptSuggestionOnCommitCharacter = true;
             edit.Options.AcceptSuggestionOnEnter = AcceptSuggestionOnEnter.On;
-            edit.Options.TabCompletion = TabCompletion.On;
+            edit.Options.TabCompletion = TabCompletion.Off;
             edit.Options.SuggestSelection = SuggestSelection.RecentlyUsed;
             edit.Options.WrappingIndent = WrappingIndent.Indent;
-            edit.Options.AutoIndent = AutoIndent.Full;
+            edit.Options.AutoIndent = AutoIndent.Keep;
             edit.Options.CodeLens = true;
             edit.Options.Contextmenu = true ;
             edit.Options.ParameterHints = new IEditorParameterHintOptions() { Cycle = false, Enabled = true };
@@ -462,11 +466,13 @@ namespace ConTeXt_UWP
             edit.Options.MouseWheelZoom = true;
             edit.Options.OccurrencesHighlight = false;
             edit.Options.RoundedSelection = true;
+            
+            edit.RequestedTheme = RequestedTheme;
 
-            var myDataObject = edit.DataContext as FileItem;
-            Binding myBinding = new Binding() { Path = new PropertyPath("FileContent"), Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged };
-            myBinding.Source = myDataObject;
-            BindingOperations.SetBinding(edit, CodeEditor.TextProperty, myBinding);
+            //var myDataObject = edit.DataContext as FileItem;
+            //Binding myBinding = new Binding() { Path = new PropertyPath("FileContent"), Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged };
+            //myBinding.Source = myDataObject;
+            //BindingOperations.SetBinding(edit, CodeEditor.TextProperty, myBinding);
 
 
 
@@ -669,9 +675,11 @@ namespace ConTeXt_UWP
             return AsyncInfo.Run(async delegate (System.Threading.CancellationToken cancelationToken)
             {
                 var textUntilPosition = await document.GetValueInRangeAsync(new Range(1, 1, position.LineNumber, position.Column));
+               
                 string[] starts = new string[] { "startxtablenext", "startxtablehead", "startxtablefoot", "startxtablebody", "startxtable", "startxrowgroup", "startxrow", "startxmlsetups", "startxmlraw", "startxmlinlineverbatim", "startxmldisplayverbatim", "startxgroup", "startxcolumn", "startxcellgroup", "startxcell", "startvtopregister", "startvtop", "startviewerlayer", "startvboxtohboxseparator", "startvboxtohbox", "startvboxregister", "startvbox", "startusingbtxspecification", "startuserdata", "startusemathstyleparameter", "startuseMPgraphic", "startusableMPgraphic", "startunpacked", "startunittext", "startuniqueMPpagegraphic", "startuniqueMPgraphic", "starttyping", "starttypescriptcollection", "starttypescript", "starttransparent", "starttokens", "starttokenlist", "starttitle", "starttextrule", "starttextmakeup", "starttextflow", "starttextcolorintent", "starttextcolor", "starttextbackgroundmanual", "starttextbackground", "starttext", "starttexdefinition", "starttexcode", "starttaglabeltext", "starttagged", "starttabulatetail", "starttabulatehead", "starttabulate", "starttabletext", "starttabletail", "starttables", "starttablehead", "starttable", "startsymbolset", "startsuffixtext", "startsubsubsubsubsubject", "startsubsubsubsubsection", "startsubsubsubsubject", "startsubsubsubsection", "startsubsubsubject", "startsubsubsection", "startsubsubject", "startsubstack", "startsubsentence", "startsubsection", "startsubjectlevel", "startsubject", "startsubformulas", "startstyle", "startstrut", "startstructurepageregister", "startstrictinspectnextcharacter", "startstaticMPgraphic", "startstaticMPfigure", "startstandardmakeup", "startspread", "startsplittext", "startsplitformula", "startspformula", "startspeech", "startspecialitem", "startsimplecolumns", "startsidebar", "startshift", "startshapebox", "startsetups", "startsectionlevel", "startsectionblockenvironment", "startsectionblock", "startsection", "startsdformula", "startscript", "startruby", "startrightaligned", "startreusableMPgraphic", "startregister", "startregime", "startreferenceprefix", "startreadingfile", "startrawsetups", "startrandomseed", "startrandomized", "startquote", "startquotation", "startpunctuation", "startpublication", "startprotectedcolors", "startprotect", "startproject", "startproduct", "startprocesscommalist", "startprocesscommacommand", "startprocessassignmentlist", "startprocessassignmentcommand", "startprefixtext", "startpostponingnotes", "startpostponing", "startpositive", "startpositionoverlay", "startpositioning", "startplacetable", "startplacepairedbox", "startplacelegend", "startplaceintermezzo", "startplacegraphic", "startplaceformula", "startplacefloat", "startplacefigure", "startplacechemical", "startpath", "startpart", "startparbuilder", "startparagraphscell", "startparagraphs", "startparagraph", "startpar", "startpagemakeup", "startpagelayout", "startpagefigure", "startpagecomment", "startpagecolumns", "startpacked", "startoverprint", "startoverlay", "startoutputstream", "startopposite", "startoperatortext", "startnotmode", "startnotext", "startnotallmodes", "startnointerference", "startnicelyfilledbox", "startnegative", "startnarrower", "startnarrow", "startnamedsubformulas", "startnamedsection", "startmpformula", "startmoduletestsection", "startmodule", "startmodeset", "startmode", "startmixedcolumns", "startmiddlemakeup", "startmiddlealigned", "startmidaligned", "startmdformula", "startmaxaligned", "startmatrix", "startmatrices", "startmathstyle", "startmathmode", "startmathmatrix", "startmathlabeltext", "startmathcases", "startmathalignment", "startmarkpages", "startmarkedcontent", "startmarginrule", "startmarginblock", "startmakeup", "startluasetups", "startluaparameterset", "startluacode", "startlua", "startlocalsetups", "startlocalnotes", "startlocallinecorrection", "startlocalheadsetup", "startlocalfootnotes", "startlinetablehead", "startlinetablecell", "startlinetablebody", "startlinetable", "startlines", "startlinenumbering", "startlinenote", "startlinefiller", "startlinecorrection", "startlinealignment", "startline", "startlegend", "startleftaligned", "startlayout", "startlanguage", "startlabeltext", "startknockout", "startitemize", "startitemgroupcolumns", "startitemgroup", "startitem", "startintertext", "startintermezzotext", "startinterface", "startinteractionmenu", "startinteraction", "startindentedtext", "startindentation", "startimath", "starthyphenation", "starthighlight", "starthiding", "starthelptext", "startheadtext", "starthead", "starthboxregister", "starthboxestohbox", "starthbox", "starthanging", "startgridsnapping", "startgraphictext", "startgoto", "startfrontmatter", "startframedtext", "startframedtable", "startframedrow", "startframedcontent", "startframedcell", "startframed", "startformulas", "startformula", "startfootnote", "startfontsolution", "startfontclass", "startfont", "startfloatcombination", "startfixed", "startfittingpage", "startfiguretext", "startfigure", "startfact", "startfacingfloat", "startexternalfigurecollection", "startextendedcatcodetable", "startexpandedcollect", "startexpanded", "startexceptions", "startenvironment", "startendofline", "startendnote", "startembeddedxtable", "startelement", "starteffect", "startdocument", "startdmath", "startdisplaymath", "startdelimitedtext", "startdelimited", "startcurrentlistentrywrapper", "startcurrentcolor", "startctxfunctiondefinition", "startctxfunction", "startcontextdefinitioncode", "startcontextcode", "startcomponent", "startcomment", "startcombination", "startcolumnspan", "startcolumnsetspan", "startcolumnset", "startcolumns", "startcolorset", "startcoloronly", "startcolorintent", "startcolor", "startcollecting", "startcollect", "startchemicaltext", "startchemical", "startcheckedfences", "startcharacteralign", "startchapter", "startcenteraligned", "startcatcodetable", "startcases", "startbuffer", "startbtxrenderingdefinitions", "startbtxlabeltext", "startboxedcolumns", "startbordermatrix", "startbodymatter", "startblockquote", "startbitmapimage", "startbbordermatrix", "startbar", "startbackmatter", "startbackground", "startattachment", "startaside", "startarrangedpages", "startappendices", "startallmodes", "startalignment", "startalign", "startXML", "startTY", "startTX", "startTRs", "startTR", "startTN", "startTH", "startTEXpage", "startTEX", "startTDs", "startTD", "startTC", "startTABLEnext", "startTABLEhead", "startTABLEfoot", "startTABLEbody", "startTABLE", "startPARSEDXML", "startMPrun", "startMPpositionmethod", "startMPpositiongraphic", "startMPpage", "startMPinitializations", "startMPinclusions", "startMPextensions", "startMPenvironment", "startMPdrawing", "startMPdefinitions", "startMPcode", "startMPclip", "startMP", "startLUA", "startJSpreamble", "startJScode" };
                 List<CompletionItem> ContextEnvironmentStructureKeywords = new List<CompletionItem>();
-                var list = starts.Select(array => new CompletionItem(array, array, CompletionItemKind.Field) { Documentation = new IMarkdownString("Document content"), Detail = "Det" }).ToList();
+                
+                var list = starts.Select(array => new CompletionItem(@"\"+array, array+"\n\t\n\\"+array.Replace("start","stop"), CompletionItemKind.Field) { Documentation = new IMarkdownString("Document content"), Detail = "Environment" }).ToList();
 
                 //Debug.WriteLine(textUntilPosition);
                 //if (textUntilPosition.EndsWith(@"\"))
@@ -700,22 +708,32 @@ namespace ConTeXt_UWP
                 //        }
                 //    };
                 //}
+                if (context.TriggerKind == CompletionTriggerKind.TriggerCharacter) 
+                {
+                    return new CompletionList()
+                    {
+                        Suggestions = list.ToArray()
+
+                    }; 
+                }
                 return new CompletionList()
                 {
-                    Suggestions = list.ToArray()
-
+                    Suggestions = new[]
+                    {
+                        new CompletionItem("startsection", "\\startsection[title={${1:tiltle}}, reference=${2:array})\n\t$0\n\\stopsection", CompletionItemKind.Snippet)
+                        {
+                            InsertTextRules = CompletionItemInsertTextRule.InsertAsSnippet
+                        }
+                    }
                 };
             });
         }
 
         public IAsyncOperation<CompletionItem> ResolveCompletionItemAsync(IModel document, Position position, CompletionItem item)
         {
-            // throw new NotImplementedException();
-            return AsyncInfo.Run(async delegate (System.Threading.CancellationToken cancelationToken)
+            return AsyncInfo.Run(delegate (CancellationToken cancelationToken)
             {
-                item.InsertText = item.Label + "\nbla"; 
-                return item; // throw new NotImplementedException();
-
+                return Task.FromResult(item); // throw new NotImplementedException();
             });
         }
     }

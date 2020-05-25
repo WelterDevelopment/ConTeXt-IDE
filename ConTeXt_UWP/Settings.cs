@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Monaco.Editor;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -31,6 +32,8 @@ namespace ConTeXt_UWP
             get { return Get<int>(); }
             set { Set(value); }
         }
+
+      
 
 
 
@@ -141,19 +144,25 @@ namespace ConTeXt_UWP
             set { Set(value); }
         }
 
-        public string[] ShowLineNumberOptions
+        public List<string> ShowLineNumberOptions
         {
             get
             {
-                string[] nav = {"on", "relative" , "interval", "off" };
-                return  nav;
+                var n = Enum.GetValues(typeof(LineNumbersType)).Cast<LineNumbersType>().ToList();
+                List<string> myDic = new List<string>();
+                foreach (LineNumbersType foo in Enum.GetValues(typeof(LineNumbersType)))
+                {
+                    myDic.Add(foo.ToString());
+                }
+                return myDic;
             }
         }
         public string[] NavigationOption
         {
             get
             {
-                string[] nav = { "Left", "LeftCompact", "Auto", "Top", "LeftMinimal" };
+                
+                string[] nav = Enum.GetNames(typeof(NavigationViewPaneDisplayMode)); // { "Left", "LeftCompact", "Auto", "Top", "LeftMinimal" };
                 return nav;
             }
         }
@@ -233,5 +242,10 @@ namespace ConTeXt_UWP
 
             return default(T);
         }
+    }
+    public class DetailItem
+    {
+        public int Value { get; set; }
+        public string Text { get; set; }
     }
 }

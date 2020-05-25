@@ -36,35 +36,22 @@ namespace ConTeXt_UWP
         {
             // var _enumval = Enum.GetValues(typeof(NavigationViewPaneDisplayMode)).Cast<NavigationViewPaneDisplayMode>();
             //PaneControl.ItemsSource = _enumval.ToList();
-            PaneControl.SelectionChanged += PaneControl_SelectionChanged1;
+            PaneControl.SelectionChanged += PaneControl_SelectionChanged;
         }
 
-        private void PaneControl_SelectionChanged1(object sender, SelectionChangedEventArgs e)
-        {
-            if ((string)(sender as ComboBox).SelectedItem == "Top")
-            {
-                Window.Current.SetTitleBar(((Window.Current.Content as Frame).Content as MainPage).nvSample.PaneCustomContent as FrameworkElement);
-                ((Window.Current.Content as Frame).Content as MainPage).nvSample.Header = null;
-            }
-
-            else
-            {
-                Window.Current.SetTitleBar(((Window.Current.Content as Frame).Content as MainPage).nvSample.Header as FrameworkElement);
-            }
-        }
 
         private void PaneControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if ((string)(sender as ComboBox).SelectedItem == "Top")
             {
                 Window.Current.SetTitleBar(((Window.Current.Content as Frame).Content as MainPage).nvSample.PaneCustomContent as FrameworkElement);
-                ((Window.Current.Content as Frame).Content as MainPage).nvSample.Header = null;
+                //((Window.Current.Content as Frame).Content as MainPage).nvSample.Header = null;
             }
 
             else
             {
-                Window.Current.SetTitleBar(((Window.Current.Content as Frame).Content as MainPage).nvSample.Header as FrameworkElement);
-                ((Window.Current.Content as Frame).Content as MainPage).nvSample.Header = "Restart needed!";
+                Window.Current.SetTitleBar(((Window.Current.Content as Frame).Content as MainPage).Header as FrameworkElement);
+                //((Window.Current.Content as Frame).Content as MainPage).nvSample.SetBinding(NavigationView.HeaderProperty, new Binding() { Path = new PropertyPath("NVHeader") });
             }
         }
 
@@ -84,6 +71,59 @@ namespace ConTeXt_UWP
             }
                 //await Task.Delay(2000);
           currentViewModel.IsNotSaving = true;
+        }
+
+        private async void Install_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                App.AppViewModel.IsNotSaving = false;
+                var cd = new ContentDialog();
+                var sp = new StackPanel();
+                StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+                var installpathtb = new TextBox() { Header = "Install Path (changing this is experimental)", Text = localFolder.Path };
+                var downloadlinktb = new TextBox() { Header = "Download link (only change if PRAGMA ADE changed the URL)", Text = App.AppViewModel.Default.ContextDownloadLink };
+                sp.Children.Add(installpathtb);
+                sp.Children.Add(downloadlinktb);
+                cd.Title = "First Start: Install the ConTeXt (LuaMetaTeX) Distribution";
+                cd.Content = sp;
+                cd.PrimaryButtonText = "Install";
+                cd.CloseButtonText = "Skip (Setup in the Settings!)";
+                cd.PrimaryButtonClick += async (a, b) =>
+                {
+                    App.AppViewModel.Default.ContextDistributionPath = installpathtb.Text;
+                    App.AppViewModel.Default.ContextDownloadLink = downloadlinktb.Text;
+                    ValueSet request = new ValueSet();
+                    request.Add("command", "install");
+                    AppServiceResponse response = await App.AppViewModel.appServiceConnection.SendMessageAsync(request);
+                    //AppViewModel.LOG(response.Status.ToString() + " ... " + response.Message.FirstOrDefault().Key.ToString() + " Key Val " + response.Message.FirstOrDefault().Value.ToString());
+                    // display the response key/value pairs
+                    foreach (string key in response.Message.Keys)
+                    {
+                        if (key == "response")
+                        {
+                            if ((bool)response.Message[key])
+                                App.AppViewModel.LOG("ConTeXt distribution installed.");
+                            else
+                                App.AppViewModel.LOG("Installation error");
+
+                        }
+                    }
+                    //AppRestartFailureReason result = await CoreApplication.RequestRestartAsync("");
+                    //if (result == AppRestartFailureReason.NotInForeground ||
+                    //    result == AppRestartFailureReason.RestartPending ||
+                    //    result == AppRestartFailureReason.Other)
+                    //{
+                    //    AppViewModel.LOG("Restart failed");
+                    //}
+                };
+                await cd.ShowAsync();
+                App.AppViewModel.IsNotSaving = true;
+            }
+            catch (Exception ex)
+            {
+                App.AppViewModel.LOG(ex.Message);
+            }
         }
     }
 }

@@ -86,13 +86,13 @@ namespace ConTeXt_WPF
             using (StreamWriter sw = p.StandardInput)
             {
                 Log("deleting cached files...");
-                //await sw.WriteLineAsync("del *.log && del *.pdf && del *.tuc");
+                sw.WriteLine("del *.log && del *.pdf && del *.tuc");
                 Log("setting up context...");
                 //await sw.WriteLineAsync("dir");
                 //sw.WriteLine(Settings.Default.ContextDistributionPath + @"\" + @"tex\setuptex.bat tex\texmf-win64\bin");
                 Log("compiling...");
                 // await sw.WriteLineAsync("cd sample");
-                sw.WriteLine("context " + Settings.Default.TexFileName);
+                sw.WriteLine(Settings.Default.ContextDistributionPath + @"\tex\texmf-win64\bin\context.exe"+ " " + Settings.Default.TexFileName);
 
                 // Thread.Sleep(5000);
             }
@@ -211,10 +211,10 @@ namespace ConTeXt_WPF
                                 case "install":
                                     {
                                         Log("installing");
-                                        Install(Settings.Default.ContextDistributionPath);
+                                        bool installed = await Install(Settings.Default.ContextDistributionPath);
                                         ValueSet response = new ValueSet
                                         {
-                                            { "response", "installed" }
+                                            { "response", installed }
                                         };
                                         await args.Request.SendResponseAsync(response);
                                         break;
@@ -253,7 +253,7 @@ namespace ConTeXt_WPF
             var status = await connection.OpenAsync();
             Log("Started");
         }
-        private void Install(string contextDistributionPath)
+        private async Task<bool> Install(string contextDistributionPath)
         {
             try
             {
@@ -273,11 +273,15 @@ namespace ConTeXt_WPF
                     archive.ExtractToDirectory(contextDistributionPath);
                 }
                 Log("Installing the Distribution");
-                Update();
+                var sf = await  StorageFile.GetFileFromPathAsync(contextDistributionPath + @"\context-win64.zip");
+                await sf.DeleteAsync();
+                await Update();
+                return true;
             }
             catch (Exception ex)
             {
                 Log(ex.Message);
+                return false;
             }
         }
 
@@ -309,35 +313,40 @@ namespace ConTeXt_WPF
             string newPathToFile = Path.Combine(local, curPDF);
             File.Copy(curPDFPath, newPathToFile, true);
         }
-        private void Update()
+        private async Task<bool> Update()
         {
-            Process p = new Process();
-            ProcessStartInfo info = new ProcessStartInfo(@"C:\Windows\System32\cmd.exe")
+            try
             {
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = false,
-                CreateNoWindow = true,
-                WindowStyle = ProcessWindowStyle.Hidden,
-                UseShellExecute = false,
-                WorkingDirectory = Settings.Default.ContextDistributionPath
-            };
-            p.OutputDataReceived += (e, f) => { updateoutput++; Log(f.Data); };
-            p.StartInfo = info;
-            p.Start();
-            p.BeginOutputReadLine();
+                Process p = new Process();
+                ProcessStartInfo info = new ProcessStartInfo(@"C:\Windows\System32\cmd.exe")
+                {
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = false,
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    UseShellExecute = false,
+                    WorkingDirectory = Settings.Default.ContextDistributionPath
+                };
+                p.OutputDataReceived += (e, f) => { updateoutput++; Log(f.Data); };
+                p.StartInfo = info;
+                p.Start();
+                p.BeginOutputReadLine();
 
-            using (StreamWriter sw = p.StandardInput)
-            {
-                sw.WriteLine(@"install.bat --modules=all");
-                Log("Setting up PATH");
-                sw.WriteLine("setx path \"%PATH%;" + Settings.Default.ContextDistributionPath + @"\tex\texmf-win64\bin" + "\"");
+                using (StreamWriter sw = p.StandardInput)
+                {
+                    sw.WriteLine(@"install.bat --modules=all");
+                    Log("Setting up PATH");
+                    sw.WriteLine("setx path \"%PATH%;" + Settings.Default.ContextDistributionPath + @"\tex\texmf-win64\bin" + "\"");
+                }
+                //string output = p.StandardOutput.ReadToEnd();
+                //Log(output);
+                //Thread.Sleep(10000);
+                p.WaitForExit();
+                Log("count = " + updateoutput.ToString());
+                return true;
             }
-            //string output = p.StandardOutput.ReadToEnd();
-            //Log(output);
-            //Thread.Sleep(10000);
-            p.WaitForExit();
-            Log("count = " + updateoutput.ToString());
+            catch { return false; }
         }
     }
 }

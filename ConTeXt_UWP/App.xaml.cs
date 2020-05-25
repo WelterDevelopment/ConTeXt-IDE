@@ -170,7 +170,7 @@ namespace ConTeXt_UWP
             var lightbrush = DefaultTheme.GetColorValue(Windows.UI.ViewManagement.UIColorType.Foreground);
             titleBar.ButtonBackgroundColor = Colors.Transparent;
             titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-            //titleBar.ButtonForegroundColor = titleBar.ButtonInactiveForegroundColor = lightbrush;
+            titleBar.ButtonForegroundColor = titleBar.ButtonInactiveForegroundColor = lightbrush;
             titleBar.BackgroundColor = Colors.Transparent;
             titleBar.ButtonForegroundColor = Colors.Transparent;
             SystemNavigationManager.GetForCurrentView().BackRequested += App_BackRequested;
@@ -182,15 +182,15 @@ namespace ConTeXt_UWP
                     AppViewModel.IsNotSaving = false;
                     var cd = new ContentDialog();
                     var sp = new StackPanel();
-
-                    var installpathtb = new TextBox() { Header = "Install Path", Text = @"C:\Program Files" };
-                    var downloadlinktb = new TextBox() { Header = "Download link (only change if PRAGMA ADE changed the link)", Text = AppViewModel.Default.ContextDownloadLink };
+                    StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+                    var installpathtb = new TextBox() { Header = "Install Path (changing this is experimental)", Text = localFolder.Path };
+                    var downloadlinktb = new TextBox() { Header = "Download link (only change if PRAGMA ADE changed the URL)", Text = AppViewModel.Default.ContextDownloadLink };
                     sp.Children.Add(installpathtb);
                     sp.Children.Add(downloadlinktb);
                     cd.Title = "First Start: Install the ConTeXt (LuaMetaTeX) Distribution";
                     cd.Content = sp;
-                    cd.PrimaryButtonText = "Install ConTeXt Distribution";
-                    cd.CloseButtonText = "I want to specify my existing Distribution Path in the settings";
+                    cd.PrimaryButtonText = "Install";
+                    cd.CloseButtonText = "Skip (Setup in the Settings!)";
                     cd.PrimaryButtonClick += async (a, b) =>
                     {
                         AppViewModel.Default.ContextDistributionPath = installpathtb.Text;
@@ -198,14 +198,17 @@ namespace ConTeXt_UWP
                         ValueSet request = new ValueSet();
                         request.Add("command", "install");
                         AppServiceResponse response = await AppViewModel.appServiceConnection.SendMessageAsync(request);
-                        AppViewModel.LOG(response.Status.ToString() + " ... " + response.Message.FirstOrDefault().Key.ToString() + " Key Val " + response.Message.FirstOrDefault().Value.ToString());
+                        //AppViewModel.LOG(response.Status.ToString() + " ... " + response.Message.FirstOrDefault().Key.ToString() + " Key Val " + response.Message.FirstOrDefault().Value.ToString());
                         // display the response key/value pairs
                         foreach (string key in response.Message.Keys)
                         {
                             if (key == "response")
                             {
-                                AppViewModel.LOG("ConTeXt distribution installed.");
-                                
+                                if ((bool)response.Message[key])
+                                    AppViewModel.LOG("ConTeXt distribution installed.");
+                                else
+                                    AppViewModel.LOG("Installation error");
+
                             }
                         }
                         //AppRestartFailureReason result = await CoreApplication.RequestRestartAsync("");

@@ -33,7 +33,7 @@
                 <CheckBox Content="Show log of the compiler" IsChecked="{Binding Default.InternalViewer, Mode=TwoWay}" />
                 <CheckBox Content="Show log of this program" IsChecked="{Binding Default.InternalViewer, Mode=TwoWay}" />
                 <TextBlock Style="{ThemeResource SubheaderTextBlockStyle}" Text="Editor" FontFamily="Segoe UI"></TextBlock>
-                <ComboBox Header="Line numbers" ItemsSource="{Binding Default.ShowLineNumberOptions}" SelectionChangedTrigger="Always" SelectedItem="{Binding Default.ShowLineNumbers, Mode=TwoWay}"  FontFamily="Segoe UI"/>
+                <ComboBox Header="Line numbers" ItemsSource="{Binding Default.ShowLineNumberOptions}" SelectionChangedTrigger="Always" SelectedItem="{Binding Default.ShowLineNumbers, Mode=TwoWay, Converter={StaticResource EnumToString},ConverterParameter=LineNumbersType}"  FontFamily="Segoe UI"/>
                 <CheckBox Content="Text wrapping (prevents horizontal scrollbar)" IsChecked="{Binding Default.ShowLineNumbers, Mode=TwoWay}"/>
                 <CheckBox Content="Show command info on hover" IsChecked="{Binding Default.ShowLineNumbers, Mode=TwoWay}"/>
                 <CheckBox Content="Code folding" IsChecked="{Binding Default.CodeFolding, Mode=TwoWay}"/>
@@ -41,6 +41,7 @@
                 <TextBlock Style="{ThemeResource SubheaderTextBlockStyle}" Text="Distribution" FontFamily="Segoe UI"></TextBlock>
                 <TextBox Header="ConTeXt distribution path" Text="{Binding Default.ContextDistributionPath, Mode=TwoWay}"/>
                 <Button IsEnabled="{Binding IsNotSaving}" Name="Update" Click="Update_Click" Content="Update the distribution" Margin="0,10,0,0"></Button>
+                <Button IsEnabled="{Binding IsNotSaving}" Name="CleanInstall" Click="Install_Click" Content="Clean install" Margin="0,10,0,0"></Button>
                 <TextBox Header="Tex file path" Text="{Binding Default.TexFilePath, Mode=TwoWay}"/>
                 <TextBox Header="Tex file name" Text="{Binding Default.TexFileName, Mode=TwoWay}"/>
                 <TextBlock Style="{ThemeResource SubheaderTextBlockStyle}" Text="Appearance" FontFamily="Segoe UI"></TextBlock>

@@ -31,9 +31,7 @@ namespace ConTeXt_UWP
         {
             this.InitializeComponent();
             // Window.Current.SetTitleBar(AppTitleBar);
-            var coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
-            coreTitleBar.ExtendViewIntoTitleBar = true;
-
+            
             //KeyboardAccelerator GoBack = new KeyboardAccelerator();
             //GoBack.Key = VirtualKey.GoBack;
             //GoBack.Invoked += BackInvoked;
@@ -88,13 +86,17 @@ namespace ConTeXt_UWP
             try
             {
                 App.AppViewModel.LOG("checking");
+                var coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
+                coreTitleBar.ExtendViewIntoTitleBar = true;
+
                 if (App.AppViewModel.Default.NavigationViewPaneMode == "Top")
                 {
                     Window.Current.SetTitleBar(nvSample.PaneCustomContent as FrameworkElement);
-                    ((Window.Current.Content as Frame).Content as MainPage).nvSample.Header = null;
+                    nvSample.Header = null;
                 }
                 else
-                    Window.Current.SetTitleBar(nvSample.Header as FrameworkElement);
+                    Window.Current.SetTitleBar(Header as FrameworkElement);
+                coreTitleBar.ExtendViewIntoTitleBar = true;
 
                 foreach (NavigationViewItemBase item in nvSample.MenuItems)
                 {
@@ -165,23 +167,43 @@ namespace ConTeXt_UWP
             On_BackRequested();
 
         }
+        private void NvSample_BackRequested(Microsoft.UI.Xaml.Controls.NavigationView sender, Microsoft.UI.Xaml.Controls.NavigationViewBackRequestedEventArgs args)
+        {
+            On_BackRequested();
+
+        }
 
         PageStackEntry Editor = new PageStackEntry(typeof(Editor), null, new DrillInNavigationTransitionInfo());
-
-        private async void NvSample_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+ private async void NvSample_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
         {
             
             if (args.IsSettingsInvoked)
                 contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo());
-            //{
-            //    if (ApiInformation.IsApiContractPresent("Windows.ApplicationModel.FullTrustAppContract", 1))
-            //    {
-            //        App.AppViewModel.LOG("launching app");
-            //        await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Parameters");
-            //        App.AppViewModel.LOG("launched");
-            //        //Thread.Sleep(5000);
-            //    }
-            //}
+         
+            else
+                try
+                {
+                    switch (args.InvokedItemContainer.Tag)
+                    {
+                        case "IDE": contentFrame.Navigate(typeof(Editor), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "Editor"; break;
+                        case "Settings": contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "Settings"; break;
+                        case "Projects": contentFrame.Navigate(typeof(Projects), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "Projects"; break;
+                        case "About": contentFrame.Navigate(typeof(About), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "About"; break;
+                        default: Console.WriteLine("Not a valid Page Type"); break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e.Message);
+                }
+            Updateback();
+        }
+        private async void NvSample_ItemInvoked(Microsoft.UI.Xaml.Controls.NavigationView sender, Microsoft.UI.Xaml.Controls.NavigationViewItemInvokedEventArgs args)
+        {
+            
+            if (args.IsSettingsInvoked)
+                contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo());
+         
             else
                 try
                 {
@@ -472,5 +494,7 @@ namespace ConTeXt_UWP
         {
             FlyoutBase.ShowAttachedFlyout((FrameworkElement)sender);
         }
+
+       
     }
 }

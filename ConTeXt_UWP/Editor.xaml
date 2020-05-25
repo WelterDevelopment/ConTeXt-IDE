@@ -70,9 +70,9 @@
             </ListView.ItemTemplate>
         </ListView>-->
             <contr:TabView x:Name="Tabs" Grid.Row="1" RequestedTheme="{Binding Default.Theme, Mode=OneWay, Converter={StaticResource StringToTheme}}"
-                       TabWidthMode="Equal" 
+                       TabWidthMode="Equal"  IsAddTabButtonVisible="False"
                       CloseButtonOverlayMode="Always" SelectionChanged="Tabs_SelectionChanged"
-                   TabCloseRequested="Tabs_TabCloseRequested"
+                   TabCloseRequested="Tabs_TabCloseRequested" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch"
                       CanDragTabs="True" Background="Transparent"
                       CanReorderTabs="True" TabItemsSource="{Binding FileItems}" SelectedItem="{Binding CurrentFileItem, Mode=TwoWay}"
                       AllowDrop="True" FontFamily="Segoe">
@@ -93,21 +93,24 @@
                             <contr:TabViewItem.Header>
                                 <TextBlock FontWeight="{Binding IsRoot, Converter={StaticResource BoolToFontWeight}}" FontFamily="Segoe" Text="{Binding FileName}"></TextBlock>
                             </contr:TabViewItem.Header>
+                            <contr:TabViewItem.IconSource>
+                                <contr:SymbolIconSource Symbol="Document"/>
+                            </contr:TabViewItem.IconSource>
                             <contr:TabViewItem.Content>
                         <Grid VerticalAlignment="Stretch">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"></RowDefinition>
                                 <RowDefinition Height="Auto"></RowDefinition>
                             </Grid.RowDefinitions>
-                            <Grid Grid.Row="0">
-                                        <monaco:CodeEditor RequestedTheme="{Binding DataContext.Default.Theme, Mode=OneWay, Converter={StaticResource StringToTheme}}" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch" MinHeight="400"  x:Name="Edit" Loading="Edit_Loading" Loaded="Edit_Loaded" Text="{Binding FileContent,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" CodeLanguage="context">
+                           
+                                        <monaco:CodeEditor Grid.Row="0" RequestedTheme="Light" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch"   x:Name="Edit" Loading="Edit_Loading" Loaded="Edit_Loaded" Text="{Binding FileContent,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" CodeLanguage="context">
 
                                     <monaco:CodeEditor.KeyboardAccelerators>
                                         <KeyboardAccelerator x:Name="ControlEnter" Key="F1" Modifiers="Control" Invoked="ControlEnter_Invoked" ></KeyboardAccelerator>
                                     </monaco:CodeEditor.KeyboardAccelerators>
                                 </monaco:CodeEditor>
-                                <Rectangle Height="1" Width="1" HorizontalAlignment="Left" VerticalAlignment="Top" Fill="{StaticResource SystemChromeMediumColor}"></Rectangle>
-                            </Grid>
+                                <Rectangle Grid.Row="0" Height="1" Width="1" HorizontalAlignment="Left" VerticalAlignment="Top" Fill="{StaticResource SystemChromeMediumColor}"></Rectangle>
+                           
                             <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Right">
                                 <TextBlock Text="R: " FontFamily="Segoe" HorizontalAlignment="Right"></TextBlock>
                                 <TextBlock MinWidth="30" Text="{Binding ElementName=Edit, Mode=OneWay, Path=SelectedRange.PositionLineNumber}" FontFamily="Segoe" HorizontalAlignment="Right"></TextBlock>
@@ -163,7 +166,7 @@
                     <TextBlock Padding="16">This tab isn't closable because its IsClosable property is set to False, even when CanCloseTabs is True.</TextBlock>
                 </controls:TabViewItem>-->
 
-                <contr:TabView.TabStripHeader>
+                <!--<contr:TabView.TabStripHeader>
                     <Button x:Name="AddTabButtonUpper"
                 Width="48" Click="AddTabButtonUpper_Click"
                 Height="{StaticResource TabViewItemHeaderMinHeight}"
@@ -178,7 +181,7 @@
                         </Viewbox>
                     </Button>
 
-                </contr:TabView.TabStripHeader>
+                </contr:TabView.TabStripHeader>-->
 
                 <!--<contr:TabView.TabEndHeader>
                     <Button Width="48"
