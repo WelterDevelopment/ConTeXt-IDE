@@ -11,12 +11,12 @@
   >
 
   <Identity
-    Name="eb7ea74f-bec6-4d93-86c9-4589419befcb"
+    Name="ConTeXt-IDE"
     Publisher="CN=Welter"
     Version="1.0.0.0" />
 
   <Properties>
-    <DisplayName>ConTeXt</DisplayName>
+    <DisplayName>ConTeXt-IDE</DisplayName>
     <PublisherDisplayName>Welter</PublisherDisplayName>
     <Logo>Images\StoreLogo.png</Logo>
   </Properties>
@@ -75,6 +75,8 @@
             <uap:Logo>Assets\StoreLogo.png</uap:Logo>
             <uap:SupportedFileTypes>
               <uap:FileType>.tex</uap:FileType>
+              <uap:FileType>.mkiv</uap:FileType>
+              <uap:FileType>.mkii</uap:FileType>
             </uap:SupportedFileTypes>
             <uap2:SupportedVerbs>
               <uap3:Verb Id="Edit">Edit with ConTEXt IDE</uap3:Verb>
