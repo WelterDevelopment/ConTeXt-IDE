@@ -33,9 +33,20 @@ namespace ConTeXt_UWP
             set { Set(value); }
         }
 
-      
 
+        [DefaultSettingValue(Value = true)]
+        public bool ShowLog
+        {
+            get { return Get<bool>(); }
+            set { Set(value); }
+        }
 
+        [DefaultSettingValue(Value = true)]
+        public bool UseModes
+        {
+            get { return Get<bool>(); }
+            set { Set(value); }
+        }
 
         [DefaultSettingValue(Value = true)]
         public bool InternalViewer
@@ -125,6 +136,12 @@ namespace ConTeXt_UWP
             get { return Get<string>(); }
             set { Set(value); }
         }
+        [DefaultSettingValue(Value = "")]
+        public string Modes
+        {
+            get { return Get<string>(); }
+            set { Set(value); }
+        }
         [DefaultSettingValue(Value = true)]
         public bool CodeFolding
         {
@@ -133,6 +150,25 @@ namespace ConTeXt_UWP
         }
         [DefaultSettingValue(Value = true)]
         public bool MiniMap
+        {
+            get { return Get<bool>(); }
+            set { Set(value); }
+        }
+
+        [DefaultSettingValue(Value = true)]
+        public bool SuggestStartStop
+        {
+            get { return Get<bool>(); }
+            set { Set(value); }
+        }
+        [DefaultSettingValue(Value = true)]
+        public bool SuggestPrimitives
+        {
+            get { return Get<bool>(); }
+            set { Set(value); }
+        }
+        [DefaultSettingValue(Value = true)]
+        public bool SuggestCommands
         {
             get { return Get<bool>(); }
             set { Set(value); }

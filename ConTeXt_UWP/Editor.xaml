@@ -9,12 +9,13 @@
     mc:Ignorable="d"
     xmlns:contr="using:Microsoft.UI.Xaml.Controls"
     xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
+    xmlns:animations="using:Microsoft.Toolkit.Uwp.UI.Animations"
     xmlns:extensions="using:Microsoft.Toolkit.Uwp.UI.Extensions"
     Background="Transparent" DataContext="{x:Bind currentViewModel}"
     Name="EditorPage"
     >
     <Page.Resources>
-        <SolidColorBrush x:Key="ApplicationPageBackgroundThemeBrush" Color="{ThemeResource ApplicationPageBackgroundThemeBrush}"/>
+        <!--<SolidColorBrush x:Key="ApplicationPageBackgroundThemeBrush" Color="{ThemeResource ApplicationPageBackgroundThemeBrush}"/>-->
 
     </Page.Resources>
 
@@ -28,33 +29,80 @@
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <RowDefinition MaxHeight="100" Height="Auto"/>
+            <RowDefinition Height="4"/>
+            <RowDefinition MaxHeight="500" Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Name="editgrid" Grid.Column="0" Grid.Row="0">
+        <Grid Name="editgrid" Grid.Column="0" Grid.Row="0" HorizontalAlignment="Stretch">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
                 <RowDefinition Height="Auto"></RowDefinition>
                 <RowDefinition Height="*"></RowDefinition>
             </Grid.RowDefinitions>
-            <StackPanel Background="Transparent"  Height="40" HorizontalAlignment="Left" Orientation="Horizontal">
-                <AppBarButton AccessKey="R" IsEnabled="{Binding IsNotSaving}" Icon="Play" Name="btncompile" Height="40" Click="Btncompile_Click" ToolTipService.ToolTip="Compile Main file">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid ColumnSpacing="6" HorizontalAlignment="Stretch" Background="Transparent"  Height="40"  Margin="6,0,6,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <!--<AppBarButton AccessKey="R" Icon="Play" Name="btncompile" Height="40" Click="Btncompile_Click" ToolTipService.ToolTip="Compile Main file">
                     <AppBarButton.KeyboardAccelerators>
                         <KeyboardAccelerator 
         Modifiers="Control" 
         Key="B" />
                     </AppBarButton.KeyboardAccelerators>
-                </AppBarButton>
-                <AppBarButton IsEnabled="{Binding IsNotSaving}" Icon="Save" Name="btnsave" Height="40" Click="Btnsave_Click" ToolTipService.ToolTip="Save all"></AppBarButton>
-                <AppBarButton IsEnabled="{Binding IsNotSaving}" Icon="OpenFile" Name="btnopen" Height="40" Click="Btnopen_Click"></AppBarButton>
+                </AppBarButton>-->
+                <Button Grid.Column="0"  IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Style="{ThemeResource ButtonRevealStyle}" Click="Btncompile_Click" >
+                    <Button.Content>
+                        <SymbolIcon Symbol="Play"></SymbolIcon>
+                    </Button.Content>
+                </Button>
+                <Button Grid.Column="1" ToolTipService.ToolTip="Select modes">
+                    <Button.Content>
+                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE70D;"></FontIcon>
+                    </Button.Content>
+                    <Button.Flyout>
+                        <Flyout>
+                            <ListView SelectionMode="None" ItemsSource="{Binding CurrentProject.Modes}" >
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}"></CheckBox>
+                                       </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+                <Button Grid.Column="2" IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Name="btnsave" Style="{ThemeResource ButtonRevealStyle}" Click="Btnsave_Click" ToolTipService.ToolTip="Save current file">
+                    <Button.Content>
+                        <SymbolIcon Symbol="Save"></SymbolIcon>
+                    </Button.Content>
+                </Button>
+                <contr:ProgressBar Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}" ShowPaused="{Binding IsPaused}" Grid.Column="3" HorizontalAlignment="Stretch"  IsIndeterminate="True" ShowError="{Binding IsError}">
+                    <animations:Implicit.ShowAnimations>
+                        <animations:TranslationAnimation Duration="0:0:0.75" From="0, -20, 0" To="0" ></animations:TranslationAnimation>
+                        <animations:OpacityAnimation Duration="0:0:0.75" From="0" To="1"></animations:OpacityAnimation>
+                    </animations:Implicit.ShowAnimations>
+                    <animations:Implicit.HideAnimations>
+                        <animations:TranslationAnimation Duration="0:0:0.75" From="0, 0, 0" To="-20" ></animations:TranslationAnimation>
+                        <animations:OpacityAnimation Duration="0:0:0.75" From="1" To="0"></animations:OpacityAnimation>
+                    </animations:Implicit.HideAnimations>
+                </contr:ProgressBar>
+                <!--<AppBarButton IsEnabled="{Binding 
+                Saving}" Icon="OpenFile" Name="btnopen" Height="40" Click="Btnopen_Click"></AppBarButton>-->
 
-                <ComboBox BorderThickness="0" Height="{x:Bind btncompile.Height}" VerticalContentAlignment="Stretch" VerticalAlignment="Center" ItemsSource="{Binding ModeList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Mode"  Width="150" SelectionChanged="ComboBox_SelectionChanged" FontFamily="Segoe UI">
+                <!--<ComboBox BorderThickness="0" Height="{x:Bind btncompile.Height}" VerticalContentAlignment="Stretch" VerticalAlignment="Center" ItemsSource="{Binding ModeList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Mode"  Width="150" SelectionChanged="ComboBox_SelectionChanged" FontFamily="Segoe UI">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Command}"></TextBlock>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
-                </ComboBox>
-            </StackPanel>
+                </ComboBox>-->
+            </Grid>
 
 
             <!--<ListView  Width="100" ItemsSource="{Binding LineNumberList}"   Grid.Row="1" Name="LineNumbers" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
@@ -74,7 +122,7 @@
                       CloseButtonOverlayMode="Always" SelectionChanged="Tabs_SelectionChanged"
                    TabCloseRequested="Tabs_TabCloseRequested" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch"
                       CanDragTabs="True" Background="Transparent"
-                      CanReorderTabs="True" TabItemsSource="{Binding FileItems}" SelectedItem="{Binding CurrentFileItem, Mode=TwoWay}"
+                      CanReorderTabs="True" TabItemsSource="{Binding FileItems}" SelectedItem="{Binding CurrentFileItem, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                       AllowDrop="True" FontFamily="Segoe">
                 <contr:TabView.Resources>
                     <!--<SolidColorBrush x:Key="TabViewItemHeaderBackgroundSelected"
@@ -97,134 +145,63 @@
                                 <contr:SymbolIconSource Symbol="Document"/>
                             </contr:TabViewItem.IconSource>
                             <contr:TabViewItem.Content>
-                        <Grid VerticalAlignment="Stretch">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"></RowDefinition>
-                                <RowDefinition Height="Auto"></RowDefinition>
-                            </Grid.RowDefinitions>
-                           
-                                        <monaco:CodeEditor Grid.Row="0" RequestedTheme="Light" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch"   x:Name="Edit" Loading="Edit_Loading" Loaded="Edit_Loaded" Text="{Binding FileContent,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" CodeLanguage="context">
-
-                                    <monaco:CodeEditor.KeyboardAccelerators>
-                                        <KeyboardAccelerator x:Name="ControlEnter" Key="F1" Modifiers="Control" Invoked="ControlEnter_Invoked" ></KeyboardAccelerator>
-                                    </monaco:CodeEditor.KeyboardAccelerators>
-                                </monaco:CodeEditor>
-                                <Rectangle Grid.Row="0" Height="1" Width="1" HorizontalAlignment="Left" VerticalAlignment="Top" Fill="{StaticResource SystemChromeMediumColor}"></Rectangle>
-                           
-                            <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Right">
-                                <TextBlock Text="R: " FontFamily="Segoe" HorizontalAlignment="Right"></TextBlock>
-                                <TextBlock MinWidth="30" Text="{Binding ElementName=Edit, Mode=OneWay, Path=SelectedRange.PositionLineNumber}" FontFamily="Segoe" HorizontalAlignment="Right"></TextBlock>
-                                <TextBlock Margin="5,0,0,0" Text="C: " FontFamily="Segoe" HorizontalAlignment="Right"></TextBlock>
-                                <TextBlock MinWidth="30" Text="{Binding ElementName=Edit, Mode=OneWay, Path=SelectedRange.PositionColumn}" FontFamily="Segoe" HorizontalAlignment="Right"></TextBlock>
-                            </StackPanel>
-                                </Grid>
+                                <Grid></Grid>
                             </contr:TabViewItem.Content>
                         </contr:TabViewItem>
                     </DataTemplate>
                 </contr:TabView.TabItemTemplate>
-                <!--<contr:TabView.TabStripHeaderTemplate>
-                    <DataTemplate>
-                        <TextBlock FontWeight="{Binding IsRoot, Converter={StaticResource BoolToFontWeight}}" FontFamily="Segoe" Text="{Binding FileName}"></TextBlock>
-                    </DataTemplate>
-                </contr:TabView.TabStripHeaderTemplate>-->
-                <!--<controls:TabView.TabStartHeader>
-                    <Button Width="48"
-                Height="{StaticResource TabViewItemHeaderMinHeight}"
-                Margin="0,0,-1,0"
-                BorderThickness="1"
-                Background="Transparent" 
-                Style="{StaticResource ButtonRevealStyle}" 
-                Padding="2,2,0,0">
-                        <Viewbox MaxWidth="16" MaxHeight="16">
-                            <SymbolIcon Symbol="AddFriend"/>
-                        </Viewbox>
-                    </Button>
-                </controls:TabView.TabStartHeader>-->
-
-                <!-- Tabs -->
-
-                <!--<controls:TabViewItem Header="Home" Icon="Home" IsClosable="False">
-                    <Grid>
-                    <monaco:CodeEditor x:Name="edit"  Loading="Edit_Loading" Loaded="Edit_Loaded"
-                           HasGlyphMargin="True" TabNavigation="Cycle" IsTapEnabled="True" IsTextScaleFactorEnabled="False"
-                           CodeLanguage="context"
-                           Text="{Binding CodeContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                           KeyDown="Box_KeyDown"
-                          >
-                        </monaco:CodeEditor>
-                        <Rectangle Height="1" Width="1" HorizontalAlignment="Left" VerticalAlignment="Top" Fill="{ThemeResource ApplicationPageBackgroundThemeBrush}"></Rectangle>
-                    </Grid>
-                    
-                </controls:TabViewItem>
-                <controls:TabViewItem Header="Tab 2 Has Longer Text" Icon="Audio">
-                    <TextBlock Padding="16" FontFamily="Segoe UI">It has a lot of versitility out of the box for different scenarios.</TextBlock>
-                </controls:TabViewItem>
-                <controls:TabViewItem Header="Tab 3" Icon="Video">
-                    <TextBlock Padding="16" FontFamily="Segoe UI">You can enable drag-and-drop and reorder the tabs too.</TextBlock>
-                </controls:TabViewItem>
-                <controls:TabViewItem Header="Not Closable" Icon="Calendar" IsClosable="False">
-                    <TextBlock Padding="16">This tab isn't closable because its IsClosable property is set to False, even when CanCloseTabs is True.</TextBlock>
-                </controls:TabViewItem>-->
-
-                <!--<contr:TabView.TabStripHeader>
-                    <Button x:Name="AddTabButtonUpper"
-                Width="48" Click="AddTabButtonUpper_Click"
-                Height="{StaticResource TabViewItemHeaderMinHeight}"
-                Margin="-1,0,0,0"
-                BorderThickness="1"
-                Background="Transparent"
-                Style="{StaticResource ButtonRevealStyle}">
-                        <Viewbox MaxWidth="16"
-                    MaxHeight="16">
-                            <FontIcon FontFamily="Segoe MDL2 Assets"
-                      Glyph="&#xE710;" />
-                        </Viewbox>
-                    </Button>
-
-                </contr:TabView.TabStripHeader>-->
-
-                <!--<contr:TabView.TabEndHeader>
-                    <Button Width="48"
-                Height="{StaticResource TabViewItemHeaderMinHeight}"
-                Margin="-1,0,0,0"
-                BorderThickness="1" 
-                Background="Transparent" 
-                Style="{StaticResource ButtonRevealStyle}" FontFamily="Segoe MDL2 Assets">
-                        <Viewbox MaxWidth="16" MaxHeight="16">
-                            <SymbolIcon Symbol="Setting"/>
-                        </Viewbox>
-                    </Button>
-                </contr:TabView.TabEndHeader>-->
-
-                <!--<controls:TabView.Footer>
-                    -->
-                <!--<TextBlock Padding="16,8,16,8"
-                   HorizontalAlignment="Right" Name="TabFooter"
-                   FontSize="16" FontWeight="Bold"
-                   Text="Some nice Info about the text" FontFamily="Segoe MDL2 Assets" />-->
-                <!--
-                </controls:TabView.Footer>-->
-
-
-
             </contr:TabView>
+            <Grid Grid.Row="2" VerticalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                </Grid.RowDefinitions>
+
+                <monaco:CodeEditor Grid.Row="0" RequestedTheme="{Binding Default.Theme, Mode=OneWay, Converter={StaticResource StringToTheme}}" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch"   x:Name="Edit" Loading="Edit_Loading" Loaded="Edit_Loaded" Text="{Binding CurrentFileItem.FileContent,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" CodeLanguage="{Binding CurrentFileItem.FileLanguage, Mode=OneWay}">
+
+                    <monaco:CodeEditor.KeyboardAccelerators>
+                        <KeyboardAccelerator x:Name="ControlEnter" Key="F1" Modifiers="Control" Invoked="ControlEnter_Invoked" ></KeyboardAccelerator>
+                    </monaco:CodeEditor.KeyboardAccelerators>
+                </monaco:CodeEditor>
+                <Rectangle Grid.Row="0" Height="1" Width="1" HorizontalAlignment="Left" VerticalAlignment="Top" Fill="{StaticResource SystemChromeMediumColor}"></Rectangle>
+
+                <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Right">
+                    <TextBlock Text="R: " FontFamily="Segoe" HorizontalAlignment="Right"></TextBlock>
+                    <TextBlock MinWidth="30" Text="{Binding ElementName=Edit, Mode=OneWay, Path=SelectedRange.PositionLineNumber}" FontFamily="Segoe" HorizontalAlignment="Right"></TextBlock>
+                    <TextBlock Margin="5,0,0,0" Text="C: " FontFamily="Segoe" HorizontalAlignment="Right"></TextBlock>
+                    <TextBlock MinWidth="30" Text="{Binding ElementName=Edit, Mode=OneWay, Path=SelectedRange.PositionColumn}" FontFamily="Segoe" HorizontalAlignment="Right"></TextBlock>
+                </StackPanel>
+            </Grid>
 
         </Grid>
         <controls:GridSplitter Visibility="{Binding Default.InternalViewer, Converter={StaticResource BoolToVisibility},Mode=OneWay}"
         Width="4" CursorBehavior="ChangeOnSplitterHover"
         Background="{ThemeResource LogAcrylicBrush}"
-        GripperCursor="SizeWestEast" FocusVisualPrimaryBrush="AliceBlue" FocusVisualSecondaryBrush="DarkGreen"
+        GripperCursor="SizeWestEast" FocusVisualPrimaryBrush="DarkGray" FocusVisualSecondaryBrush="LightGray"
         HorizontalAlignment="Left"
         Grid.Column="1" Grid.Row="0"
         ResizeDirection="Columns"
         ResizeBehavior="PreviousAndNext"
         GripperForeground="{ThemeResource ContentAcrylicBrush}" >
         </controls:GridSplitter>
+        
         <Grid Grid.Column="2"  Grid.Row="0" Name="pdfview"  Visibility="{Binding Default.InternalViewer, Converter={StaticResource BoolToVisibility},Mode=OneWay}">
             <Image Name="PdfImage" Grid.Row="0" Margin="0"></Image>
-            <WebView RequestedTheme="Dark" Loading="PDFReader_Loading" NewWindowRequested="PDFReader_NewWindowRequested" Name="PDFReader" Source="ms-appx-web:///web/viewer.html" DefaultBackgroundColor="Transparent" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.IsZoomChainingEnabled="False" ScrollViewer.IsScrollInertiaEnabled="False" ScrollViewer.IsVerticalRailEnabled="False" Grid.Row="0" Margin="0"></WebView>
+            <WebView x:FieldModifier="public" RequestedTheme="Dark" Loading="PDFReader_Loading" NewWindowRequested="PDFReader_NewWindowRequested" x:Name="PDFReader" Source="ms-appx-web:///web/viewer.html" DefaultBackgroundColor="Transparent" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.IsZoomChainingEnabled="False" ScrollViewer.IsScrollInertiaEnabled="False" ScrollViewer.IsVerticalRailEnabled="False" Grid.Row="0" Margin="0"></WebView>
         </Grid>
-        <Grid MaxHeight="150" Tag="LogView" Grid.Row="1" Grid.ColumnSpan="3" Visibility="Visible" x:FieldModifier="public" x:Name="logview" Background="{ThemeResource LogAcrylicBrush}" Padding="15,0,15,15">
+
+        <controls:GridSplitter
+        Height="4" CursorBehavior="ChangeOnSplitterHover"
+        Background="{ThemeResource LogAcrylicBrush}"
+        GripperCursor="SizeNorthSouth" FocusVisualPrimaryBrush="DarkGray" FocusVisualSecondaryBrush="DarkGray"
+        HorizontalAlignment="Stretch"
+         Grid.Column="0"  Grid.ColumnSpan="3" Grid.Row="1"
+        ResizeDirection="Rows"
+        ResizeBehavior="PreviousAndNext"
+        GripperForeground="{ThemeResource ContentAcrylicBrush}" >
+        </controls:GridSplitter>
+
+        <Grid  Tag="LogView" Grid.Row="2" Grid.ColumnSpan="3" Visibility="Visible" x:FieldModifier="public" x:Name="logview" Background="{ThemeResource LogAcrylicBrush}" Padding="15,0,15,15">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="203*"/>
                 <ColumnDefinition Width="277*"/>

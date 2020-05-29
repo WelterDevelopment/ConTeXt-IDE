@@ -54,8 +54,9 @@
     <TargetPlatformVersion>10.0.18362.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.18362.0</TargetPlatformMinVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
-    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <EntryPointProjectUniqueName>..\ConTeXt_UWP\ConTeXt_UWP.csproj</EntryPointProjectUniqueName>
+    <PackageCertificateThumbprint>A13485CFB03F6B03E2425ABD427D9310358FBA39</PackageCertificateThumbprint>
   </PropertyGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -67,6 +68,7 @@
     <ProjectReference Include="..\ConTeXt_WPF\ConTeXt_WPF.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ConTeXt_TemporaryKey.pfx" />
     <Content Include="Images\LargeTile.scale-100.png" />
     <Content Include="Images\LargeTile.scale-125.png" />
     <Content Include="Images\LargeTile.scale-150.png" />

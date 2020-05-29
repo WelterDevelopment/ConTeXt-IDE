@@ -34,7 +34,7 @@ namespace ConTeXt_UWP
             this.Suspending += OnSuspending;
         }
 
-        public static ViewModel AppViewModel
+        public static ViewModel VM
         {
             get
             {
@@ -47,24 +47,20 @@ namespace ConTeXt_UWP
 
         protected override void OnBackgroundActivated(BackgroundActivatedEventArgs args)
         {
-            AppViewModel.LOG("activated");
             base.OnBackgroundActivated(args);
-            AppViewModel.LOG(args.TaskInstance.TriggerDetails.GetType().ToString());
             if (args.TaskInstance.TriggerDetails is AppServiceTriggerDetails details)
             {
-                AppViewModel.LOG(Package.Current.Id.FamilyName);
                 // only accept connections from callers in the same package
                 if (details.CallerPackageFamilyName == Package.Current.Id.FamilyName)
                 {
-                    AppViewModel.LOG("activated");
                     // connection established from the fulltrust process
-                    AppViewModel.AppServiceDeferral = args.TaskInstance.GetDeferral();
+                    VM.AppServiceDeferral = args.TaskInstance.GetDeferral();
                     args.TaskInstance.Canceled += OnTaskCanceled;
 
                     //coreDispatcher = Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher;
-                    AppViewModel.appServiceConnection = details.AppServiceConnection;
+                    VM.appServiceConnection = details.AppServiceConnection;
 
-                    AppViewModel.appServiceConnection.RequestReceived += AppServiceConnection_RequestReceived;
+                    VM.appServiceConnection.RequestReceived += AppServiceConnection_RequestReceived;
 
 
                     //Connection.RequestReceived += (a, b) => { AppViewModel.LOG(b.Request.Message.Values.FirstOrDefault() as string); };
@@ -88,10 +84,10 @@ namespace ConTeXt_UWP
             // The name of the first file is args.Files[0].Name
             if (Window.Current.Content == null)
             {
-                AppViewModel.FileActivatedEvents.Add(args);
+                VM.FileActivatedEvents.Add(args);
                 if (!CreateRootFrame().Navigate(typeof(MainPage)))
                 {
-                    await new MessageDialog("miep").ShowAsync();
+                    await new MessageDialog("Error").ShowAsync();
                 }
                 else
                 {
@@ -111,7 +107,7 @@ namespace ConTeXt_UWP
                     titleBar.BackgroundColor = Colors.Transparent;
                     titleBar.ButtonForegroundColor = Colors.Transparent;
                     SystemNavigationManager.GetForCurrentView().BackRequested += App_BackRequested;
-                    AppViewModel.Default.PackageID = Package.Current.Id.FamilyName;
+                    VM.Default.PackageID = Package.Current.Id.FamilyName;
                 }
             }
             else
@@ -119,7 +115,7 @@ namespace ConTeXt_UWP
                 foreach (StorageFile file in args.Files)
                 {
                     var fileitem = new FileItem(file) { };
-                    AppViewModel.OpenFile(fileitem);
+                    VM.OpenFile(fileitem);
                 }
             }
         }
@@ -133,7 +129,7 @@ namespace ConTeXt_UWP
         {
             // Do not repeat app initialization when the Window already has content,
             // just ensure that the window is active
-            AppViewModel.Default.PackageID = Package.Current.Id.FamilyName;
+            VM.Default.PackageID = Package.Current.Id.FamilyName;
             if (!(Window.Current.Content is Frame rootFrame))
             {
                 // Create a Frame to act as the navigation context and navigate to the first page
@@ -175,42 +171,68 @@ namespace ConTeXt_UWP
             titleBar.ButtonForegroundColor = Colors.Transparent;
             SystemNavigationManager.GetForCurrentView().BackRequested += App_BackRequested;
             
-            if (AppViewModel.Default.ContextDistributionPath == "")
+            if (VM.Default.ContextDistributionPath == "")
             {
                 try
                 {
-                    AppViewModel.IsNotSaving = false;
+                    VM.IsSaving = true;
+                    VM.IsPaused = false;
                     var cd = new ContentDialog();
                     var sp = new StackPanel();
                     StorageFolder localFolder = ApplicationData.Current.LocalFolder;
                     var installpathtb = new TextBox() { Header = "Install Path (changing this is experimental)", Text = localFolder.Path };
-                    var downloadlinktb = new TextBox() { Header = "Download link (only change if PRAGMA ADE changed the URL)", Text = AppViewModel.Default.ContextDownloadLink };
+                    var downloadlinktb = new TextBox() { Header = "Download link (only change if PRAGMA ADE changed the URL)", Text = VM.Default.ContextDownloadLink };
                     sp.Children.Add(installpathtb);
                     sp.Children.Add(downloadlinktb);
                     cd.Title = "First Start: Install the ConTeXt (LuaMetaTeX) Distribution";
                     cd.Content = sp;
                     cd.PrimaryButtonText = "Install";
                     cd.CloseButtonText = "Skip (Setup in the Settings!)";
-                    cd.PrimaryButtonClick += async (a, b) =>
+                    if (await cd.ShowAsync() == ContentDialogResult.Primary)
                     {
-                        AppViewModel.Default.ContextDistributionPath = installpathtb.Text;
-                        AppViewModel.Default.ContextDownloadLink = downloadlinktb.Text;
+                        VM.Default.ContextDistributionPath = installpathtb.Text;
+                        VM.Default.ContextDownloadLink = downloadlinktb.Text;
+                        var installing = new ContentDialog() { Title = "Please wait while installing. This can take up to 10 minutes." };
+                        var prog = new Microsoft.UI.Xaml.Controls.ProgressBar() { IsIndeterminate = true };
+                        installing.Content = prog;
+                        installing.ShowAsync();
+
+                        //VM.LOG("Installing... This can take up to 10 minutes depending on your system and the download speed.");
+                        //VM.LOG("You can start editing in the meanwhile. Please go to \"Projects\" to add a project folder");
                         ValueSet request = new ValueSet();
                         request.Add("command", "install");
-                        AppServiceResponse response = await AppViewModel.appServiceConnection.SendMessageAsync(request);
+                        AppServiceResponse response = await VM.appServiceConnection.SendMessageAsync(request);
                         //AppViewModel.LOG(response.Status.ToString() + " ... " + response.Message.FirstOrDefault().Key.ToString() + " Key Val " + response.Message.FirstOrDefault().Value.ToString());
                         // display the response key/value pairs
+                        
                         foreach (string key in response.Message.Keys)
                         {
                             if (key == "response")
                             {
                                 if ((bool)response.Message[key])
-                                    AppViewModel.LOG("ConTeXt distribution installed.");
+                                {
+                                    VM.LOG("ConTeXt distribution installed.");
+                                    installing.Title = "ConTeXt distribution installed!";
+                                    prog.ShowPaused = true;
+
+                                }
                                 else
-                                    AppViewModel.LOG("Installation error");
+                                { 
+                                    VM.LOG("Installation error");
+                                    installing.Title = "Error. Please try again in the settings";
+                                    prog.ShowError = true;
+                                }
+                                installing.PrimaryButtonText = "Ok";
+                                installing.IsPrimaryButtonEnabled = true;
+                                installing.DefaultButton = ContentDialogButton.Primary;
+
+
 
                             }
                         }
+                        VM.IsSaving = false;
+                        VM.IsPaused = true;
+                        VM.IsVisible = false;
                         //AppRestartFailureReason result = await CoreApplication.RequestRestartAsync("");
                         //if (result == AppRestartFailureReason.NotInForeground ||
                         //    result == AppRestartFailureReason.RestartPending ||
@@ -218,17 +240,17 @@ namespace ConTeXt_UWP
                         //{
                         //    AppViewModel.LOG("Restart failed");
                         //}
-                    };
-                    await cd.ShowAsync();
-                    AppViewModel.IsNotSaving = true;
+                    }
+                    
+                    
                 }
                 catch (Exception ex)
                 {
-                    AppViewModel.LOG(ex.Message);
+                    VM.LOG("Error on Startup: "+ex.Message);
                 }
             }
             else
-                AppViewModel.Startup();
+                VM.Startup();
         }
 
         private void App_BackRequested(object sender, BackRequestedEventArgs e)
@@ -239,7 +261,7 @@ namespace ConTeXt_UWP
         private void AppServiceConnection_RequestReceived(AppServiceConnection sender, AppServiceRequestReceivedEventArgs args)
         {
             var appServiceDeferral = args.GetDeferral();
-            AppViewModel.LOG("Background Service Message: " + args.Request.Message.Values.FirstOrDefault() as string);
+            VM.LOG("Background Service Message: " + args.Request.Message.Values.FirstOrDefault() as string);
             appServiceDeferral.Complete();
         }
 

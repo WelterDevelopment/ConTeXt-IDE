@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
@@ -27,7 +28,7 @@ namespace ConTeXt_UWP
     /// </summary>
     public sealed partial class Projects : Page
     {
-        public ViewModel currentViewModel = App.AppViewModel;
+        public ViewModel currentViewModel = App.VM;
         public Projects()
         {
             this.InitializeComponent();
@@ -38,14 +39,14 @@ namespace ConTeXt_UWP
         {
             try
             {
-
-                //App.AppViewModel.Projects.Clear();
-                App.AppViewModel.UpdateRecentAccessList();
+               
+                App.VM.UpdateRecentAccessList();
                 
+
             }
             catch (Exception ex)
             {
-                App.AppViewModel.LOG(ex.Message);
+                App.VM.LOG(ex.Message);
             }
            
         }
@@ -101,45 +102,118 @@ namespace ConTeXt_UWP
 
         private async void Btnaddproject_Click(object sender, RoutedEventArgs e)
         {
-            var folderPicker = new Windows.Storage.Pickers.FolderPicker();
-            //folderPicker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.Desktop;
-            folderPicker.FileTypeFilter.Add("*");
-            folderPicker.CommitButtonText = "Open";
-            folderPicker.SettingsIdentifier = "ChooseWorkspace";
-            folderPicker.ViewMode = Windows.Storage.Pickers.PickerViewMode.List;
-            StorageFolder folder = await folderPicker.PickSingleFolderAsync();
-            if (folder != null)
+            try
             {
-                StorageApplicationPermissions.FutureAccessList.AddOrReplace(folder.Name, folder, "folder");
-                StorageApplicationPermissions.MostRecentlyUsedList.AddOrReplace(folder.Name, folder, "folder");
-                App.AppViewModel.RecentAccessList = StorageApplicationPermissions.MostRecentlyUsedList;
-                App.AppViewModel.CurrentProject = new Project(folder.Name, folder, App.AppViewModel.GenerateTreeView(folder));
-               // App.AppViewModel.UpdateRecentAccessList();
-            }
-            
-        }
+                var selectNew = new SelectNew();
+                var selectTemplate = new SelectTemplate();
+                var selectFolder = new SelectFolder();
 
+            
+                var result = await selectNew.ShowAsync();
+                ContentDialogResult res;
+                if (result == ContentDialogResult.Primary)
+                {
+                    switch ((selectNew.TempList.SelectedItem as TemplateSelection).Tag)
+                    {
+                        case "empty": 
+                            res = await selectFolder.ShowAsync(); 
+                            if (res == ContentDialogResult.Primary)
+                            {
+                                var folder = selectFolder.folder;
+                                if (folder != null)
+                                {
+                                    StorageApplicationPermissions.FutureAccessList.AddOrReplace(folder.Name, folder, "");
+                                    StorageApplicationPermissions.MostRecentlyUsedList.AddOrReplace(folder.Name, folder, "");
+                                    App.VM.RecentAccessList = StorageApplicationPermissions.MostRecentlyUsedList;
+                                    var proj = new Project(folder.Name, folder, App.VM.GenerateTreeView(folder));
+                                    App.VM.CurrentProject = proj;
+                                    App.VM.ProjectList.Add(proj);
+                                    // App.AppViewModel.UpdateRecentAccessList();
+                                }
+                            }
+                            break;
+                        case "template": 
+                            res = await selectTemplate.ShowAsync();
+                            if (res == ContentDialogResult.Primary)
+                            {
+                                string project = (selectTemplate.TempList.SelectedItem as TemplateSelection).Tag;
+                              
+                                res = await selectFolder.ShowAsync();
+                                if (res == ContentDialogResult.Primary)
+                                {
+                                    var folder = selectFolder.folder;
+                                    if (folder != null)
+                                    {
+                                        StorageApplicationPermissions.FutureAccessList.AddOrReplace(folder.Name, folder, "");
+                                        StorageApplicationPermissions.MostRecentlyUsedList.AddOrReplace(folder.Name, folder, "");
+                                        App.VM.RecentAccessList = StorageApplicationPermissions.MostRecentlyUsedList;
+                                        string root = Windows.ApplicationModel.Package.Current.InstalledLocation.Path;
+                                        string path = root + @"\Templates";
+                                        var templateFolder = await StorageFolder.GetFolderFromPathAsync(path + @"\" + project);
+                                        //ZipFile.ExtractToDirectory(path + @"\" + project + ".zip", folder.Path,true);
+                                        await CopyFolderAsync(templateFolder, folder);
+                                        var proj = new Project(folder.Name, folder, App.VM.GenerateTreeView(folder));
+                                        App.VM.CurrentProject = proj;
+                                        App.VM.ProjectList.Add(proj);
+
+                                        // App.AppViewModel.UpdateRecentAccessList();
+                                    }
+                                }
+                            }
+                            break;
+                        default: break;
+
+                    }
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                App.VM.LOG(ex.Message);
+            }
+
+        }
+        public static async Task CopyFolderAsync(StorageFolder source, StorageFolder destinationContainer, string desiredName = null)
+        {
+            foreach (var file in await source.GetFilesAsync())
+            {
+                await file.CopyAsync(destinationContainer, file.Name, NameCollisionOption.ReplaceExisting);
+            }
+            foreach (var folder in await source.GetFoldersAsync())
+            {
+                await CopyFolderAsync(folder, destinationContainer);
+            }
+        }
         private void Btndeleteproject_Click(object sender, RoutedEventArgs e)
         {
             var proj = (sender as FrameworkElement).DataContext as Project;
             StorageApplicationPermissions.MostRecentlyUsedList.Remove(proj.Name);
-            App.AppViewModel.UpdateRecentAccessList();
+            App.VM.ProjectList.Remove(proj);
+            //App.VM.UpdateRecentAccessList();
         }
 
-        private async void Button_Click(object sender, RoutedEventArgs e)
+        private async void BtnLoad_Click(object sender, RoutedEventArgs e)
         {
             try
             {
 
                 var proj = (sender as FrameworkElement).DataContext as Project;
-                App.AppViewModel.LOG(proj.Name);
                 var f = await StorageApplicationPermissions.MostRecentlyUsedList.GetFolderAsync(proj.Name);
                 //App.AppViewModel.CurrentFolder = f;
-                App.AppViewModel.CurrentProject = new Project(f.Name, f, App.AppViewModel.GenerateTreeView(f));
+                App.VM.CurrentProject = new Project(f.Name, f, App.VM.GenerateTreeView(f));
+
+                App.VM.Default.LastActiveProject = proj.Name;
+                App.VM.FileItems.Clear();
+                var rf = StorageApplicationPermissions.MostRecentlyUsedList.Entries.Where(x => x.Token == proj.Name).FirstOrDefault();
+                //App.VM.LOG("Loaded1" + rf.Token + rf.Metadata);
+                //App.VM.LOG("Loaded2" + App.VM.Meta(rf.Metadata)["rootfile"]);
+                //App.VM.CurrentProject.RootFile = App.VM.Meta(rf.Metadata)["rootfile"];
+                //App.VM.LOG("Loaded2"+rf.Token+rf.Metadata);
             }
             catch (Exception ex)
             {
-                App.AppViewModel.LOG(ex.Message);
+                App.VM.LOG(ex.Message);
             }
         }
 

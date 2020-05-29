@@ -31,14 +31,27 @@ namespace ConTeXt_WPF
         }
 
 
-        [DefaultSettingValue(Value = "on")]
-        public string ShowLineNumbers
+        [DefaultSettingValue(Value = 2)]
+        public int ShowLineNumbers
         {
-            get { return Get<string>(); }
+            get { return Get<int>(); }
             set { Set(value); }
         }
 
 
+        [DefaultSettingValue(Value = true)]
+        public bool ShowLog
+        {
+            get { return Get<bool>(); }
+            set { Set(value); }
+        }
+
+        [DefaultSettingValue(Value = true)]
+        public bool UseModes
+        {
+            get { return Get<bool>(); }
+            set { Set(value); }
+        }
 
         [DefaultSettingValue(Value = true)]
         public bool InternalViewer
@@ -68,21 +81,28 @@ namespace ConTeXt_WPF
             set { Set(value); }
         }
 
-        [DefaultSettingValue(Value = @"c:\context")]
+        [DefaultSettingValue(Value = 200)]
+        public int NavigationViewPaneOpenLength
+        {
+            get { return Get<int>(); }
+            set { Set(value); }
+        }
+
+        [DefaultSettingValue(Value = @"")]
         public string ContextDistributionPath
         {
             get { return Get<string>(); }
             set { Set(value); }
         }
 
-        [DefaultSettingValue(Value = @"c:\context")]
+        [DefaultSettingValue(Value = @"")]
         public string TexFilePath
         {
             get { return Get<string>(); }
             set { Set(value); }
         }
 
-        [DefaultSettingValue(Value = @"c:\context")]
+        [DefaultSettingValue(Value = @"")]
         public string TexFileFolder
         {
             get { return Get<string>(); }
@@ -121,6 +141,12 @@ namespace ConTeXt_WPF
             get { return Get<string>(); }
             set { Set(value); }
         }
+        [DefaultSettingValue(Value = "")]
+        public string Modes
+        {
+            get { return Get<string>(); }
+            set { Set(value); }
+        }
         [DefaultSettingValue(Value = true)]
         public bool CodeFolding
         {
@@ -140,19 +166,13 @@ namespace ConTeXt_WPF
             set { Set(value); }
         }
 
-        public string[] ShowLineNumberOptions
-        {
-            get
-            {
-                string[] nav = { "on", "relative", "interval", "off" };
-                return nav;
-            }
-        }
+       
         public string[] NavigationOption
         {
             get
             {
-                string[] nav = { "Left", "LeftCompact", "Auto", "Top", "LeftMinimal" };
+
+                string[] nav = Enum.GetNames(typeof(NavigationViewPaneDisplayMode)); // { "Left", "LeftCompact", "Auto", "Top", "LeftMinimal" };
                 return nav;
             }
         }
