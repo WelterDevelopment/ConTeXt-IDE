@@ -1,0 +1,38 @@
+\startproduct[prd_thesis]
+\environment[env_thesis]
+
+% Meta information
+\setvariables[meta][title={Title}, subtitle={Subtitle}, author={Author}, date={\currentdate}]
+\setupinteraction[title=\getvariable{meta}{title}, subtitle=\getvariable{meta}{subtitle}, author=\getvariable{meta}{author}, date=\getvariable{meta}{date}]
+
+\abbreviation{MWE}{Minimal Working Example}
+\abbreviation{BP}{Best Practice}
+
+\starttext
+\startfrontmatter
+\component[c_0_frontpart]
+\stopfrontmatter
+
+\startbodymatter
+\component[c_1_section1]
+\component[c_2_section2]
+
+Here I am citing \cite[hagen], and here \cite[hagen2].
+
+This document is not an \gloss{MWE} but it might represent the \gloss{BP}.
+\stopbodymatter
+
+\startappendices
+\startsection[title=Bibliography]
+    \placelistofpublications
+\stopsection
+\startsection[title=Glossary]
+    \placeglossentry
+\stopsection
+\stopappendices
+
+\startbackmatter
+\section{The Backmatter}
+\stopbackmatter
+\stoptext
+\stopproduct

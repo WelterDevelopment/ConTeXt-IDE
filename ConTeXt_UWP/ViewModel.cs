@@ -22,6 +22,8 @@ using Windows.Storage.AccessCache;
 using System.Diagnostics;
 using Windows.UI.Text;
 using Monaco.Editor;
+using Windows.Foundation.Collections;
+using System.Runtime.CompilerServices;
 
 namespace ConTeXt_UWP
 {
@@ -87,7 +89,7 @@ namespace ConTeXt_UWP
             return ((Visibility)value) == Visibility.Visible ? true : false;
         }
     }
-public class PaneVisibiltyToMarginConverter : IValueConverter
+    public class PaneVisibiltyToMarginConverter : IValueConverter
     {
 
         public object Convert(object value, Type targetType, object parameter, string language)
@@ -194,130 +196,7 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
         }
     }
 
-    //public class ExplorerItem : INotifyPropertyChanged
-    //{
-    //    private StorageFile file;
-
-    //    private bool isRoot;
-
-    //    private ObservableCollection<ExplorerItem> m_children;
-
-    //    private bool m_isExpanded;
-
-    //    private bool m_isSelected;
-
-    //    private string name;
-
-    //    private string path;
-
-    //    public event PropertyChangedEventHandler PropertyChanged;
-    //    public enum ExplorerItemType { Folder, File };
-    //    public ObservableCollection<ExplorerItem> Children
-    //    {
-    //        get
-    //        {
-    //            if (m_children == null)
-    //            {
-    //                m_children = new ObservableCollection<ExplorerItem>();
-    //            }
-    //            return m_children;
-    //        }
-    //        set
-    //        {
-    //            m_children = value;
-    //        }
-    //    }
-
-    //    public StorageFile File
-    //    {
-    //        get { return file; }
-    //        set
-    //        {
-    //            if (file != value)
-    //            {
-    //                file = value;
-    //                NotifyPropertyChanged("File");
-    //            }
-    //        }
-    //    }
-
-    //    public bool IsExpanded
-    //    {
-    //        get { return m_isExpanded; }
-    //        set
-    //        {
-    //            if (m_isExpanded != value)
-    //            {
-    //                m_isExpanded = value;
-    //                NotifyPropertyChanged("IsExpanded");
-    //            }
-    //        }
-    //    }
-
-    //    public bool IsRoot
-    //    {
-    //        get { return isRoot; }
-    //        set
-    //        {
-    //            if (isRoot != value)
-    //            {
-    //                isRoot = value;
-    //                NotifyPropertyChanged("IsRoot");
-    //            }
-    //        }
-    //    }
-
-    //    public bool IsSelected
-    //    {
-    //        get { return m_isSelected; }
-
-    //        set
-    //        {
-    //            if (m_isSelected != value)
-    //            {
-    //                m_isSelected = value;
-    //                NotifyPropertyChanged("IsSelected");
-    //            }
-    //        }
-
-    //    }
-
-    //    public string Name
-    //    {
-    //        get { return name; }
-    //        set
-    //        {
-    //            if (name != value)
-    //            {
-    //                name = value;
-    //                NotifyPropertyChanged("Name");
-    //            }
-    //        }
-    //    }
-
-    //    public string Path
-    //    {
-    //        get { return path; }
-    //        set
-    //        {
-    //            if (path != value)
-    //            {
-    //                path = value;
-    //                NotifyPropertyChanged("Path");
-    //            }
-    //        }
-    //    }
-
-    //    // public string Name { get; set; }
-    //    public ExplorerItemType Type { get; set; }
-    //    private void NotifyPropertyChanged(String propertyName)
-    //    {
-    //        if (PropertyChanged != null)
-    //        {
-    //            PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-    //        }
-    //    }
-    //}
+   
 
     public class ExplorerItemTemplateSelector : DataTemplateSelector
     {
@@ -339,7 +218,7 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
 
         private string fileFolder;
 
-        private string fileLanguage;
+        private string fileLanguage = "context";
 
         private string fileName;
 
@@ -347,31 +226,69 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
 
         private bool isRoot;
 
-        private ObservableCollection<FileItem> m_children;
+        private ObservableCollection<FileItem> m_children = new ObservableCollection<FileItem>();
 
         private bool m_isExpanded;
 
         private bool m_isSelected;
 
+        public static string GetFileLanguage(string ext)
+        {
+            switch (ext)
+            {
+                case ".tex": return "context"; 
+                case ".mkiv": return "context";
+                case ".mkii": return "context";
+                case ".lua": return "lua";
+                case ".json": return "javascript";
+                case ".js": return "javascript";
+                case ".md": return "markdown";
+                case ".html": return "html"; 
+                case ".xml": return "xml";
+                default: 
+                    return"context"; 
+            }
+        }
+
         public FileItem(IStorageItem file, bool isRoot = false)
         {
-            this.fileName = file.Name;
-            this.filePath = file.Path;
+            this.fileName = file != null ? file.Name : "";
+            this.filePath = file != null ? file.Path : "";
             this.fileContent = "";
             this.isRoot = isRoot;
             this.file = file;
-            this.fileFolder = Path.GetDirectoryName(file.Path);
-            if (file is StorageFile)
-                switch (((StorageFile)file).FileType)
-                {
-                    case ".tex": this.fileLanguage = "context"; break;
-                    case ".lua": this.fileLanguage = "lua"; break;
-                    case ".json": this.fileLanguage = "javascript"; break;
-                    case ".md": this.fileLanguage = "markdown"; break;
-                    case ".html": this.fileLanguage = "html"; break;
-                    case ".xml": this.fileLanguage = "xml"; break;
-                    default: this.fileLanguage = "context"; break;
-                }
+            this.fileFolder = file != null ? Path.GetDirectoryName(file.Path) : "";
+            if (file != null && file is StorageFile)
+                this.fileLanguage = GetFileLanguage(((StorageFile)file).FileType);
+          
+            if (Children != null) 
+                Children.CollectionChanged += Children_CollectionChanged;
+        }
+
+        private async void Children_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            try
+            {
+                if (!App.VM.IsSaving)
+                    if (e.Action == NotifyCollectionChangedAction.Add)
+                    {
+                        App.VM.LOG("Children_CollectionChanged");
+                        var fi = e.NewItems[0] as FileItem;
+                        if (fi.File is StorageFile fil && File is StorageFolder fold)
+                        {
+                            if ((await fil.GetParentAsync()).Path != fold.Path)
+                                await fil.MoveAsync(fold, fil.Name, NameCollisionOption.GenerateUniqueName);
+                        }
+                        else if (fi.File is StorageFolder fol)
+                        {
+                            App.VM.LOG("Moving Folders to Subfolders is currently not supported. Please to this operation in the Windows Explorer and reload the project.");
+                        }
+                    }
+            }
+            catch (Exception ex)
+            {
+                App.VM.LOG(ex.Message);
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -607,6 +524,34 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
             this.directory = directory;
             this.name = name;
             this.folder = folder;
+            if (Directory != null) 
+                Directory.CollectionChanged += Directory_CollectionChanged;
+        }
+
+        private async void Directory_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            try
+            {
+                if (!App.VM.IsSaving)
+                    if (e.Action == NotifyCollectionChangedAction.Add)
+                    {
+                        App.VM.LOG("Directory_CollectionChanged");
+                        var fi = e.NewItems[0] as FileItem;
+                        if (fi.File is StorageFile file)
+                        {
+                            if ((await file.GetParentAsync()).Path != Folder.Path)
+                                await file.MoveAsync(Folder, file.Name, NameCollisionOption.GenerateUniqueName);
+                        }
+                        else if (fi.File is StorageFolder fold)
+                        {
+                            // await fold.c
+                        }
+                    }
+            }
+            catch (Exception ex)
+            {
+                App.VM.LOG(ex.Message);
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -645,8 +590,22 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Name"));
             }
         }
-        private FileItem rootFile;
-        public FileItem RootFile
+
+        private ObservableCollection<Mode> modes = new ObservableCollection<Mode>() { new Mode() { Name = "print", IsSelected = false }, new Mode() { Name = "screen", IsSelected = false }};
+        public ObservableCollection<Mode> Modes
+        {
+            get { return modes; }
+            set
+            {
+                if (value == modes)
+                    return;
+                modes = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Modes"));
+            }
+        }
+
+        private string rootFile;
+        public string RootFile
         {
             get { return rootFile; }
             set
@@ -654,6 +613,12 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
                 if (value == rootFile)
                     return;
                 rootFile = value;
+                Directory.Where(x => x.FileName != value).ToList().ForEach(x => x.IsRoot = false);
+                var df = Directory.Where(x => x.FileName == value);
+                if (df.Count() == 1)
+                {
+                    df.FirstOrDefault().IsRoot = true;
+                }
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("RootFile"));
             }
         }
@@ -737,14 +702,32 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
         {
 
             FileItems = new ObservableCollection<FileItem>();
-            FileItems.CollectionChanged += FileItems_CollectionChanged;
-            CurrentFileItem = FileItems.Count > 0 ? FileItems.FirstOrDefault() : null;
+            CurrentFileItem = FileItems.Count > 0 ? FileItems.FirstOrDefault() : new FileItem(null);
             //FileItems.Add(new FileItem("bla","blub","content",true));
             TabViewItems = new ObservableCollection<TabViewItem>();
-            IsNotSaving = true;
+            FileItems.CollectionChanged += FileItems_CollectionChanged1;
             //ModeList = new ObservableCollection<string>(new List<string>() { "sample1", "sample2" });
             //AddHelp();
 
+        }
+
+        private async void FileItems_CollectionChanged1(object sender, NotifyCollectionChangedEventArgs e)
+        {
+
+            if (e.Action == NotifyCollectionChangedAction.Add)
+            {
+                await Task.Delay(100);
+
+                CurrentFileItem = e.NewItems[0] as FileItem;
+            }
+            if (FileItems.Count == 0)
+            {
+                IsSaving = true;
+            }
+            else
+            {
+                IsSaving = false;
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -756,22 +739,22 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
             get { return blocks; }
             set
             {
-                if (value == blocks)
-                    return;
                 blocks = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Blocks"));
 
             }
         }
-
+        private Project currentProject;
         public Project CurrentProject
         {
-            get { return currentProject == null ? new Project() : currentProject; }
+            get { return currentProject ?? new Project(); }
             set
             {
                 if (value == currentProject)
                     return;
                 currentProject = value;
+                if (currentProject.Folder != null)
+                    IsProjectLoaded = true;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CurrentProject"));
             }
         }
@@ -799,8 +782,6 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
             get { return currentFileItem; }
             set
             {
-                if (value == currentFileItem)
-                    return;
                 currentFileItem = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CurrentFileItem"));
             }
@@ -814,15 +795,92 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
         }
 
         public ObservableCollection<KeyValuePair<string, string>> Helpfile { get; set; }
-        public bool IsNotSaving { get; set; }
 
+        private bool isSaving = true;
+        public bool IsSaving
+        {
+            get { return isSaving; }
+            set
+            {
+                if (value == isSaving)
+                    return;
+                isSaving = value;
+                if (value)
+                { IsError = false;
+                    IsVisible = true;
+                }
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSaving"));
+            }
+        }
 
+        private string selectedPath;
+        public string SelectedPath
+        {
+            get { return selectedPath; }
+            set
+            {
+                selectedPath = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("SelectedPath"));
+            }
+        }
+
+        private bool isVisible = false;
+        public bool IsVisible
+        {
+            get { return isVisible; }
+            set
+            {
+                if (value == isVisible)
+                    return;
+                isVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsVisible"));
+            }
+        }
+
+        private bool isPaused = true;
+        public bool IsPaused
+        {
+            get { return isPaused; }
+            set
+            {
+                if (value == isPaused)
+                    return;
+                isPaused = value;
+                if (value)
+                    IsError = false;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsPaused"));
+            }
+        }
+        private bool isError = false;
+        public bool IsError
+        {
+            get { return isError; }
+            set
+            {
+                if (value == isError)
+                    return;
+                isError = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsError"));
+            }
+        }
+        private bool isProjectLoaded = false;
+        public bool IsProjectLoaded
+        {
+            get { return isProjectLoaded; }
+            set
+            {
+                if (value == isProjectLoaded)
+                    return;
+                isProjectLoaded = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsProjectLoaded"));
+            }
+        }
 
         //public string CodeContent { get; set; }
-        public string NVHeader
+        public string NVHead
         {
             get { return nVHeader; }
-            set { nVHeader = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NVHeader")); }
+            set { nVHeader = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NVHead")); }
         }
 
         public ObservableCollection<Project> ProjectList
@@ -852,7 +910,7 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
         //public TabViewList TabViewList { get; set; }
         public ObservableCollection<TabViewItem> TabViewItems { get; set; }
 
-        private Project currentProject { get; set; }
+        
 
         public ObservableCollection<FileItem> GenerateTreeView(StorageFolder folder)
         {
@@ -860,7 +918,6 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
             if (folder != null)
             {
                 DirWalk(folder);
-                LOG("Picked folder: " + folder.Name);
 
             }
             else
@@ -878,7 +935,6 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
         public void LOG(string log)
         {
             Blocks = log;
-            Debug.WriteLine("LOG: " + log);
         }
         public async void Message(string content, string title = "Error")
         {
@@ -888,15 +944,94 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
 
         public async void OpenFile(FileItem File)
         {
-            var read = await FileIO.ReadTextAsync((StorageFile)File.File);
-            Default.TexFileName = File.FileName;
-            Default.TexFileFolder = Path.GetDirectoryName(File.FilePath);
-            Default.TexFilePath = File.FilePath;
-            File.FileContent = read;
+            if (!FileItems.Contains(File))
+            {
+                var read = await FileIO.ReadTextAsync((StorageFile)File.File);
+                //Default.TexFileName = File.FileName;
+                //Default.TexFileFolder = Path.GetDirectoryName(File.FilePath);
+                //Default.TexFilePath = File.FilePath;
+                File.FileContent = read;
 
-            LOG(File.FileName + " opened.");
-            FileItems.Add(File);
-            CurrentFileItem = File;
+                LOG("Opening " + File.FileName);
+                FileItems.Add(File);
+            }
+            else
+            {
+                CurrentFileItem = File;
+            }
+        }
+        public async Task Save()
+        {
+            if (!IsSaving)
+            {
+                IsSaving = true;
+                //App.AppViewModel.LOG(Tabs.SelectedItem.GetType().ToString());
+
+                //ViewModel.Default.CodeContent = fi.FileContent;
+                var buffer = Windows.Security.Cryptography.CryptographicBuffer.ConvertStringToBinary(CurrentFileItem.FileContent, Windows.Security.Cryptography.BinaryStringEncoding.Utf8);
+                var file = await ApplicationData.Current.LocalFolder.CreateFileAsync(CurrentFileItem.FileName, CreationCollisionOption.ReplaceExisting);
+                await FileIO.WriteBufferAsync(file, buffer);
+                Default.TexFileName = CurrentFileItem.FileName;
+                Default.TexFilePath = CurrentFileItem.FilePath;
+
+                LOG("Saving");
+                ValueSet request = new ValueSet
+                {
+                    { "save", true }
+                };
+                AppServiceResponse response = await appServiceConnection.SendMessageAsync(request);
+                // display the response key/value pairs
+                if (response != null)
+                    foreach (string key in response.Message.Keys)
+                    {
+                        if ((string)response.Message[key] == "response")
+                        {
+                            LOG(key + " = " + response.Message[key]); LOG("Saved on " + DateTime.Now);
+                        }
+                    }
+
+                //await Task.Delay(2000);
+                IsSaving = false;
+            }
+            else LOG("already saving...");
+        }
+
+        public async Task UWPSave(StorageFile file)
+        {
+            if (!IsSaving && file != null)
+            {
+                try
+                {
+                    IsSaving = true;
+                    isPaused = false;
+                    string cont = CurrentFileItem.FileContent ?? " ";
+                    var buffer = Windows.Security.Cryptography.CryptographicBuffer.ConvertStringToBinary(cont, Windows.Security.Cryptography.BinaryStringEncoding.Utf8);
+                    await FileIO.WriteBufferAsync(file, buffer);
+                    Default.TexFileName = CurrentFileItem.FileName;
+                    Default.TexFilePath = CurrentFileItem.FilePath;
+                    Default.TexFileFolder = CurrentFileItem.FileFolder;
+                    IsSaving = false;
+                    isPaused = true;
+                    IsVisible = false;
+                }
+                catch (Exception ex)
+                {
+                    IsError = true;
+                    isSaving = false;
+                    LOG("Error on Saving file: " + ex.Message);
+                }
+                
+            }
+            else LOG("Error");
+            
+        }
+
+
+
+        public Dictionary<string, string> Meta(string m)
+        {
+            return m.Split(';').Select(x => x.Split('=')).ToDictionary(x => x[0], x => x[1]);
+
         }
 
         public async void Startup()
@@ -908,37 +1043,57 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
                     RecentAccessList = StorageApplicationPermissions.MostRecentlyUsedList;
                     if (RecentAccessList.ContainsItem(Default.LastActiveProject))
                     {
+                        IsSaving = true;
                         var folder = await RecentAccessList.GetFolderAsync(Default.LastActiveProject);
+                        var f = RecentAccessList.Entries.Where(x => x.Token == folder.Name).FirstOrDefault();
                         CurrentProject = new Project(folder.Name, folder, GenerateTreeView(folder));
+                        //CurrentProject.RootFile = Meta(f.Metadata).ContainsKey("rootfile") ? Meta(f.Metadata)["rootfile"] : null;
+
                         //Message(GenerateTreeView(folder).Count.ToString());
                         // LOG(CurrentProject.Folder.Path);
                         //LOG(CurrentProject.Directory.Count.ToString());
                         //var fileitem = CurrentProject.Directory.Where(x => x.FileName == Default.LastActiveFileName).FirstOrDefault();
                         //OpenFile(fileitem);
+                        IsSaving = false;
                     }
                 }
             }
             catch (Exception ex)
             {
-                LOG(ex.Message);
+                LOG("Error on ViewModel startup: "+ex.Message);
             }
+        }
+
+        public async void UpdateMRUEntry(Project prj)
+        {
+            StorageApplicationPermissions.MostRecentlyUsedList.AddOrReplace(prj.Name, prj.Folder, "rootfile=" + prj.RootFile);
+            var entry = StorageApplicationPermissions.MostRecentlyUsedList.Entries.Where(x => x.Token == prj.Name).FirstOrDefault();
+            LOG("Updated" + entry.Token + entry.Metadata);
         }
 
         public async void UpdateRecentAccessList()
         {
+            App.VM.IsSaving = true;
+           
+            if (ProjectList.Count == 0)
+            {
+
+            
             RecentAccessList = StorageApplicationPermissions.MostRecentlyUsedList;
-            var accesslist = RecentAccessList.Entries.Where(x => x.Metadata == "folder");
+            var accesslist = RecentAccessList.Entries;
             ProjectList.Clear();
             if (accesslist.Count() > 0)
             {
-                Default.LastActiveProject = accesslist.FirstOrDefault().Token;
+                //Default.LastActiveProject = accesslist.FirstOrDefault().Token;
                 foreach (var accessitem in accesslist)
                 {
                     var folder = await RecentAccessList.GetFolderAsync(accessitem.Token);
-                    var tree = GenerateTreeView(folder);
-                    ProjectList.Add(new Project(folder.Name, folder, tree));
+                    //var tree = GenerateTreeView(folder);
+                    ProjectList.Add(new Project(folder.Name, folder));
                 }
             }
+            }
+            App.VM.IsSaving = false;
         }
         private void AddHelp()
         {
@@ -994,7 +1149,7 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
             }
             catch (Exception excpt)
             {
-                Message(excpt.Message);
+                Message("Error in generating the directory tree: "+excpt.Message);
             }
         }
         async void DirWalk(StorageFolder sDir, FileItem currFolder = null, int level = 0)
@@ -1029,18 +1184,87 @@ public class PaneVisibiltyToMarginConverter : IValueConverter
             }
             catch (Exception excpt)
             {
-                Message(excpt.Message);
+                Message("Error in generating the directory tree: " + excpt.Message);
             }
         }
 
-        private void FileItems_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+    }
+    public class Mode : Bindable
+    {
+        public string Name
         {
-            switch (e.Action)
+            get { return Get<string>(); }
+            set { Set(value); }
+        }
+        public bool IsSelected
+        {
+            get { return Get<bool>(); }
+            set { Set(value); }
+        }
+    }
+
+    public class TemplateSelection : Bindable
+    {
+        public string Content
+        {
+            get { return Get<string>(); }
+            set { Set(value); }
+        }
+
+        public string Tag
+        {
+            get { return Get<string>(); }
+            set { Set(value); }
+        }
+        public bool IsSelected
+        {
+            get { return Get<bool>(); }
+            set { Set(value); }
+        }
+    }
+    public class Bindable : INotifyPropertyChanged
+    {
+        private Dictionary<string, object> _properties = new Dictionary<string, object>();
+
+        /// <summary>
+        /// Gets the value of a property
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        protected T Get<T>([CallerMemberName] string name = null)
+        {
+            Debug.Assert(name != null, "name != null");
+            object value = null;
+            if (_properties.TryGetValue(name, out value))
+                return value == null ? default(T) : (T)value;
+            return default(T);
+        }
+
+        /// <summary>
+        /// Sets the value of a property
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="value"></param>
+        /// <param name="name"></param>
+        /// <remarks>Use this overload when implicitly naming the property</remarks>
+        protected void Set<T>(T value, [CallerMemberName] string name = null)
+        {
+            Debug.Assert(name != null, "name != null");
+            if (Equals(value, Get<T>(name)))
+                return;
+            _properties[name] = value;
+            OnPropertyChanged(name);
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChangedEventHandler handler = PropertyChanged;
+            if (handler != null)
             {
-                case NotifyCollectionChangedAction.Add:
-                    LOG("File opened.");
-                    break;
-                default: break;
+                handler(this, new PropertyChangedEventArgs(propertyName));
             }
         }
     }

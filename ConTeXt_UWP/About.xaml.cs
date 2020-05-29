@@ -23,7 +23,7 @@ namespace ConTeXt_UWP
     /// </summary>
     public sealed partial class About : Page
     {
-        public ViewModel currentViewModel = App.AppViewModel;
+        public ViewModel currentViewModel = App.VM;
         public About()
         {
             this.InitializeComponent();

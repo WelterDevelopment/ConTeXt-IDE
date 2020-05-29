@@ -6,7 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:animations="using:Microsoft.Toolkit.Uwp.UI.Animations"
-   
+   xmlns:contr="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d" DataContext="{x:Bind currentViewModel}"
     RequestedTheme="{Binding Default.Theme, Mode=OneWay, Converter={StaticResource StringToTheme}}"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
@@ -15,42 +15,47 @@
         <Thickness x:Key="NavigationViewHeaderMargin">50,0,0,0</Thickness>
        
         <DataTemplate x:Key="FolderTemplate" x:DataType="local:FileItem">
-            <TreeViewItem AllowDrop="True" HorizontalContentAlignment="Left" ItemsSource="{x:Bind Children}">
-                <TreeViewItem.ContextFlyout>
+            <local:MyTreeViewItem HorizontalContentAlignment="Left" ItemsSource="{x:Bind Children}">
+                <local:MyTreeViewItem.ContextFlyout>
                     <MenuFlyout>
+                        <MenuFlyoutItem x:Name="NewFile" Icon="Add" Click="NewFile_Click" Text="New File"></MenuFlyoutItem>
                         <MenuFlyoutItem x:Name="Delete" Icon="Delete" Click="Delete_Click" Text="Delete"></MenuFlyoutItem>
                         <MenuFlyoutItem x:Name="Rename" Icon="Rename" Click="Rename_Click" Text="Rename"></MenuFlyoutItem>
                     </MenuFlyout>
-                </TreeViewItem.ContextFlyout>
+                </local:MyTreeViewItem.ContextFlyout>
                 <StackPanel Margin="0" Orientation="Horizontal">
                     <!--<Image Width="20" Source="Assets/folder.png"/>-->
                     <SymbolIcon Width="20" Symbol="Folder"></SymbolIcon>
                     <TextBlock Text="{x:Bind FileName}" FontFamily="Segoe UI" Margin="12,0,12,0" />
                 </StackPanel>
-            </TreeViewItem>
+            </local:MyTreeViewItem>
         </DataTemplate>
 
         <DataTemplate x:Key="FileTemplate" x:DataType="local:FileItem">
-            <TreeViewItem>
-                <TreeViewItem.ContextFlyout>
+            <local:MyTreeViewItem >
+                <local:MyTreeViewItem.ContextFlyout>
                     <MenuFlyout>
                         <MenuFlyoutItem x:Name="SetRoot" Icon="Favorite" Click="SetRoot_Click" IsEnabled="{Binding IsRoot, Converter={StaticResource BoolInverter}}" Text="Set as Main File"></MenuFlyoutItem>
                         <MenuFlyoutItem x:Name="Delete" Icon="Delete" Click="Delete_Click" IsEnabled="{Binding IsRoot, Converter={StaticResource BoolInverter}}" Text="Delete"></MenuFlyoutItem>
                         <MenuFlyoutItem x:Name="Rename" Icon="Rename" Click="Rename_Click" Text="Rename"></MenuFlyoutItem>
                     </MenuFlyout>
-                </TreeViewItem.ContextFlyout>
+                </local:MyTreeViewItem.ContextFlyout>
                 <StackPanel Orientation="Horizontal">
                     <!--<Image Width="20" Source="Assets/file.png"/>-->
                     <SymbolIcon Width="20" Symbol="Document"></SymbolIcon>
                     <TextBlock Text="{Binding FileName}" FontWeight="{Binding IsRoot, Converter={StaticResource BoolToFontWeight}}" FontFamily="Segoe UI" Margin="12,0,12,0"/>
                 </StackPanel>
-            </TreeViewItem>
+            </local:MyTreeViewItem>
         </DataTemplate>
 
         <local:ExplorerItemTemplateSelector
             x:Key="ExplorerItemTemplateSelector"
             FolderTemplate="{StaticResource FolderTemplate}"
             FileTemplate="{StaticResource FileTemplate}" />
+
+        <AcrylicBrush x:Key="NavigationViewExpandedPaneBackground" BackgroundSource="HostBackdrop" TintColor="{ThemeResource AcrylicColor}" TintOpacity="0.9" FallbackColor="{ThemeResource AcrylicColor}"/>
+        <AcrylicBrush x:Key="NavigationViewDefaultPaneBackground" BackgroundSource="HostBackdrop" TintColor="{ThemeResource AcrylicColor}" TintOpacity="0.9" FallbackColor="{ThemeResource AcrylicColor}"/>
+        <AcrylicBrush x:Key="NavigationViewTopPaneBackground" BackgroundSource="HostBackdrop" TintColor="{ThemeResource AcrylicColor}" TintOpacity="0.9" FallbackColor="{ThemeResource AcrylicColor}"/>
     </Page.Resources>
     <!--<Page.DataContext>
         <local:ViewModel x:Name="viewModelInDataContext"/>
@@ -109,16 +114,16 @@
                                         <ColumnDefinition Width="Auto"></ColumnDefinition>
                                     </Grid.ColumnDefinitions>
                                     <NavigationViewItemHeader Grid.Column="0" Content="{Binding CurrentProject.Name}"></NavigationViewItemHeader>
-                                    <Button VerticalContentAlignment="Center" Grid.Column="1" x:Name="AddFile" Click="AddFile_Click">
+                                    <Button IsEnabled="{Binding IsProjectLoaded}" Style="{ThemeResource ButtonRevealStyle}" VerticalContentAlignment="Center" Grid.Column="1"  Click="AddFile_Click">
                                         <SymbolIcon Symbol="Document"/>
                                     </Button>
-                                    <Button   Grid.Column="2" x:Name="AddFolder" Click="AddFolder_Click" Margin="5,0,0,0">
+                                    <Button  IsEnabled="{Binding IsProjectLoaded}"  Style="{ThemeResource ButtonRevealStyle}"  Grid.Column="2" Click="AddFolder_Click" Margin="5,0,5,0">
                                         <SymbolIcon Symbol="Folder"/>
                                     </Button>
                                 </Grid>
-                                <TreeView ItemInvoked="NavigationTree_ItemInvoked" MaxHeight="300" ScrollViewer.VerticalScrollBarVisibility="Auto"  ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}" ItemsSource="{Binding CurrentProject.Directory}" x:Name="NavigationTree"
-                       CanDragItems="True" CanReorderItems="False" AllowDrop="False" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Padding="0" Margin="-20,0,0,0"
-                         />
+                                <!--<TreeView SelectionMode="None" ItemInvoked="NavigationTree_ItemInvoked" MaxHeight="300" ScrollViewer.VerticalScrollBarVisibility="Auto"  ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}" ItemsSource="{Binding CurrentProject.Directory}" 
+                       CanDragItems="True"  CanDrag="True" CanReorderItems="False" AllowDrop="True"  DragItemsStarting="TreeView_DragItemsStarting" DragItemsCompleted="TreeView_DragItemsCompleted" DropCompleted="TreeView_DropCompleted" Drop="TreeView_Drop" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0" Margin="-20,0,0,0"
+                         />-->
                             </StackPanel>
                         </Flyout>
                     </FlyoutBase.AttachedFlyout>
@@ -129,7 +134,7 @@
                 <NavigationViewItem Icon="Library" Content="Projects" Tag="Projects" />
 
                 <NavigationViewItemSeparator Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToNotVisibility}}"></NavigationViewItemSeparator>
-                <NavigationViewItem Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToNotVisibility}}" SelectsOnInvoked="True" Icon="Help" Tag="About" Content="About" ></NavigationViewItem>
+                <!--<NavigationViewItem Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToNotVisibility}}" SelectsOnInvoked="True" Icon="Help" Tag="About" Content="About" ></NavigationViewItem>-->
                 <NavigationViewItem Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToNotVisibility}}" SelectsOnInvoked="True" Icon="Setting" Content="Settings" Tag="Settings" />
                 <!--<NavigationViewItem Icon="Refresh" Content="Trading Bots" Tag="TradingBots" />
                 <NavigationViewItem Content="Wallets" Tag="Wallets">
@@ -147,14 +152,6 @@
                             <animations:TranslationAnimation Duration="0:0:0.25" From="0, -50, 0" To="0" ></animations:TranslationAnimation>
                             <animations:OpacityAnimation Duration="0:0:0.25" From="0" To="1.0"></animations:OpacityAnimation>
                         </animations:Implicit.ShowAnimations>
-
-                        <!--<animations:Implicit.HideAnimations>
-                            <animations:ScalarAnimation Target="Opacity" Duration="0:0:0.25" To="0.0"></animations:ScalarAnimation>
-                            <animations:ScalarAnimation Target="Translation.Y" Duration="0:0:0.25" To="-50">
-                                <animations:ScalarKeyFrame Key="0.1" Value="20"></animations:ScalarKeyFrame>
-                                <animations:ScalarKeyFrame Key="0.5" Value="0.0"></animations:ScalarKeyFrame>
-                            </animations:ScalarAnimation>
-                        </animations:Implicit.HideAnimations>-->
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"></ColumnDefinition>
@@ -162,32 +159,32 @@
                                 <ColumnDefinition Width="Auto"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
                             <NavigationViewItemHeader Grid.Column="0" Content="{Binding CurrentProject.Name}"></NavigationViewItemHeader>
-                            <Button VerticalContentAlignment="Center" Grid.Column="1"  Click="AddFile_Click">
+                            <Button  IsEnabled="{Binding IsProjectLoaded}" Style="{ThemeResource ButtonRevealStyle}" VerticalContentAlignment="Center" Grid.Column="1"  Click="AddFile_Click">
                                 <SymbolIcon Symbol="Document"/>
                             </Button>
-                            <Button   Grid.Column="2" Click="AddFolder_Click" Margin="5,0,5,0">
+                            <Button  IsEnabled="{Binding IsProjectLoaded}"  Style="{ThemeResource ButtonRevealStyle}"  Grid.Column="2" Click="AddFolder_Click" Margin="5,0,5,0">
                                 <SymbolIcon Symbol="Folder"/>
                             </Button>
                         </Grid>
-                        <TreeView ItemInvoked="NavigationTree_ItemInvoked" MaxHeight="300" ScrollViewer.VerticalScrollBarVisibility="Auto"  ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}" ItemsSource="{Binding CurrentProject.Directory}" 
-                       CanDragItems="True" CanReorderItems="False" AllowDrop="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0" Margin="-20,0,0,0"
+                        <contr:TreeView x:Name="Tree"  SelectionMode="None" ItemInvoked="NavigationTree_ItemInvoked" MaxHeight="300" ScrollViewer.VerticalScrollBarVisibility="Auto"  ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}" ItemsSource="{Binding CurrentProject.Directory, Mode=TwoWay}" 
+                      CanReorderItems="False" AllowDrop="True" Drop="Tree_Drop"   DropCompleted="TreeView_DropCompleted" DragOver="TreeView_Drop" DragEnter="TreeView_Drop" DragItemsStarting="TreeView_DragItemsStarting" DragItemsCompleted="TreeView_DragItemsCompleted" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0"
                          />
                     </StackPanel>
                     <Grid Background="#3F858585" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToNotVisibility}}"></Grid>
                 </Grid>
             </NavigationView.PaneCustomContent>
-            <NavigationView.PaneFooter>
+            <!--<NavigationView.PaneFooter>
                 <NavigationViewItem Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToVisibility}}" Tapped="About_Tapped" SelectsOnInvoked="True" Icon="Help" Tag="About" Content="About" Padding="0,0,12,0" Margin="0,0,0,0"></NavigationViewItem>
 
-            </NavigationView.PaneFooter>
+            </NavigationView.PaneFooter>-->
             <NavigationView.Content>
                 <Grid Margin="0,0,0,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Grid x:Name="Header" x:FieldModifier="public" Grid.Row="0"  Height="40" Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToVisibility}}" Background="#3F858585" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,0,0,0">
-                        <TextBlock  VerticalAlignment="Center"  Text="{Binding NVHeader}" Style="{ThemeResource BodyTextBlockStyle}" Margin="52,0,0,0"  />
+                    <Grid x:Name="Header" x:FieldModifier="public" Grid.Row="0"  Height="40" Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToVisibility}}" Background="{ThemeResource NavigationViewDefaultPaneBackground}" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,0,0,0">
+                        <!--<TextBlock  VerticalAlignment="Center"  Text="{Binding NVHeader}" Style="{ThemeResource BodyTextBlockStyle}" Margin="52,0,0,0"  />-->
                     </Grid>
                     <!--<TreeView Grid.Row="0" ItemsSource="{Binding CurrentWorkingDirectory}"  ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}" 
                        CanDragItems="True" AllowDrop="True" 

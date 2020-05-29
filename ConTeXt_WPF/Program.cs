@@ -23,9 +23,6 @@ namespace ConTeXt_WPF
         static void Main(string[] args)
         {
            
-            // kick off asynchronous stuff 
-            
-            Console.WriteLine("loool");
            var app = new App();
 
             while (true) {
@@ -47,11 +44,26 @@ namespace ConTeXt_WPF
         {
             // InitializeComponent();
             var handle = GetConsoleWindow();
-            ShowWindow(handle, SW_SHOW);
+            ShowWindow(handle, SW_HIDE);
             Log(Settings.Default.PackageID);
             InitializeAppServiceConnection();
             Log(Settings.Default.ContextDistributionPath);
         }
+
+        private string getversion()
+        {
+            if (Directory.Exists(Settings.Default.ContextDistributionPath + @"\tex\texmf-win64"))
+            {
+                return @"\texmf-win64";
+            }
+            else if (Directory.Exists(Settings.Default.ContextDistributionPath + @"\tex\texmf-mswin"))
+            {
+                return @"\texmf-mswin";
+            }
+            else 
+                return @"\texmf-mswin";
+        }
+
 
         protected override void OnActivated(EventArgs e)
         {
@@ -86,13 +98,17 @@ namespace ConTeXt_WPF
             using (StreamWriter sw = p.StandardInput)
             {
                 Log("deleting cached files...");
-                sw.WriteLine("del *.log && del *.pdf && del *.tuc");
+                //sw.WriteLine("del *.log && del *.pdf && del *.tuc");
                 Log("setting up context...");
                 //await sw.WriteLineAsync("dir");
                 //sw.WriteLine(Settings.Default.ContextDistributionPath + @"\" + @"tex\setuptex.bat tex\texmf-win64\bin");
                 Log("compiling...");
                 // await sw.WriteLineAsync("cd sample");
-                sw.WriteLine(Settings.Default.ContextDistributionPath + @"\tex\texmf-win64\bin\context.exe"+ " " + Settings.Default.TexFileName);
+                string param = "";
+                if (Settings.Default.Modes.Length > 0)
+                    param = "--mode=" + Settings.Default.Modes + " ";
+
+                sw.WriteLine(Settings.Default.ContextDistributionPath + @"\tex" + getversion() + @"\bin\context.exe"+ " " + param + Settings.Default.TexFileName);
 
                 // Thread.Sleep(5000);
             }
@@ -211,7 +227,8 @@ namespace ConTeXt_WPF
                                 case "install":
                                     {
                                         Log("installing");
-                                        bool installed = await Install(Settings.Default.ContextDistributionPath);
+                                        bool installed = Install(Settings.Default.ContextDistributionPath);
+                                        
                                         ValueSet response = new ValueSet
                                         {
                                             { "response", installed }
@@ -253,7 +270,7 @@ namespace ConTeXt_WPF
             var status = await connection.OpenAsync();
             Log("Started");
         }
-        private async Task<bool> Install(string contextDistributionPath)
+        private bool Install(string contextDistributionPath)
         {
             try
             {
@@ -263,20 +280,20 @@ namespace ConTeXt_WPF
                 {
                     Log("Downloading");
                     DirectoryInfo di = Directory.CreateDirectory(contextDistributionPath);
-                    client.DownloadFile(installurl, contextDistributionPath + @"\context-win64.zip");
+                    client.DownloadFile(installurl, contextDistributionPath + @"\context.zip");
                     Log("Download finished");
                     client.Dispose();
                 }
                 Log("Extracting Zip Archive");
-                using (ZipArchive archive = ZipFile.Open(contextDistributionPath + @"\context-win64.zip", ZipArchiveMode.Read))
+                using (ZipArchive archive = ZipFile.Open(contextDistributionPath + @"\context.zip", ZipArchiveMode.Read))
                 {
                     archive.ExtractToDirectory(contextDistributionPath);
                 }
                 Log("Installing the Distribution");
-                var sf = await  StorageFile.GetFileFromPathAsync(contextDistributionPath + @"\context-win64.zip");
-                await sf.DeleteAsync();
-                await Update();
-                return true;
+                var sf =  StorageFile.GetFileFromPathAsync(contextDistributionPath + @"\context.zip").AsTask().Result;
+                sf.DeleteAsync().AsTask().Wait();
+
+                return Update();
             }
             catch (Exception ex)
             {
@@ -313,7 +330,7 @@ namespace ConTeXt_WPF
             string newPathToFile = Path.Combine(local, curPDF);
             File.Copy(curPDFPath, newPathToFile, true);
         }
-        private async Task<bool> Update()
+        private bool Update()
         {
             try
             {

@@ -6,14 +6,14 @@
      xmlns:winui="using:Microsoft.UI.Xaml.Controls" >
     <Application.Resources>
         <ResourceDictionary>
-            
+
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary>
                     <CornerRadius x:Key="OverlayCornerRadius">4</CornerRadius>
                     <CornerRadius x:Key="ControlCornerRadius">4</CornerRadius>
                 </ResourceDictionary>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-              
+
             </ResourceDictionary.MergedDictionaries>
             <Style TargetType="TextBox">
                 <Setter Property="CornerRadius" Value="4"></Setter>
@@ -29,40 +29,18 @@
             <local:EnumToStringConverter x:Key="EnumToString" />
             <local:BoolToFontWeightConverter x:Key="BoolToFontWeight" />
             <local:BoolInverter x:Key="BoolInverter" />
-            
+
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Default">
 
-                    <AcrylicBrush x:Key="MyAcrylicBrush"
-            BackgroundSource="HostBackdrop"
-            TintColor="#FF232323"
-            TintOpacity="0.80"
-            FallbackColor="#FF232323"/>
+                    <AcrylicBrush x:Key="MyAcrylicBrush" BackgroundSource="HostBackdrop" TintColor="{ThemeResource AcrylicColor}"   TintOpacity="0.9"            FallbackColor="{ThemeResource AcrylicColor}"/>
 
-                    <AcrylicBrush x:Key="ContentAcrylicBrush"
-            BackgroundSource="HostBackdrop"
-            TintColor="#FF232323"
-            TintOpacity="0.9"
-            FallbackColor="#FF232323"/>
-                    <AcrylicBrush x:Key="ItemAcrylicBrush"
-            BackgroundSource="HostBackdrop"
-            TintColor="#FF222222"
-            TintOpacity="0.9"
-            FallbackColor="#FF222222"/>
-                    <AcrylicBrush x:Key="LogAcrylicBrush"
-            BackgroundSource="HostBackdrop"
-            TintColor="#FF383838"
-            TintOpacity="0.7"
-            FallbackColor="#FF383838"/>
-                    <AcrylicBrush x:Key="TitlebarAcrylicBrush"
-            BackgroundSource="HostBackdrop"
-            TintColor="#FF202020"
-            TintOpacity="0.9"
-            FallbackColor="#FF202020"/>
-                    <AcrylicBrush x:Key="NavigationViewDefaultPaneBackground"
-              BackgroundSource="HostBackdrop" TintColor="#FF4E4E4E" TintOpacity="0.8" FallbackColor="#FF4E4E4E"/>
-                    <AcrylicBrush x:Key="NavigationViewExpandedPaneBackground"
-              BackgroundSource="HostBackdrop" TintColor="#FF4E4E4E" TintOpacity="0.7" FallbackColor="#FF4E4E4E"/>
+                    <AcrylicBrush x:Key="ContentAcrylicBrush"            BackgroundSource="HostBackdrop"            TintColor="#FF232323"            TintOpacity="0.9"            FallbackColor="#FF232323"/>
+                    <AcrylicBrush x:Key="ItemAcrylicBrush"            BackgroundSource="HostBackdrop"            TintColor="#FF222222"            TintOpacity="0.9"            FallbackColor="#FF222222"/>
+                    <AcrylicBrush x:Key="LogAcrylicBrush"            BackgroundSource="HostBackdrop"            TintColor="#FF383838"            TintOpacity="0.9"            FallbackColor="#FF383838"/>
+                    <AcrylicBrush x:Key="TitlebarAcrylicBrush"            BackgroundSource="HostBackdrop"            TintColor="#FF202020"            TintOpacity="0.9"            FallbackColor="#FF202020"/>
+
+                    <Color x:Key="AcrylicColor">#444444</Color>
                 </ResourceDictionary>
 
                 <ResourceDictionary x:Key="HighContrast">
@@ -71,40 +49,18 @@
                 </ResourceDictionary>
 
                 <ResourceDictionary x:Key="Light">
-                    <AcrylicBrush x:Key="MyAcrylicBrush"
-            BackgroundSource="HostBackdrop"
-            TintColor="#FFCACACA"
-            TintOpacity="0.80"
-            FallbackColor="#FFCACACA"/>
-                    <AcrylicBrush x:Key="ContentAcrylicBrush"
-            BackgroundSource="HostBackdrop"
-            TintColor="#FF232323"
-            TintOpacity="0.9"
-            FallbackColor="#FF232323"/>
-                    <AcrylicBrush x:Key="ItemAcrylicBrush"
-            BackgroundSource="HostBackdrop"
-            TintColor="#FF222222"
-            TintOpacity="0.9"
-            FallbackColor="#FF222222"/>
-                    <AcrylicBrush x:Key="LogAcrylicBrush"
-            BackgroundSource="HostBackdrop"
-            TintColor="#FFA3A3A3"
-            TintOpacity="0.7"
-            FallbackColor="#FFA3A3A3"/>
-                    <AcrylicBrush x:Key="TitlebarAcrylicBrush"
-            BackgroundSource="HostBackdrop"
-            TintColor="#FF9F9F9F"
-            TintOpacity="0.9"
-            FallbackColor="#FF9F9F9F"/>
-                    <AcrylicBrush x:Key="NavigationViewDefaultPaneBackground"
-              BackgroundSource="HostBackdrop" TintColor="#FFABABAB" TintOpacity="0.8" FallbackColor="#FFABABAB"/>
-                    <AcrylicBrush x:Key="NavigationViewExpandedPaneBackground"
-              BackgroundSource="HostBackdrop" TintColor="#FFABABAB" TintOpacity="0.7" FallbackColor="#FFABABAB"/>
+                    <AcrylicBrush x:Key="MyAcrylicBrush" BackgroundSource="HostBackdrop" TintColor="{ThemeResource AcrylicColor}"   TintOpacity="0.9"            FallbackColor="{ThemeResource AcrylicColor}"/>
+                    <AcrylicBrush x:Key="ContentAcrylicBrush"            BackgroundSource="HostBackdrop"            TintColor="#FF232323"            TintOpacity="0.9"            FallbackColor="#FF232323"/>
+                    <AcrylicBrush x:Key="ItemAcrylicBrush"            BackgroundSource="HostBackdrop"            TintColor="#FF222222"            TintOpacity="0.9"            FallbackColor="#FF222222"/>
+                    <AcrylicBrush x:Key="LogAcrylicBrush"            BackgroundSource="HostBackdrop"            TintColor="#FFA3A3A3"            TintOpacity="0.9"            FallbackColor="#FFA3A3A3"/>
+                    <AcrylicBrush x:Key="TitlebarAcrylicBrush"            BackgroundSource="HostBackdrop"            TintColor="#FF9F9F9F"            TintOpacity="0.9"            FallbackColor="#FF9F9F9F"/>
+
+                    <Color x:Key="AcrylicColor">#cccccc</Color>
                 </ResourceDictionary>
-            </ResourceDictionary.ThemeDictionaries> 
+            </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
 
-       
+
     </Application.Resources>
 
 </Application>

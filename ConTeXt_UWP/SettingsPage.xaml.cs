@@ -26,7 +26,7 @@ namespace ConTeXt_UWP
     /// </summary>
     public sealed partial class SettingsPage : Page
     {
-        public ViewModel currentViewModel = App.AppViewModel;
+        public ViewModel currentViewModel = App.VM;
         public SettingsPage()
         {
             this.InitializeComponent();
@@ -57,32 +57,32 @@ namespace ConTeXt_UWP
 
         private async void Update_Click(object sender, RoutedEventArgs e)
         {
-            App.AppViewModel.IsNotSaving = false;
+            App.VM.IsSaving = true;
             ValueSet request = new ValueSet();
             request.Add("command", "update");
-            AppServiceResponse response = await App.AppViewModel.appServiceConnection.SendMessageAsync(request);
+            AppServiceResponse response = await App.VM.appServiceConnection.SendMessageAsync(request);
             // display the response key/value pairs
             foreach (string key in response.Message.Keys)
             {
                 if ((string)response.Message[key] == "response")
                 {
-                    App.AppViewModel.LOG("ConTeXt distribution updated.");
+                    App.VM.LOG("ConTeXt distribution updated.");
                 }
             }
                 //await Task.Delay(2000);
-          currentViewModel.IsNotSaving = true;
+          currentViewModel.IsSaving = false;
         }
 
         private async void Install_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                App.AppViewModel.IsNotSaving = false;
+                App.VM.IsSaving = true;
                 var cd = new ContentDialog();
                 var sp = new StackPanel();
                 StorageFolder localFolder = ApplicationData.Current.LocalFolder;
                 var installpathtb = new TextBox() { Header = "Install Path (changing this is experimental)", Text = localFolder.Path };
-                var downloadlinktb = new TextBox() { Header = "Download link (only change if PRAGMA ADE changed the URL)", Text = App.AppViewModel.Default.ContextDownloadLink };
+                var downloadlinktb = new TextBox() { Header = "Download link (only change if PRAGMA ADE changed the URL)", Text = App.VM.Default.ContextDownloadLink };
                 sp.Children.Add(installpathtb);
                 sp.Children.Add(downloadlinktb);
                 cd.Title = "First Start: Install the ConTeXt (LuaMetaTeX) Distribution";
@@ -91,11 +91,11 @@ namespace ConTeXt_UWP
                 cd.CloseButtonText = "Skip (Setup in the Settings!)";
                 cd.PrimaryButtonClick += async (a, b) =>
                 {
-                    App.AppViewModel.Default.ContextDistributionPath = installpathtb.Text;
-                    App.AppViewModel.Default.ContextDownloadLink = downloadlinktb.Text;
+                    App.VM.Default.ContextDistributionPath = installpathtb.Text;
+                    App.VM.Default.ContextDownloadLink = downloadlinktb.Text;
                     ValueSet request = new ValueSet();
                     request.Add("command", "install");
-                    AppServiceResponse response = await App.AppViewModel.appServiceConnection.SendMessageAsync(request);
+                    AppServiceResponse response = await App.VM.appServiceConnection.SendMessageAsync(request);
                     //AppViewModel.LOG(response.Status.ToString() + " ... " + response.Message.FirstOrDefault().Key.ToString() + " Key Val " + response.Message.FirstOrDefault().Value.ToString());
                     // display the response key/value pairs
                     foreach (string key in response.Message.Keys)
@@ -103,9 +103,9 @@ namespace ConTeXt_UWP
                         if (key == "response")
                         {
                             if ((bool)response.Message[key])
-                                App.AppViewModel.LOG("ConTeXt distribution installed.");
+                                App.VM.LOG("ConTeXt distribution installed.");
                             else
-                                App.AppViewModel.LOG("Installation error");
+                                App.VM.LOG("Installation error");
 
                         }
                     }
@@ -118,11 +118,11 @@ namespace ConTeXt_UWP
                     //}
                 };
                 await cd.ShowAsync();
-                App.AppViewModel.IsNotSaving = true;
+                App.VM.IsSaving = false;
             }
             catch (Exception ex)
             {
-                App.AppViewModel.LOG(ex.Message);
+                App.VM.LOG(ex.Message);
             }
         }
     }

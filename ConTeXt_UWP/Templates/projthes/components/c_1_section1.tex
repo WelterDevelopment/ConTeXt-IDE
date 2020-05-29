@@ -1,0 +1,31 @@
+\startcomponent[c_1_section1]
+\startsection[title=Basic functions]
+\startsubsection[title=Itemize]
+\startitemize
+    \item Item one
+    \item Item two
+\stopitemize
+
+\stopsubsection
+
+\startsubsection[title=Tables]
+\startplacetable[location=here, reference=tab:exampletable, title={Example table}]
+    \setupTABLE[r][each][style=\tfx\it, align=center]
+    \bTABLE[split=repeat,option=stretch]
+        \bTABLEhead
+            \bTR
+                \bTH  head1 \eTH
+                \bTH  head2 \eTH
+            \eTR
+        \eTABLEhead
+        \bTABLEbody
+            \bTR \bTD One \eTD \bTD two \eTD \eTR
+            \bTR \bTD One \eTD \bTD two \eTD \eTR
+        \eTABLEbody
+    \eTABLE
+\stopplacetable
+
+This is a reference to \ref[tab:exampletable].
+\stopsubsection
+\stopsection
+\stopcomponent

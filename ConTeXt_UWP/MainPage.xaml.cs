@@ -16,6 +16,9 @@ using Windows.UI.Xaml.Navigation;
 using Windows.Storage;
 using System.IO;
 using Windows.UI.Xaml.Controls.Primitives;
+using Windows.ApplicationModel.DataTransfer;
+using System.Collections.Generic;
+using System.Linq;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -26,12 +29,14 @@ namespace ConTeXt_UWP
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        public ViewModel currentViewModel = App.AppViewModel;
+        public ViewModel currentViewModel = App.VM;
+        public static List<FileItem> DraggedItems { get; set; }
         public MainPage()
         {
+            DraggedItems = new List<FileItem>();
             this.InitializeComponent();
             // Window.Current.SetTitleBar(AppTitleBar);
-            
+
             //KeyboardAccelerator GoBack = new KeyboardAccelerator();
             //GoBack.Key = VirtualKey.GoBack;
             //GoBack.Invoked += BackInvoked;
@@ -54,6 +59,7 @@ namespace ConTeXt_UWP
             // ALT routes here
             this.NavigationCacheMode = NavigationCacheMode.Enabled;
             Application.Current.Suspending += new SuspendingEventHandler(App_Suspending);
+
 
         }
 
@@ -85,11 +91,10 @@ namespace ConTeXt_UWP
         {
             try
             {
-                App.AppViewModel.LOG("checking");
                 var coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
                 coreTitleBar.ExtendViewIntoTitleBar = true;
 
-                if (App.AppViewModel.Default.NavigationViewPaneMode == "Top")
+                if (App.VM.Default.NavigationViewPaneMode == "Top")
                 {
                     Window.Current.SetTitleBar(nvSample.PaneCustomContent as FrameworkElement);
                     nvSample.Header = null;
@@ -100,28 +105,37 @@ namespace ConTeXt_UWP
 
                 foreach (NavigationViewItemBase item in nvSample.MenuItems)
                 {
-                    if (item is NavigationViewItem && item.Tag.ToString() == "IDE")
+                    if (App.VM.CurrentProject.Folder != null)
                     {
-                        nvSample.SelectedItem = item;
+                        if (item is NavigationViewItem && item.Tag.ToString() == "IDE")
+                        {
+                            nvSample.SelectedItem = item;
 
-                        contentFrame.Navigate(typeof(Editor), null, new DrillInNavigationTransitionInfo());
-                        App.AppViewModel.NVHeader = "Editor";
-                        break;
+                            contentFrame.Navigate(typeof(Editor), null, new DrillInNavigationTransitionInfo());
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (item is NavigationViewItem && item.Tag.ToString() == "Projects")
+                        {
+                            nvSample.SelectedItem = item;
+
+                            contentFrame.Navigate(typeof(Projects), null, new DrillInNavigationTransitionInfo());
+                            break;
+                        }
                     }
                 }
-                App.AppViewModel.LOG("checking");
                 if (ApiInformation.IsApiContractPresent("Windows.ApplicationModel.FullTrustAppContract", 1))
                 {
-                    App.AppViewModel.LOG("launching app");
                     await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Parameters");
-                    App.AppViewModel.LOG("launched");
                     //Thread.Sleep(5000);
                 }
                 nvSample.IsBackEnabled = contentFrame.CanGoBack;
             }
             catch (Exception ex)
             {
-                App.AppViewModel.LOG(ex.Message);
+                App.VM.LOG("Error on Navigation: " + ex.Message);
             }
 
         }
@@ -174,21 +188,21 @@ namespace ConTeXt_UWP
         }
 
         PageStackEntry Editor = new PageStackEntry(typeof(Editor), null, new DrillInNavigationTransitionInfo());
- private async void NvSample_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+        private async void NvSample_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
         {
-            
+
             if (args.IsSettingsInvoked)
                 contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo());
-         
+
             else
                 try
                 {
                     switch (args.InvokedItemContainer.Tag)
                     {
-                        case "IDE": contentFrame.Navigate(typeof(Editor), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "Editor"; break;
-                        case "Settings": contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "Settings"; break;
-                        case "Projects": contentFrame.Navigate(typeof(Projects), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "Projects"; break;
-                        case "About": contentFrame.Navigate(typeof(About), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "About"; break;
+                        case "IDE": contentFrame.Navigate(typeof(Editor), null, new DrillInNavigationTransitionInfo()); break;
+                        case "Settings": contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo()); break;
+                        case "Projects": contentFrame.Navigate(typeof(Projects), null, new DrillInNavigationTransitionInfo()); break;
+                        case "About": contentFrame.Navigate(typeof(About), null, new DrillInNavigationTransitionInfo()); break;
                         default: Console.WriteLine("Not a valid Page Type"); break;
                     }
                 }
@@ -200,19 +214,19 @@ namespace ConTeXt_UWP
         }
         private async void NvSample_ItemInvoked(Microsoft.UI.Xaml.Controls.NavigationView sender, Microsoft.UI.Xaml.Controls.NavigationViewItemInvokedEventArgs args)
         {
-            
+
             if (args.IsSettingsInvoked)
                 contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo());
-         
+
             else
                 try
                 {
                     switch (args.InvokedItemContainer.Tag)
                     {
-                        case "IDE": contentFrame.Navigate(typeof(Editor), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "Editor"; break;
-                        case "Settings": contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "Settings"; break;
-                        case "Projects": contentFrame.Navigate(typeof(Projects), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "Projects"; break;
-                        case "About": contentFrame.Navigate(typeof(About), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "About"; break;
+                        case "IDE": contentFrame.Navigate(typeof(Editor), null, new DrillInNavigationTransitionInfo()); break;
+                        case "Settings": contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo()); break;
+                        case "Projects": contentFrame.Navigate(typeof(Projects), null, new DrillInNavigationTransitionInfo()); break;
+                        case "About": contentFrame.Navigate(typeof(About), null, new DrillInNavigationTransitionInfo()); break;
                         default: Console.WriteLine("Not a valid Page Type"); break;
                     }
                 }
@@ -247,8 +261,8 @@ namespace ConTeXt_UWP
         private void About_Tapped(object sender, TappedRoutedEventArgs e)
         {
             nvSample.SelectedItem = (sender as NavigationViewItem);
-            contentFrame.Navigate(typeof(About), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "Projects";
-            App.AppViewModel.NVHeader = "About";
+            contentFrame.Navigate(typeof(About), null, new DrillInNavigationTransitionInfo());
+
         }
 
         private void ContentFrame_Navigated(object sender, NavigationEventArgs e)
@@ -271,10 +285,10 @@ namespace ConTeXt_UWP
             {
                 switch (e.Content.GetType().ToString())
                 {
-                    case "Editor": ; App.AppViewModel.NVHeader = "Editor"; break;
-                    case "SettingsPage": contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "Settings"; break;
-                    case "Projects": contentFrame.Navigate(typeof(Projects), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "Projects"; break;
-                    case "About": contentFrame.Navigate(typeof(About), null, new DrillInNavigationTransitionInfo()); App.AppViewModel.NVHeader = "About"; break;
+                    case "Editor": break;
+                    case "SettingsPage": contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo()); break;
+                    case "Projects": contentFrame.Navigate(typeof(Projects), null, new DrillInNavigationTransitionInfo()); break;
+                    case "About": contentFrame.Navigate(typeof(About), null, new DrillInNavigationTransitionInfo()); break;
                     default: Console.WriteLine("Not a valid Page Type"); break;
                 }
             }
@@ -300,101 +314,12 @@ namespace ConTeXt_UWP
         }
 
 
-        private async Task<string> ExecuteCommandLineString(string CommandString)
-        {
-            if (ApiInformation.IsApiContractPresent(
-      "Windows.ApplicationModel.FullTrustAppContract", 1, 0))
-            {
-                await
-                  FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("User");
-            }
-            Process process = new Process();
-            process.StartInfo.FileName = "context";
-            process.StartInfo.Arguments = "c:\\context\\hello.tex";
-            process.StartInfo.UseShellExecute = false;
-            process.Start();
-            process.WaitForExit();
-            if (process.ExitCode == 0)
-            {
-                Console.WriteLine("Command was successfully executed.");
-            }
-            else
-            {
-                Console.WriteLine("An error occurred.");
-            }
-
-            const string CommandLineProcesserExe = "c:\\windows\\system32\\cmd.exe";
-            const uint CommandStringResponseBufferSize = 8192;
-            string currentDirectory = "C:\\";
-
-            StringBuilder textOutput = new StringBuilder((int)CommandStringResponseBufferSize);
-            uint bytesLoaded = 0;
-
-            if (string.IsNullOrWhiteSpace(CommandString))
-                return ("");
-
-            var commandLineText = CommandString.Trim();
-
-            var standardOutput = new Windows.Storage.Streams.InMemoryRandomAccessStream();
-            var standardError = new Windows.Storage.Streams.InMemoryRandomAccessStream();
-            var options = new Windows.System.ProcessLauncherOptions
-            {
-                StandardOutput = standardOutput,
-                StandardError = standardError
-            };
-
-            try
-            {
-                var args = "/C \"cd \"" + currentDirectory + "\" & " + commandLineText + "\"";
-                Debug.WriteLine("1");
-                var result = await Windows.System.ProcessLauncher.RunToCompletionAsync(CommandLineProcesserExe, args, options);
-                Debug.WriteLine("2");
-                //First write std out
-                using (var outStreamRedirect = standardOutput.GetInputStreamAt(0))
-                {
-                    using (var dataReader = new Windows.Storage.Streams.DataReader(outStreamRedirect))
-                    {
-                        while ((bytesLoaded = await dataReader.LoadAsync(CommandStringResponseBufferSize)) > 0)
-                            textOutput.Append(dataReader.ReadString(bytesLoaded));
-
-                        new System.Threading.ManualResetEvent(false).WaitOne(10);
-                        if ((bytesLoaded = await dataReader.LoadAsync(CommandStringResponseBufferSize)) > 0)
-                            textOutput.Append(dataReader.ReadString(bytesLoaded));
-                    }
-                }
-
-                //Then write std err
-                using (var errStreamRedirect = standardError.GetInputStreamAt(0))
-                {
-                    using (var dataReader = new Windows.Storage.Streams.DataReader(errStreamRedirect))
-                    {
-                        while ((bytesLoaded = await dataReader.LoadAsync(CommandStringResponseBufferSize)) > 0)
-                            textOutput.Append(dataReader.ReadString(bytesLoaded));
-
-                        new System.Threading.ManualResetEvent(false).WaitOne(10);
-                        if ((bytesLoaded = await dataReader.LoadAsync(CommandStringResponseBufferSize)) > 0)
-                            textOutput.Append(dataReader.ReadString(bytesLoaded));
-                    }
-                }
-
-                return (textOutput.ToString());
-            }
-            catch (UnauthorizedAccessException uex)
-            {
-                return ("ERROR - " + uex.Message + "\n\nCmdNotEnabled");
-            }
-            catch (Exception ex)
-            {
-                return ("ERROR - " + ex.Message + "\n");
-            }
-        }
-
-        private  void NavigationTree_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)
+        private void NavigationTree_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)
         {
             var fileitem = (FileItem)args.InvokedItem;
             if (fileitem.Type == FileItem.ExplorerItemType.File)
             {
-                App.AppViewModel.OpenFile(fileitem);
+                App.VM.OpenFile(fileitem);
             }
             args.Handled = true;
         }
@@ -403,17 +328,16 @@ namespace ConTeXt_UWP
         {
             var ei = (FileItem)(sender as FrameworkElement).DataContext;
             ei.IsRoot = true;
-            if (App.AppViewModel.CurrentProject.RootFile != null)
-            App.AppViewModel.CurrentProject.RootFile.IsRoot = false;
-            App.AppViewModel.CurrentProject.RootFile = ei;
+            App.VM.CurrentProject.RootFile = ei.FileName;
+            App.VM.UpdateMRUEntry(App.VM.CurrentProject);
         }
 
         private async void Delete_Click(object sender, RoutedEventArgs e)
         {
             var fi = (FileItem)(sender as FrameworkElement).DataContext;
-            if (App.AppViewModel.CurrentProject.Directory.Contains(fi))
+            if (App.VM.CurrentProject.Directory.Contains(fi))
             {
-                App.AppViewModel.CurrentProject.Directory.Remove(fi);
+                App.VM.CurrentProject.Directory.Remove(fi);
             }
 
             await fi.File.DeleteAsync();
@@ -429,18 +353,19 @@ namespace ConTeXt_UWP
             }
             catch (Exception ex)
             {
-                App.AppViewModel.LOG(ex.Message);
+                App.VM.LOG(ex.Message);
             }
         }
 
-        private async Task<string> rename (FileItem.ExplorerItemType type, string startstring)
+        private async Task<string> rename(FileItem.ExplorerItemType type, string startstring)
         {
             string newstring = startstring;
 
-            var cd = new ContentDialog() { Title = "Rename " + type, PrimaryButtonText = "rename", CloseButtonText = "cancel"};
+            var cd = new ContentDialog() { Title = "Rename " + type, PrimaryButtonText = "rename", CloseButtonText = "cancel" };
             TextBox tb = new TextBox() { Text = startstring };
             cd.Content = tb;
-            cd.PrimaryButtonClick += (a,b) => {
+            cd.PrimaryButtonClick += (a, b) =>
+            {
                 newstring = tb.Text;
             };
             await cd.ShowAsync();
@@ -452,20 +377,29 @@ namespace ConTeXt_UWP
 
             try
             {
-                string name = "bla.tex";
-                var folder = App.AppViewModel.CurrentProject.Folder;
+                string name = "file.tex";
+                var cd = new ContentDialog() { Title = "Set file name", PrimaryButtonText = "ok", CloseButtonText = "cancel", DefaultButton = ContentDialogButton.Primary };
+                TextBox tb = new TextBox() { Text = name };
+                cd.Content = tb;
+                cd.PrimaryButtonClick += (a, b) =>
+                {
+                    name = tb.Text;
+                };
+                await cd.ShowAsync();
+
+                var folder = App.VM.CurrentProject.Folder;
                 if (await folder.TryGetItemAsync(name) == null)
                 {
                     var file = await folder.CreateFileAsync(name);
-                    var fi = new FileItem(file) { Type = FileItem.ExplorerItemType.File, FileLanguage = Path.GetExtension(file.Path) };
-                    App.AppViewModel.CurrentProject.Directory.Add(fi);
+                    var fi = new FileItem(file) { Type = FileItem.ExplorerItemType.File, FileLanguage = FileItem.GetFileLanguage(file.FileType) };
+                    App.VM.CurrentProject.Directory.Add(fi);
                 }
                 else
-                    App.AppViewModel.LOG(name + " does already exist.");
+                    App.VM.LOG(name + " does already exist.");
             }
             catch (Exception ex)
             {
-                App.AppViewModel.LOG(ex.Message);
+                App.VM.LOG(ex.Message);
             }
         }
 
@@ -473,20 +407,28 @@ namespace ConTeXt_UWP
         {
             try
             {
-                string name = "folder";
-                var folder = App.AppViewModel.CurrentProject.Folder;
+                string name = "";
+                var cd = new ContentDialog() { Title = "Set folder name", PrimaryButtonText = "ok", CloseButtonText = "cancel", DefaultButton = ContentDialogButton.Primary };
+                TextBox tb = new TextBox() { Text = name };
+                cd.Content = tb;
+                cd.PrimaryButtonClick += (a, b) =>
+                {
+                    name = tb.Text;
+                };
+                await cd.ShowAsync();
+                var folder = App.VM.CurrentProject.Folder;
                 if (await folder.TryGetItemAsync(name) == null)
                 {
                     var subfolder = await folder.CreateFolderAsync(name);
                     var fi = new FileItem(subfolder) { Type = FileItem.ExplorerItemType.Folder };
-                    App.AppViewModel.CurrentProject.Directory.Add(fi);
+                    App.VM.CurrentProject.Directory.Insert(0, fi);
                 }
                 else
-                    App.AppViewModel.LOG(name + " does already exist.");
+                    App.VM.LOG(name + " does already exist.");
             }
             catch (Exception ex)
             {
-                App.AppViewModel.LOG(ex.Message);
+                App.VM.LOG(ex.Message);
             }
         }
 
@@ -495,6 +437,215 @@ namespace ConTeXt_UWP
             FlyoutBase.ShowAttachedFlyout((FrameworkElement)sender);
         }
 
-       
+        private void TreeView_DropCompleted(UIElement sender, DropCompletedEventArgs args)
+        {
+            App.VM.LOG("TreeView_DropCompleted");
+        }
+
+        private void TreeView_Drop(object sender, DragEventArgs e)
+        {
+            App.VM.LOG(e.GetType().FullName);
+            e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+
+           // e.Handled = true;
+        }
+
+        private async void NewFile_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+
+                var fileitem = (sender as FrameworkElement).DataContext as FileItem;
+                string name = "bla.tex";
+                var folder = fileitem.File as StorageFolder;
+                if (await folder.TryGetItemAsync(name) == null)
+                {
+                    var file = await folder.CreateFileAsync(name);
+                    var fi = new FileItem(file) { Type = FileItem.ExplorerItemType.File, FileLanguage = Path.GetExtension(file.Path) };
+                    fileitem.Children.Add(fi);
+                }
+                else
+                    App.VM.LOG(name + " does already exist.");
+            }
+            catch (Exception ex)
+            {
+                App.VM.LOG(ex.Message);
+            }
+        }
+
+        private void TreeView_DragItemsStarting(TreeView sender, TreeViewDragItemsStartingEventArgs args)
+        {
+            App.VM.LOG("TreeView_DragItemsStarting" + (args.Items[0] as FileItem).FileName);
+            args.Data.RequestedOperation = DataPackageOperation.Move;
+        }
+
+        private void TreeView_DragItemsCompleted(TreeView sender, TreeViewDragItemsCompletedEventArgs args)
+        {
+            App.VM.LOG("TreeView_DragItemsCompleted" + (args.Items[0] as FileItem).FileName + "\n" + string.Join(", ", (new List<FileItem>(App.VM.CurrentProject.Directory)).Select(x => x.FileName).ToArray()));
+        }
+
+        private void TreeViewItem_Drop(object sender, DragEventArgs e)
+        {
+            e.AcceptedOperation = DataPackageOperation.Move;
+            var target = (sender as Microsoft.UI.Xaml.Controls.TreeViewItem).DataContext as FileItem;
+            var source = (e.OriginalSource as Microsoft.UI.Xaml.Controls.TreeViewItem).DataContext as FileItem;
+            if (source.File is StorageFolder)
+            {
+                Tree.CanReorderItems = false;
+                e.AcceptedOperation = DataPackageOperation.None;
+                // e.Handled = false;
+            }
+            else
+            {
+                if (target.File is StorageFile storageFile)
+                {
+                    Tree.CanReorderItems = false;
+                    e.AcceptedOperation = DataPackageOperation.None;
+                    //e.Handled = false;
+                }
+                else
+                {
+                    Tree.CanReorderItems = true;
+                    e.AcceptedOperation = DataPackageOperation.Move;
+                    // e.Handled = true;
+                }
+            }
+            // e.Handled = true;
+        }
+
+        private void TreeViewItem_DropCompleted(UIElement sender, DropCompletedEventArgs args)
+        {
+        }
+
+        private void TreeView_DragStarting(UIElement sender, DragStartingEventArgs args)
+        {
+            // App.VM.LOG(args.OriginalSource.GetType().FullName);
+        }
+
+        private void NavigationTree_ItemInvoked(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewItemInvokedEventArgs args)
+        {
+            var fileitem = (FileItem)args.InvokedItem;
+            if (fileitem.Type == FileItem.ExplorerItemType.File)
+            {
+                App.VM.OpenFile(fileitem);
+            }
+            args.Handled = true;
+        }
+
+        private void TreeView_DragItemsStarting(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewDragItemsStartingEventArgs args)
+        {
+            // if ((args.Items[0] as FileItem).File is StorageFolder)
+            //     sender.CanReorderItems = false;
+            // else
+            //     sender.CanReorderItems = true;
+            //// App.VM.LOG("TreeView_DragItemsStarting" + (args.Items[0] as FileItem).FileName);
+            try
+            {
+                foreach (FileItem item in args.Items)
+                {
+                    DraggedItems.Add(item);
+                }
+            }
+            catch (Exception ex)
+            {
+                App.VM.LOG("OnDrop" + ex.Message);
+            }
+        }
+
+        private void TreeView_DragItemsCompleted(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewDragItemsCompletedEventArgs args)
+        {
+            //  App.VM.LOG("TreeView_DragItemsCompleted" + (args.Items[0] as FileItem).FileName + "\n" + string.Join(", ", (new List<FileItem>(App.VM.CurrentProject.Directory)).Select(x => x.FileName).ToArray()));
+            try
+            {
+                //App.VM.LOG(args.Items.Count.ToString());
+                //if (args.DropResult != DataPackageOperation.None)
+                //    foreach (FileItem item in args.Items)
+                //    {
+                //        if (args.NewParentItem != null)
+                //        {
+                //            var parent = args.NewParentItem as FileItem;
+                //            parent.Children.Add(item);
+                //        }
+                //    }
+
+                DraggedItems.Clear();
+            }
+            catch (Exception ex)
+            {
+                App.VM.LOG("TreeView_DragItemsCompleted" + ex.Message);
+            }
+        }
+        private void Tree_Drop(object sender, DragEventArgs e)
+        {
+            App.VM.LOG("Tree_Drop");
+            e.Handled = true;
+        }
+    }
+    class MyTreeViewItem : Microsoft.UI.Xaml.Controls.TreeViewItem
+    {
+        protected override void OnDragEnter(DragEventArgs e)
+        {
+            try
+            {
+                var draggedItem = MainPage.DraggedItems[0];
+                var draggedOverItem = DataContext as FileItem;
+                // Block TreeViewNode auto expanding if we are dragging a group onto another group
+                if (draggedItem.File is StorageFolder && draggedOverItem.File is StorageFolder)
+                {
+                    e.Handled = true;
+                }
+
+                base.OnDragEnter(e);
+            }
+            catch (Exception ex)
+            {
+                App.VM.LOG("OnDrop" + ex.Message);
+            }
+
+        }
+
+        protected override void OnDragOver(DragEventArgs e)
+        {
+            try
+            {
+                var draggedItem = MainPage.DraggedItems[0];
+                var draggedOverItem = DataContext as FileItem;
+
+                if (draggedItem.File is StorageFolder && draggedOverItem.File is StorageFolder)
+                {
+                    //- Group
+                    //-- Leaf1
+                    //-- (Group2) <- Blocks dropping another Group here
+                    //-- Leaf2
+                    e.Handled = true;
+                }
+                base.OnDragOver(e);
+                e.AcceptedOperation = draggedOverItem.File is StorageFolder && !(draggedItem.File is StorageFolder) ? DataPackageOperation.Move : DataPackageOperation.None;
+            }
+            catch (Exception ex)
+            {
+                App.VM.LOG("OnDrop" + ex.Message);
+            }
+
+        }
+        protected override void OnDrop(DragEventArgs e)
+        {
+            try
+            {
+                var data = DataContext as FileItem;
+                // Block all drops on leaf node
+                if (!(data.File is StorageFolder))
+                {
+                    e.Handled = true;
+                }
+
+                base.OnDrop(e);
+            }
+            catch (Exception ex)
+            {
+                App.VM.LOG("OnDrop" + ex.Message);
+            }
+        }
+
     }
 }
