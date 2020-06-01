@@ -29,7 +29,7 @@
                 
             </Button>
         </StackPanel>
-        <ItemsControl x:Name="tStack" Grid.Row="1" ItemsSource="{Binding ProjectList, Mode=OneWay}">
+        <ItemsControl x:Name="tStack" Grid.Row="1" ItemsSource="{Binding Default.ProjectList, Mode=OneWay}">
             <ItemsControl.Template>
                 <ControlTemplate>
                     <ScrollViewer x:Name="ScrollViewer" Padding="{TemplateBinding Padding}">

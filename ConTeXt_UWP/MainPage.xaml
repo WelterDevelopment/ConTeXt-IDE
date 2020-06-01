@@ -19,6 +19,7 @@
                 <local:MyTreeViewItem.ContextFlyout>
                     <MenuFlyout>
                         <MenuFlyoutItem x:Name="NewFile" Icon="Add" Click="NewFile_Click" Text="New File"></MenuFlyoutItem>
+                        <MenuFlyoutItem x:Name="NewFolder" Icon="Add" Click="NewFolder_Click"  Text="New Folder"></MenuFlyoutItem>
                         <MenuFlyoutItem x:Name="Delete" Icon="Delete" Click="Delete_Click" Text="Delete"></MenuFlyoutItem>
                         <MenuFlyoutItem x:Name="Rename" Icon="Rename" Click="Rename_Click" Text="Rename"></MenuFlyoutItem>
                     </MenuFlyout>
@@ -26,15 +27,16 @@
                 <StackPanel Margin="0" Orientation="Horizontal">
                     <!--<Image Width="20" Source="Assets/folder.png"/>-->
                     <SymbolIcon Width="20" Symbol="Folder"></SymbolIcon>
-                    <TextBlock Text="{x:Bind FileName}" FontFamily="Segoe UI" Margin="12,0,12,0" />
+                    <TextBlock Text="{x:Bind FileName, Mode=OneWay}" FontFamily="Segoe UI" Margin="12,0,12,0" />
                 </StackPanel>
             </local:MyTreeViewItem>
         </DataTemplate>
 
         <DataTemplate x:Key="FileTemplate" x:DataType="local:FileItem">
-            <local:MyTreeViewItem >
+            <local:MyTreeViewItem Margin="0,0,20,0">
                 <local:MyTreeViewItem.ContextFlyout>
                     <MenuFlyout>
+                        <MenuFlyoutItem x:Name="CompileFlyoutButton" Icon="Play" Click="Compile_Click" Text="Compile"></MenuFlyoutItem>
                         <MenuFlyoutItem x:Name="SetRoot" Icon="Favorite" Click="SetRoot_Click" IsEnabled="{Binding IsRoot, Converter={StaticResource BoolInverter}}" Text="Set as Main File"></MenuFlyoutItem>
                         <MenuFlyoutItem x:Name="Delete" Icon="Delete" Click="Delete_Click" IsEnabled="{Binding IsRoot, Converter={StaticResource BoolInverter}}" Text="Delete"></MenuFlyoutItem>
                         <MenuFlyoutItem x:Name="Rename" Icon="Rename" Click="Rename_Click" Text="Rename"></MenuFlyoutItem>
@@ -43,7 +45,7 @@
                 <StackPanel Orientation="Horizontal">
                     <!--<Image Width="20" Source="Assets/file.png"/>-->
                     <SymbolIcon Width="20" Symbol="Document"></SymbolIcon>
-                    <TextBlock Text="{Binding FileName}" FontWeight="{Binding IsRoot, Converter={StaticResource BoolToFontWeight}}" FontFamily="Segoe UI" Margin="12,0,12,0"/>
+                    <TextBlock Text="{Binding FileName, Mode=OneWay}" FontWeight="{Binding IsRoot, Converter={StaticResource BoolToFontWeight}}" FontFamily="Segoe UI" Margin="12,0,12,0"/>
                 </StackPanel>
             </local:MyTreeViewItem>
         </DataTemplate>
@@ -77,7 +79,7 @@
             <TextBlock Text="|" Grid.Column="1" Style="{StaticResource TitleTextBlockStyle}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="15,0,0,0" />
             <TextBlock Text="" x:Name="PageTitle" Grid.Column="2" Style="{StaticResource TitleTextBlockStyle}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,0,15,0" />
         </Grid>-->
-        <NavigationView  IsPaneOpen="{Binding Default.NavigationViewPaneOpen, Mode=TwoWay}" IsSettingsVisible="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToBool}}" x:FieldModifier="public" Grid.Row="0" OpenPaneLength="{Binding Default.NavigationViewPaneOpenLength}" IsPaneToggleButtonVisible="True" IsPaneVisible="True" PaneDisplayMode="{Binding Default.NavigationViewPaneMode, Mode=TwoWay,Converter={StaticResource StringToNav}}" IsBackButtonVisible="Collapsed"  BackRequested="NvSample_BackRequested" ItemInvoked="NvSample_ItemInvoked" x:Name="nvSample"  Loaded="NvSample_Loaded" FontFamily="Segoe UI" Margin="0,1,0,0" >
+        <NavigationView  IsPaneOpen="{Binding Default.NavigationViewPaneOpen, Mode=TwoWay}" IsSettingsVisible="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToBool}}" x:FieldModifier="public" Grid.Row="0" OpenPaneLength="{Binding Default.NavigationViewPaneOpenLength}" IsPaneToggleButtonVisible="True" IsPaneVisible="True" PaneDisplayMode="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource StringToNav}}" IsBackButtonVisible="Collapsed"  BackRequested="NvSample_BackRequested" ItemInvoked="NvSample_ItemInvoked" x:Name="nvSample"  Loaded="NvSample_Loaded" FontFamily="Segoe UI" Margin="0,1,0,0" >
 
             <!--<NavigationView.HeaderTemplate>
                 <DataTemplate>
@@ -114,16 +116,16 @@
                                         <ColumnDefinition Width="Auto"></ColumnDefinition>
                                     </Grid.ColumnDefinitions>
                                     <NavigationViewItemHeader Grid.Column="0" Content="{Binding CurrentProject.Name}"></NavigationViewItemHeader>
-                                    <Button IsEnabled="{Binding IsProjectLoaded}" Style="{ThemeResource ButtonRevealStyle}" VerticalContentAlignment="Center" Grid.Column="1"  Click="AddFile_Click">
+                                    <Button ToolTipService.ToolTip="Create file" IsEnabled="{Binding IsProjectLoaded}" Style="{ThemeResource ButtonRevealStyle}" VerticalContentAlignment="Center" Grid.Column="1"  Click="AddFile_Click">
                                         <SymbolIcon Symbol="Document"/>
                                     </Button>
-                                    <Button  IsEnabled="{Binding IsProjectLoaded}"  Style="{ThemeResource ButtonRevealStyle}"  Grid.Column="2" Click="AddFolder_Click" Margin="5,0,5,0">
+                                    <Button ToolTipService.ToolTip="Create folder" IsEnabled="{Binding IsProjectLoaded}"  Style="{ThemeResource ButtonRevealStyle}"  Grid.Column="2" Click="AddFolder_Click" Margin="5,0,5,0">
                                         <SymbolIcon Symbol="Folder"/>
                                     </Button>
                                 </Grid>
-                                <!--<TreeView SelectionMode="None" ItemInvoked="NavigationTree_ItemInvoked" MaxHeight="300" ScrollViewer.VerticalScrollBarVisibility="Auto"  ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}" ItemsSource="{Binding CurrentProject.Directory}" 
-                       CanDragItems="True"  CanDrag="True" CanReorderItems="False" AllowDrop="True"  DragItemsStarting="TreeView_DragItemsStarting" DragItemsCompleted="TreeView_DragItemsCompleted" DropCompleted="TreeView_DropCompleted" Drop="TreeView_Drop" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0" Margin="-20,0,0,0"
-                         />-->
+                                <contr:TreeView x:Name="Tree" SelectionMode="None" ItemInvoked="NavigationTree_ItemInvoked" MaxHeight="300" ScrollViewer.VerticalScrollBarVisibility="Auto"  ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}" ItemsSource="{Binding CurrentProject.Directory, Mode=TwoWay}" 
+                      CanReorderItems="False" AllowDrop="True" Drop="Tree_Drop"   DropCompleted="TreeView_DropCompleted" DragOver="TreeView_Drop" DragEnter="TreeView_Drop" DragItemsStarting="TreeView_DragItemsStarting" DragItemsCompleted="TreeView_DragItemsCompleted" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0"
+                         />
                             </StackPanel>
                         </Flyout>
                     </FlyoutBase.AttachedFlyout>
@@ -159,14 +161,14 @@
                                 <ColumnDefinition Width="Auto"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
                             <NavigationViewItemHeader Grid.Column="0" Content="{Binding CurrentProject.Name}"></NavigationViewItemHeader>
-                            <Button  IsEnabled="{Binding IsProjectLoaded}" Style="{ThemeResource ButtonRevealStyle}" VerticalContentAlignment="Center" Grid.Column="1"  Click="AddFile_Click">
+                            <Button ToolTipService.ToolTip="Create file" IsEnabled="{Binding IsProjectLoaded}" Style="{ThemeResource ButtonRevealStyle}" VerticalContentAlignment="Center" Grid.Column="1"  Click="AddFile_Click">
                                 <SymbolIcon Symbol="Document"/>
                             </Button>
-                            <Button  IsEnabled="{Binding IsProjectLoaded}"  Style="{ThemeResource ButtonRevealStyle}"  Grid.Column="2" Click="AddFolder_Click" Margin="5,0,5,0">
+                            <Button ToolTipService.ToolTip="Create folder" IsEnabled="{Binding IsProjectLoaded}"  Style="{ThemeResource ButtonRevealStyle}"  Grid.Column="2" Click="AddFolder_Click" Margin="5,0,5,0">
                                 <SymbolIcon Symbol="Folder"/>
                             </Button>
                         </Grid>
-                        <contr:TreeView x:Name="Tree"  SelectionMode="None" ItemInvoked="NavigationTree_ItemInvoked" MaxHeight="300" ScrollViewer.VerticalScrollBarVisibility="Auto"  ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}" ItemsSource="{Binding CurrentProject.Directory, Mode=TwoWay}" 
+                        <contr:TreeView SelectionMode="None" ItemInvoked="NavigationTree_ItemInvoked" MaxHeight="300" ScrollViewer.VerticalScrollBarVisibility="Auto"  ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}" ItemsSource="{Binding CurrentProject.Directory, Mode=TwoWay}" 
                       CanReorderItems="False" AllowDrop="True" Drop="Tree_Drop"   DropCompleted="TreeView_DropCompleted" DragOver="TreeView_Drop" DragEnter="TreeView_Drop" DragItemsStarting="TreeView_DragItemsStarting" DragItemsCompleted="TreeView_DragItemsCompleted" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0"
                          />
                     </StackPanel>

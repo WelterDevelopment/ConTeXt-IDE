@@ -125,9 +125,11 @@ namespace ConTeXt_UWP
                                     StorageApplicationPermissions.FutureAccessList.AddOrReplace(folder.Name, folder, "");
                                     StorageApplicationPermissions.MostRecentlyUsedList.AddOrReplace(folder.Name, folder, "");
                                     App.VM.RecentAccessList = StorageApplicationPermissions.MostRecentlyUsedList;
-                                    var proj = new Project(folder.Name, folder, App.VM.GenerateTreeView(folder));
+                                    
+                                    var proj = new Project(folder.Name, folder, App.VM.GenerateTreeView(folder, App.VM.CurrentProject.RootFile));
                                     App.VM.CurrentProject = proj;
-                                    App.VM.ProjectList.Add(proj);
+                                    App.VM.Default.ProjectList.Add(proj);
+                                    App.VM.Default.LastActiveProject = proj.Name;
                                     // App.AppViewModel.UpdateRecentAccessList();
                                 }
                             }
@@ -152,9 +154,19 @@ namespace ConTeXt_UWP
                                         var templateFolder = await StorageFolder.GetFolderFromPathAsync(path + @"\" + project);
                                         //ZipFile.ExtractToDirectory(path + @"\" + project + ".zip", folder.Path,true);
                                         await CopyFolderAsync(templateFolder, folder);
-                                        var proj = new Project(folder.Name, folder, App.VM.GenerateTreeView(folder));
+                                        string rootfile = "";
+                                        switch (project)
+                                        {
+                                            case "mwe": rootfile = "main.tex"; break;
+                                            case "projpres": rootfile = "prd_presentation.tex"; break;
+                                            case "projthes": rootfile = "prd_thesis.tex"; break;
+                                            case "single": rootfile = "main.tex"; break;
+                                            default: break;
+                                        }
+                                        var proj = new Project(folder.Name, folder, App.VM.GenerateTreeView(folder, rootfile)) {RootFile = rootfile};
                                         App.VM.CurrentProject = proj;
-                                        App.VM.ProjectList.Add(proj);
+                                        App.VM.Default.ProjectList.Add(proj);
+                                        App.VM.Default.LastActiveProject = proj.Name;
 
                                         // App.AppViewModel.UpdateRecentAccessList();
                                     }
@@ -189,7 +201,7 @@ namespace ConTeXt_UWP
         {
             var proj = (sender as FrameworkElement).DataContext as Project;
             StorageApplicationPermissions.MostRecentlyUsedList.Remove(proj.Name);
-            App.VM.ProjectList.Remove(proj);
+            App.VM.Default.ProjectList.Remove(proj);
             //App.VM.UpdateRecentAccessList();
         }
 
@@ -200,16 +212,18 @@ namespace ConTeXt_UWP
 
                 var proj = (sender as FrameworkElement).DataContext as Project;
                 var f = await StorageApplicationPermissions.MostRecentlyUsedList.GetFolderAsync(proj.Name);
-                //App.AppViewModel.CurrentFolder = f;
-                App.VM.CurrentProject = new Project(f.Name, f, App.VM.GenerateTreeView(f));
-
+                var list =  App.VM.Default.ProjectList.Where(x => x.Name == f.Name);
+                if (list.Count() == 1)
+                {
+                    var project = list.FirstOrDefault();
+                    project.Folder = f;
+                    project.Directory = App.VM.GenerateTreeView(f,proj.RootFile);
+                     App.VM.CurrentProject = project;
+                }
                 App.VM.Default.LastActiveProject = proj.Name;
                 App.VM.FileItems.Clear();
-                var rf = StorageApplicationPermissions.MostRecentlyUsedList.Entries.Where(x => x.Token == proj.Name).FirstOrDefault();
-                //App.VM.LOG("Loaded1" + rf.Token + rf.Metadata);
-                //App.VM.LOG("Loaded2" + App.VM.Meta(rf.Metadata)["rootfile"]);
-                //App.VM.CurrentProject.RootFile = App.VM.Meta(rf.Metadata)["rootfile"];
-                //App.VM.LOG("Loaded2"+rf.Token+rf.Metadata);
+                App.VM.CurrentFileItem.FileContent = "";
+               // var rf = StorageApplicationPermissions.MostRecentlyUsedList.Entries.Where(x => x.Token == proj.Name).FirstOrDefault();
             }
             catch (Exception ex)
             {

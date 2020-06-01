@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Monaco.Editor;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -7,21 +8,15 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage;
-using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Data;
 
-namespace ConTeXt_WPF
+namespace ConTeXt_UWP
 {
-
-    public class Settings : ObservableSettings
+    public class OldSettings : ObservableSettings
     {
-        public static Settings settings = new Settings();
-        public static Settings Default
-        {
-            get { return settings; }
-        }
-
-        public Settings() : base(ApplicationData.Current.LocalSettings) { }
+        public OldSettings() : base(ApplicationData.Current.LocalSettings) { }
 
         [DefaultSettingValue(Value = true)]
         public bool StartWithLastActiveProject
@@ -122,7 +117,7 @@ namespace ConTeXt_WPF
             get { return Get<string>(); }
             set { Set(value); }
         }
-
+        
         [DefaultSettingValue(Value = @"http://lmtx.pragma-ade.nl/install-lmtx/context-win64.zip")]
         public string ContextDownloadLink
         {
@@ -159,6 +154,25 @@ namespace ConTeXt_WPF
             get { return Get<bool>(); }
             set { Set(value); }
         }
+
+        [DefaultSettingValue(Value = true)]
+        public bool SuggestStartStop
+        {
+            get { return Get<bool>(); }
+            set { Set(value); }
+        }
+        [DefaultSettingValue(Value = true)]
+        public bool SuggestPrimitives
+        {
+            get { return Get<bool>(); }
+            set { Set(value); }
+        }
+        [DefaultSettingValue(Value = true)]
+        public bool SuggestCommands
+        {
+            get { return Get<bool>(); }
+            set { Set(value); }
+        }
         [DefaultSettingValue(Value = @"")]
         public string PackageID
         {
@@ -166,12 +180,24 @@ namespace ConTeXt_WPF
             set { Set(value); }
         }
 
-       
+        public List<string> ShowLineNumberOptions
+        {
+            get
+            {
+                var n = Enum.GetValues(typeof(LineNumbersType)).Cast<LineNumbersType>().ToList();
+                List<string> myDic = new List<string>();
+                foreach (LineNumbersType foo in Enum.GetValues(typeof(LineNumbersType)))
+                {
+                    myDic.Add(foo.ToString());
+                }
+                return myDic;
+            }
+        }
         public string[] NavigationOption
         {
             get
             {
-
+                
                 string[] nav = Enum.GetNames(typeof(NavigationViewPaneDisplayMode)); // { "Left", "LeftCompact", "Auto", "Top", "LeftMinimal" };
                 return nav;
             }
@@ -200,7 +226,7 @@ namespace ConTeXt_WPF
 
         public object Value { get; set; }
 
-
+       
 
     }
 
@@ -223,7 +249,7 @@ namespace ConTeXt_WPF
                 if (EqualityComparer<T>.Default.Equals(currentValue, value))
                     return false;
             }
-
+   
             settings.Values[propertyName] = value;
             //PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             OnPropertyChanged(propertyName);
@@ -242,6 +268,7 @@ namespace ConTeXt_WPF
 
         protected T Get<T>([CallerMemberName] string propertyName = null)
         {
+
             if (settings.Values.ContainsKey(propertyName))
                 return (T)settings.Values[propertyName];
 
@@ -251,5 +278,10 @@ namespace ConTeXt_WPF
 
             return default(T);
         }
+    }
+    public class DetailItem
+    {
+        public int Value { get; set; }
+        public string Text { get; set; }
     }
 }

@@ -24,6 +24,7 @@ using Windows.UI.Text;
 using Monaco.Editor;
 using Windows.Foundation.Collections;
 using System.Runtime.CompilerServices;
+using Newtonsoft.Json;
 
 namespace ConTeXt_UWP
 {
@@ -156,48 +157,6 @@ namespace ConTeXt_UWP
         }
     }
 
-    public class CompileMode : INotifyPropertyChanged
-    {
-
-        private string command;
-
-        private string key;
-
-        private string name;
-
-        private string passphrase;
-
-        private string privatekey;
-
-        public CompileMode(string Name, string Command)
-        {
-            name = Name;
-            command = Command;
-
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-        public string Command
-        {
-            get { return command; }
-            set { command = value; }
-        }
-
-        public string Name
-        {
-            get { return name; }
-            set
-            {
-                if (value == name)
-                    return;
-                name = value;
-                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Name"));
-            }
-        }
-    }
-
-   
-
     public class ExplorerItemTemplateSelector : DataTemplateSelector
     {
         public DataTemplate FileTemplate { get; set; }
@@ -236,17 +195,17 @@ namespace ConTeXt_UWP
         {
             switch (ext)
             {
-                case ".tex": return "context"; 
+                case ".tex": return "context";
                 case ".mkiv": return "context";
                 case ".mkii": return "context";
                 case ".lua": return "lua";
                 case ".json": return "javascript";
                 case ".js": return "javascript";
                 case ".md": return "markdown";
-                case ".html": return "html"; 
+                case ".html": return "html";
                 case ".xml": return "xml";
-                default: 
-                    return"context"; 
+                default:
+                    return "context";
             }
         }
 
@@ -260,29 +219,51 @@ namespace ConTeXt_UWP
             this.fileFolder = file != null ? Path.GetDirectoryName(file.Path) : "";
             if (file != null && file is StorageFile)
                 this.fileLanguage = GetFileLanguage(((StorageFile)file).FileType);
-          
-            if (Children != null) 
+
+            if (Children != null)
+            {
+                // App.VM.LOG("AddedChildrenChngedHandler");
                 Children.CollectionChanged += Children_CollectionChanged;
+            }
         }
 
         private async void Children_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             try
             {
-                if (!App.VM.IsSaving)
+                if (App.VM.IsProjectLoaded)
                     if (e.Action == NotifyCollectionChangedAction.Add)
                     {
-                        App.VM.LOG("Children_CollectionChanged");
-                        var fi = e.NewItems[0] as FileItem;
-                        if (fi.File is StorageFile fil && File is StorageFolder fold)
+                        bool ischanged = false;
+                        foreach (FileItem fi in e.NewItems)
                         {
-                            if ((await fil.GetParentAsync()).Path != fold.Path)
-                                await fil.MoveAsync(fold, fil.Name, NameCollisionOption.GenerateUniqueName);
+                            if (fi.File is StorageFile fil && File is StorageFolder fold)
+                            {
+                                var parent = await fil.GetParentAsync();
+                                if (parent.Path != fold.Path)
+                                {
+                                    await fil.MoveAsync(fold, fil.Name, NameCollisionOption.GenerateUniqueName);
+                                    fi.FileFolder = Path.GetDirectoryName(fil.Path);
+                                    //  fi.FilePath = fil.Path;
+                                    App.VM.LOG("Moved " + fil.Name + " from " + parent.Name + " to " + fold.Name);
+                                    ischanged = true;
+                                }
+                            }
+                            else if (fi.File is StorageFolder fol && File is StorageFolder folcurr)
+                            {
+                                var parent = await fol.GetParentAsync();
+                                if (parent.Path != folcurr.Path)
+                                {
+                                    App.VM.LOG("Moving Folders to Subfolders is currently not supported. Please do this operation in the Windows Explorer and reload the project.");
+                                }
+                            }
+
                         }
-                        else if (fi.File is StorageFolder fol)
+                        if (ischanged)
                         {
-                            App.VM.LOG("Moving Folders to Subfolders is currently not supported. Please to this operation in the Windows Explorer and reload the project.");
+                            //Children.Sort((a,b)=> { return string.Compare(a.File.Name, b.File.Name); });
                         }
+
                     }
             }
             catch (Exception ex)
@@ -290,6 +271,7 @@ namespace ConTeXt_UWP
                 App.VM.LOG(ex.Message);
             }
         }
+
 
         public event PropertyChangedEventHandler PropertyChanged;
         public enum ExplorerItemType { Folder, File };
@@ -339,8 +321,6 @@ namespace ConTeXt_UWP
             get { return fileFolder; }
             set
             {
-                if (value == fileFolder)
-                    return;
                 fileFolder = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FileFolder"));
             }
@@ -351,8 +331,6 @@ namespace ConTeXt_UWP
             get { return fileLanguage; }
             set
             {
-                if (value == fileLanguage)
-                    return;
                 fileLanguage = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FileLanguage"));
             }
@@ -363,24 +341,22 @@ namespace ConTeXt_UWP
             get { return fileName; }
             set
             {
-                if (value == fileName)
-                    return;
                 fileName = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FileName"));
             }
         }
 
-        public string FilePath
-        {
-            get { return filePath; }
-            set
-            {
-                if (value == filePath)
-                    return;
-                filePath = value;
-                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FilePath"));
-            }
-        }
+        //public string FilePath
+        //{
+        //    get { return filePath; }
+        //    set
+        //    {
+        //        if (value == filePath)
+        //            return;
+        //        filePath = value;
+        //        this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FilePath"));
+        //    }
+        //}
 
         public bool IsExpanded
         {
@@ -524,7 +500,7 @@ namespace ConTeXt_UWP
             this.directory = directory;
             this.name = name;
             this.folder = folder;
-            if (Directory != null) 
+            if (Directory != null)
                 Directory.CollectionChanged += Directory_CollectionChanged;
         }
 
@@ -532,19 +508,23 @@ namespace ConTeXt_UWP
         {
             try
             {
-                if (!App.VM.IsSaving)
+                if (App.VM.IsProjectLoaded)
                     if (e.Action == NotifyCollectionChangedAction.Add)
                     {
-                        App.VM.LOG("Directory_CollectionChanged");
-                        var fi = e.NewItems[0] as FileItem;
-                        if (fi.File is StorageFile file)
+                        foreach (FileItem fi in e.NewItems)
                         {
-                            if ((await file.GetParentAsync()).Path != Folder.Path)
-                                await file.MoveAsync(Folder, file.Name, NameCollisionOption.GenerateUniqueName);
-                        }
-                        else if (fi.File is StorageFolder fold)
-                        {
-                            // await fold.c
+                            if (fi.File is StorageFile file)
+                            {
+                                if (fi.FileFolder != Folder.Path)
+                                {
+                                    await file.MoveAsync(Folder, file.Name, NameCollisionOption.GenerateUniqueName);
+                                    fi.FileFolder = Path.GetDirectoryName(file.Path);
+                                }
+                            }
+                            else if (fi.File is StorageFolder fold)
+                            {
+                                // await fold.c
+                            }
                         }
                     }
             }
@@ -555,6 +535,8 @@ namespace ConTeXt_UWP
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
+
+        [JsonIgnore]
         public ObservableCollection<FileItem> Directory
         {
             get { return directory; }
@@ -567,6 +549,7 @@ namespace ConTeXt_UWP
 
             }
         }
+        [JsonIgnore]
         public StorageFolder Folder
         {
             get { return folder; }
@@ -591,7 +574,7 @@ namespace ConTeXt_UWP
             }
         }
 
-        private ObservableCollection<Mode> modes = new ObservableCollection<Mode>() { new Mode() { Name = "print", IsSelected = false }, new Mode() { Name = "screen", IsSelected = false }};
+        private ObservableCollection<Mode> modes = new ObservableCollection<Mode>() { new Mode() { Name = "print", IsSelected = false }, new Mode() { Name = "screen", IsSelected = false } };
         public ObservableCollection<Mode> Modes
         {
             get { return modes; }
@@ -604,7 +587,7 @@ namespace ConTeXt_UWP
             }
         }
 
-        private string rootFile;
+        private string rootFile = null;
         public string RootFile
         {
             get { return rootFile; }
@@ -613,11 +596,17 @@ namespace ConTeXt_UWP
                 if (value == rootFile)
                     return;
                 rootFile = value;
-                Directory.Where(x => x.FileName != value).ToList().ForEach(x => x.IsRoot = false);
-                var df = Directory.Where(x => x.FileName == value);
-                if (df.Count() == 1)
+                if (Directory != null)
                 {
-                    df.FirstOrDefault().IsRoot = true;
+                    Directory.Where(x => x.FileName != value).ToList().ForEach(x => x.IsRoot = false);
+                    var df = Directory.Where(x => x.FileName == value);
+                    if (df.Count() == 1)
+                    {
+                        df.FirstOrDefault().IsRoot = true;
+                    }
+
+                    App.VM.LOG("Root file changed to " + RootFile);
+                    App.VM.Default.SaveSettings();
                 }
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("RootFile"));
             }
@@ -657,6 +646,18 @@ namespace ConTeXt_UWP
             ElementTheme Mode = ElementTheme.Default;
             if (!string.IsNullOrEmpty(value.ToString()))
             {
+                //var defTheme = ApplicationTheme.Dark;
+                //var DefaultTheme = new Windows.UI.ViewManagement.UISettings();
+                //var uiTheme = DefaultTheme.GetColorValue(Windows.UI.ViewManagement.UIColorType.Background).ToString();
+                //if (uiTheme == "#FF000000")
+                //{
+                //    defTheme = ApplicationTheme.Dark;
+                //}
+                //else if (uiTheme == "#FFFFFFFF")
+                //{
+                //    defTheme = ApplicationTheme.Light;
+                //}
+
                 switch (value.ToString())
                 {
                     case "Default": Mode = ElementTheme.Default; break;
@@ -665,6 +666,7 @@ namespace ConTeXt_UWP
                     default: Mode = ElementTheme.Default; break;
                 }
             }
+
             return Mode;
         }
 
@@ -674,41 +676,28 @@ namespace ConTeXt_UWP
         }
     }
 
-    public class ViewModel : INotifyPropertyChanged
+    public class ViewModel : Bindable
     {
         public ObservableCollection<FileActivatedEventArgs> FileActivatedEvents = new ObservableCollection<FileActivatedEventArgs>() { };
 
-        public ObservableCollection<CompileMode> ModeList = new ObservableCollection<CompileMode>() { new CompileMode("testname", "testcommand"), new CompileMode("bla", "blub") };
+        public ObservableCollection<Helpfile> HelpFiles { get; } = new ObservableCollection<Helpfile>() {
+            new Helpfile() { FriendlyName = "Manual", FileName = "ma-cb-en.pdf", Path = @"\tex\texmf-context\doc\context\documents\general\manuals\" },
+            new Helpfile() { FriendlyName = "Commands", FileName = "setup-en.pdf", Path = @"\tex\texmf-context\doc\context\documents\general\qrcs\" },
 
-        public Settings settings = new Settings();
+        };
+
+        public Settings Default { get; } = Settings.Default;
 
         readonly List<string> cancelWords = new List<string> { ".gitignore", ".tuc", ".log", ".pgf", ".pdf" };
 
-        private string blocks;
-
-        private ObservableCollection<FileItem> fileItems = new ObservableCollection<FileItem>();
-
-        private KeyValuePair<string, string> help;
-
         private ObservableCollection<FileItem> list;
 
-        private string nVHeader;
-
-        private ObservableCollection<Project> projectList = new ObservableCollection<Project>();
-
-        private StorageItemMostRecentlyUsedList recentAccessList;
 
         public ViewModel()
         {
-
             FileItems = new ObservableCollection<FileItem>();
             CurrentFileItem = FileItems.Count > 0 ? FileItems.FirstOrDefault() : new FileItem(null);
-            //FileItems.Add(new FileItem("bla","blub","content",true));
-            TabViewItems = new ObservableCollection<TabViewItem>();
             FileItems.CollectionChanged += FileItems_CollectionChanged1;
-            //ModeList = new ObservableCollection<string>(new List<string>() { "sample1", "sample2" });
-            //AddHelp();
-
         }
 
         private async void FileItems_CollectionChanged1(object sender, NotifyCollectionChangedEventArgs e)
@@ -722,198 +711,53 @@ namespace ConTeXt_UWP
             }
             if (FileItems.Count == 0)
             {
-                IsSaving = true;
+                IsFileItemLoaded = false;
             }
             else
             {
-                IsSaving = false;
+                IsFileItemLoaded = true;
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        //public ObservableCollection<Page> PageList { get; set; }
         public AppServiceConnection appServiceConnection { get; set; }
         public BackgroundTaskDeferral AppServiceDeferral { get; set; }
-        public string Blocks
-        {
-            get { return blocks; }
-            set
-            {
-                blocks = value;
-                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Blocks"));
+        public string Blocks { get => Get<string>(); set => Set(value); }
 
-            }
-        }
-        private Project currentProject;
-        public Project CurrentProject
-        {
-            get { return currentProject ?? new Project(); }
-            set
-            {
-                if (value == currentProject)
-                    return;
-                currentProject = value;
-                if (currentProject.Folder != null)
-                    IsProjectLoaded = true;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CurrentProject"));
-            }
-        }
+        public Project CurrentProject { get => Get(new Project()); set { Set(value); if (CurrentProject.Folder != null) IsProjectLoaded = true; } }
 
-        public Settings Default
-        {
-            get { return settings; }
-        }
+        public ObservableCollection<FileItem> FileItems { get => Get(new ObservableCollection<FileItem>()); set => Set(value); }
 
-        public ObservableCollection<FileItem> FileItems
-        {
-            get { return fileItems; }
-            set
-            {
-                if (value == fileItems)
-                    return;
-                fileItems = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FileItems"));
-            }
-        }
+        public FileItem CurrentFileItem { get => Get(new FileItem(null)); set => Set(value); }
 
-        private FileItem currentFileItem;
-        public FileItem CurrentFileItem
-        {
-            get { return currentFileItem; }
-            set
-            {
-                currentFileItem = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CurrentFileItem"));
-            }
-        }
+        //public KeyValuePair<string, string> Help
+        //{
+        //    get { return this.help; }
+        //    set { this.help = value; this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Help")); }
+        //}
 
-        //public StorageFolder CurrentFolder { get; set; }
-        public KeyValuePair<string, string> Help
-        {
-            get { return this.help; }
-            set { this.help = value; this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Help")); }
-        }
+        //public ObservableCollection<KeyValuePair<string, string>> Helpfile { get; set; }
 
-        public ObservableCollection<KeyValuePair<string, string>> Helpfile { get; set; }
+        public bool IsSaving { get => Get(false); set { Set(value); if (value) { IsError = false; IsVisible = true; } if (!value && !IsError) { IsVisible = false; } } }
+        public bool IsFileItemLoaded { get => Get(false); set { Set(value); if (value) { IsError = false; IsVisible = false; } else { IsVisible = false; } } }
 
-        private bool isSaving = true;
-        public bool IsSaving
-        {
-            get { return isSaving; }
-            set
-            {
-                if (value == isSaving)
-                    return;
-                isSaving = value;
-                if (value)
-                { IsError = false;
-                    IsVisible = true;
-                }
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSaving"));
-            }
-        }
+        public string SelectedPath { get => Get(""); set => Set(value); }
 
-        private string selectedPath;
-        public string SelectedPath
-        {
-            get { return selectedPath; }
-            set
-            {
-                selectedPath = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("SelectedPath"));
-            }
-        }
+        public bool IsVisible { get => Get(true); set => Set(value); }
 
-        private bool isVisible = false;
-        public bool IsVisible
-        {
-            get { return isVisible; }
-            set
-            {
-                if (value == isVisible)
-                    return;
-                isVisible = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsVisible"));
-            }
-        }
+        public bool IsPaused { get => Get(false); set { Set(value); if (value) IsError = false; } }
 
-        private bool isPaused = true;
-        public bool IsPaused
-        {
-            get { return isPaused; }
-            set
-            {
-                if (value == isPaused)
-                    return;
-                isPaused = value;
-                if (value)
-                    IsError = false;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsPaused"));
-            }
-        }
-        private bool isError = false;
-        public bool IsError
-        {
-            get { return isError; }
-            set
-            {
-                if (value == isError)
-                    return;
-                isError = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsError"));
-            }
-        }
-        private bool isProjectLoaded = false;
-        public bool IsProjectLoaded
-        {
-            get { return isProjectLoaded; }
-            set
-            {
-                if (value == isProjectLoaded)
-                    return;
-                isProjectLoaded = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsProjectLoaded"));
-            }
-        }
+        public bool IsError { get => Get(false); set => Set(value); }
 
-        //public string CodeContent { get; set; }
-        public string NVHead
+        public bool IsProjectLoaded { get => Get(false); set => Set(value); }
+
+        public string NVHead { get => Get(""); set => Set(value); }
+
+        public StorageItemMostRecentlyUsedList RecentAccessList { get => Get<StorageItemMostRecentlyUsedList>(); set => Set(value); }
+
+        private string rootFile;
+        public ObservableCollection<FileItem> GenerateTreeView(StorageFolder folder, string rootfile)
         {
-            get { return nVHeader; }
-            set { nVHeader = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NVHead")); }
-        }
-
-        public ObservableCollection<Project> ProjectList
-        {
-            get { return projectList; }
-            set
-            {
-                if (value == projectList)
-                    return;
-                projectList = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ProjectList"));
-            }
-        }
-
-        public StorageItemMostRecentlyUsedList RecentAccessList
-        {
-            get { return recentAccessList; }
-            set
-            {
-                if (value == recentAccessList)
-                    return;
-                recentAccessList = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("RecentAccessList"));
-            }
-        }
-
-        //public TabViewList TabViewList { get; set; }
-        public ObservableCollection<TabViewItem> TabViewItems { get; set; }
-
-        
-
-        public ObservableCollection<FileItem> GenerateTreeView(StorageFolder folder)
-        {
+            rootFile = rootfile;
             list = new ObservableCollection<FileItem>();
             if (folder != null)
             {
@@ -922,7 +766,7 @@ namespace ConTeXt_UWP
             }
             else
             {
-                Message("Operation cancelled.");
+                App.VM.LOG("Operation cancelled.");
             }
             return list;
         }
@@ -944,20 +788,23 @@ namespace ConTeXt_UWP
 
         public async void OpenFile(FileItem File)
         {
-            if (!FileItems.Contains(File))
+            try
             {
-                var read = await FileIO.ReadTextAsync((StorageFile)File.File);
-                //Default.TexFileName = File.FileName;
-                //Default.TexFileFolder = Path.GetDirectoryName(File.FilePath);
-                //Default.TexFilePath = File.FilePath;
-                File.FileContent = read;
-
-                LOG("Opening " + File.FileName);
-                FileItems.Add(File);
+                if (!FileItems.Contains(File))
+                {
+                    var read = await FileIO.ReadTextAsync((StorageFile)File.File);
+                    File.FileContent = read;
+                    LOG("Opening " + File.FileName);
+                    FileItems.Add(File);
+                }
+                else
+                {
+                    CurrentFileItem = File;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                CurrentFileItem = File;
+                App.VM.LOG("Cannot open selected file: " + ex.Message);
             }
         }
         public async Task Save()
@@ -972,7 +819,7 @@ namespace ConTeXt_UWP
                 var file = await ApplicationData.Current.LocalFolder.CreateFileAsync(CurrentFileItem.FileName, CreationCollisionOption.ReplaceExisting);
                 await FileIO.WriteBufferAsync(file, buffer);
                 Default.TexFileName = CurrentFileItem.FileName;
-                Default.TexFilePath = CurrentFileItem.FilePath;
+                Default.TexFilePath = CurrentFileItem.File.Path;
 
                 LOG("Saving");
                 ValueSet request = new ValueSet
@@ -996,34 +843,72 @@ namespace ConTeXt_UWP
             else LOG("already saving...");
         }
 
-        public async Task UWPSave(StorageFile file)
+        public async Task UWPSaveAll()
         {
-            if (!IsSaving && file != null)
+
+            try
             {
-                try
+                if (!IsSaving && CurrentFileItem != null)
                 {
-                    IsSaving = true;
-                    isPaused = false;
-                    string cont = CurrentFileItem.FileContent ?? " ";
-                    var buffer = Windows.Security.Cryptography.CryptographicBuffer.ConvertStringToBinary(cont, Windows.Security.Cryptography.BinaryStringEncoding.Utf8);
-                    await FileIO.WriteBufferAsync(file, buffer);
-                    Default.TexFileName = CurrentFileItem.FileName;
-                    Default.TexFilePath = CurrentFileItem.FilePath;
-                    Default.TexFileFolder = CurrentFileItem.FileFolder;
-                    IsSaving = false;
-                    isPaused = true;
-                    IsVisible = false;
+                    if (CurrentFileItem.File != null)
+                    {
+                        IsSaving = true;
+                        IsPaused = false;
+                        foreach (var item in FileItems)
+                        {
+                            string cont = item.FileContent ?? " ";
+                            var buffer = Windows.Security.Cryptography.CryptographicBuffer.ConvertStringToBinary(cont, Windows.Security.Cryptography.BinaryStringEncoding.Utf8);
+                            await FileIO.WriteBufferAsync((StorageFile)item.File, buffer);
+                        }
+                        Default.TexFileName = CurrentFileItem.FileName;
+                        Default.TexFilePath = CurrentFileItem.File.Path;
+                        Default.TexFileFolder = CurrentFileItem.FileFolder;
+                        IsSaving = false;
+                        IsPaused = true;
+                        IsVisible = false;
+                    }
                 }
-                catch (Exception ex)
-                {
-                    IsError = true;
-                    isSaving = false;
-                    LOG("Error on Saving file: " + ex.Message);
-                }
-                
+                //else LOG("Error");
             }
-            else LOG("Error");
-            
+            catch (Exception ex)
+            {
+                IsError = true;
+                IsSaving = false;
+                LOG("Error on Saving file: " + ex.Message);
+            }
+
+
+
+        }
+        public async Task UWPSave()
+        {
+            if (CurrentFileItem != null)
+                if (!IsSaving && CurrentFileItem.File != null)
+                {
+                    try
+                    {
+                        IsSaving = true;
+                        IsPaused = false;
+                        string cont = CurrentFileItem.FileContent ?? " ";
+                        var buffer = Windows.Security.Cryptography.CryptographicBuffer.ConvertStringToBinary(cont, Windows.Security.Cryptography.BinaryStringEncoding.Utf8);
+                        await FileIO.WriteBufferAsync(CurrentFileItem.File as StorageFile, buffer);
+                        Default.TexFileName = CurrentFileItem.FileName;
+                        Default.TexFilePath = CurrentFileItem.File.Path;
+                        Default.TexFileFolder = CurrentFileItem.FileFolder;
+                        IsSaving = false;
+                        IsPaused = true;
+                        IsVisible = false;
+                    }
+                    catch (Exception ex)
+                    {
+                        IsError = true;
+                        IsSaving = false;
+                        LOG("Error on Saving file: " + ex.Message);
+                    }
+
+                }
+                else LOG("Error");
+
         }
 
 
@@ -1046,7 +931,21 @@ namespace ConTeXt_UWP
                         IsSaving = true;
                         var folder = await RecentAccessList.GetFolderAsync(Default.LastActiveProject);
                         var f = RecentAccessList.Entries.Where(x => x.Token == folder.Name).FirstOrDefault();
-                        CurrentProject = new Project(folder.Name, folder, GenerateTreeView(folder));
+                        var list = App.VM.Default.ProjectList.Where(x => x.Name == folder.Name);
+                        if (list.Count() == 1)
+                        {
+                            var project = list.FirstOrDefault();
+                            project.Folder = folder;
+                            project.Directory = App.VM.GenerateTreeView(folder, project.RootFile);
+                            App.VM.CurrentProject = project;
+                            if (App.VM.CurrentProject.RootFile != null)
+                            {
+                                FileItem root = App.VM.CurrentProject.Directory.Where(x => x.IsRoot).FirstOrDefault();
+                                if (root != null)
+                                App.VM.OpenFile(root);
+                            }
+                        }
+                        //CurrentProject = new Project(folder.Name, folder, GenerateTreeView(folder));
                         //CurrentProject.RootFile = Meta(f.Metadata).ContainsKey("rootfile") ? Meta(f.Metadata)["rootfile"] : null;
 
                         //Message(GenerateTreeView(folder).Count.ToString());
@@ -1060,7 +959,7 @@ namespace ConTeXt_UWP
             }
             catch (Exception ex)
             {
-                LOG("Error on ViewModel startup: "+ex.Message);
+                LOG("Error on ViewModel startup: " + ex.Message);
             }
         }
 
@@ -1074,47 +973,47 @@ namespace ConTeXt_UWP
         public async void UpdateRecentAccessList()
         {
             App.VM.IsSaving = true;
-           
-            if (ProjectList.Count == 0)
+
+            if (App.VM.Default.ProjectList.Count == 0)
             {
 
-            
-            RecentAccessList = StorageApplicationPermissions.MostRecentlyUsedList;
-            var accesslist = RecentAccessList.Entries;
-            ProjectList.Clear();
-            if (accesslist.Count() > 0)
-            {
-                //Default.LastActiveProject = accesslist.FirstOrDefault().Token;
-                foreach (var accessitem in accesslist)
+
+                RecentAccessList = StorageApplicationPermissions.MostRecentlyUsedList;
+                var accesslist = RecentAccessList.Entries;
+                App.VM.Default.ProjectList.Clear();
+                if (accesslist.Count() > 0)
                 {
-                    var folder = await RecentAccessList.GetFolderAsync(accessitem.Token);
-                    //var tree = GenerateTreeView(folder);
-                    ProjectList.Add(new Project(folder.Name, folder));
+                    //Default.LastActiveProject = accesslist.FirstOrDefault().Token;
+                    foreach (var accessitem in accesslist)
+                    {
+                        var folder = await RecentAccessList.GetFolderAsync(accessitem.Token);
+                        //var tree = GenerateTreeView(folder);
+                        App.VM.Default.ProjectList.Add(new Project(folder.Name, folder));
+                    }
                 }
-            }
             }
             App.VM.IsSaving = false;
         }
-        private void AddHelp()
-        {
-            this.Helpfile = new ObservableCollection<KeyValuePair<string, string>>();
-            Helpfile.Add(new KeyValuePair<string, string>("Dashboard", "Overview of your holdings and active Bots."));
-            Helpfile.Add(new KeyValuePair<string, string>("MainPage", "This is a sample Text. This is a sample Text. \n This is a sample Text. \n This is a sample Text."));
-            Helpfile.Add(new KeyValuePair<string, string>("APIKeys", "Here you can add your Coinbase Pro API Keys. The details needed for adding a key are:\n - Company (Only Coinbase.Pro is supported yet)\n - API Key\n - Secret Key\n - Passphrase\n\nOnly the Company, API Key and Name will ever appear in this App. To Change the secret data you need to delete the Key and add a new one."));
-            Helpfile.Add(new KeyValuePair<string, string>("DayTrading", ""));
+        //private void AddHelp()
+        //{
+        //    this.Helpfile = new ObservableCollection<KeyValuePair<string, string>>();
+        //    Helpfile.Add(new KeyValuePair<string, string>("Dashboard", "Overview of your holdings and active Bots."));
+        //    Helpfile.Add(new KeyValuePair<string, string>("MainPage", "This is a sample Text. This is a sample Text. \n This is a sample Text. \n This is a sample Text."));
+        //    Helpfile.Add(new KeyValuePair<string, string>("APIKeys", "Here you can add your Coinbase Pro API Keys. The details needed for adding a key are:\n - Company (Only Coinbase.Pro is supported yet)\n - API Key\n - Secret Key\n - Passphrase\n\nOnly the Company, API Key and Name will ever appear in this App. To Change the secret data you need to delete the Key and add a new one."));
+        //    Helpfile.Add(new KeyValuePair<string, string>("DayTrading", ""));
 
 
-            Helpfile.Add(new KeyValuePair<string, string>("ActiveAccounts", "These are your wallets."));
-            Helpfile.Add(new KeyValuePair<string, string>("LogView", ""));
-            Helpfile.Add(new KeyValuePair<string, string>("ShowLog", "The Log is needed for troubleshooting purposes. Error messages will only appear in the Log."));
-            Helpfile.Add(new KeyValuePair<string, string>("ShowHelp", "The Help Window may be needed when you first get in touch with the Software."));
-            Helpfile.Add(new KeyValuePair<string, string>("Market", ""));
-            Helpfile.Add(new KeyValuePair<string, string>("Limit", ""));
-            Helpfile.Add(new KeyValuePair<string, string>("Stop", ""));
-            Helpfile.Add(new KeyValuePair<string, string>("Amount", "Amount of the Currency you want to buy/sell.\nInsert a decimal number with your local decimal separator.\n - Use a decimal point in British / American English and Thai; e.g. 1.23\n - Use a decimal comma in most other languages; e.g. 1,23"));
-            Helpfile.Add(new KeyValuePair<string, string>("Size", ""));
-            Helpfile.Add(new KeyValuePair<string, string>("", ""));
-        }
+        //    Helpfile.Add(new KeyValuePair<string, string>("ActiveAccounts", "These are your wallets."));
+        //    Helpfile.Add(new KeyValuePair<string, string>("LogView", ""));
+        //    Helpfile.Add(new KeyValuePair<string, string>("ShowLog", "The Log is needed for troubleshooting purposes. Error messages will only appear in the Log."));
+        //    Helpfile.Add(new KeyValuePair<string, string>("ShowHelp", "The Help Window may be needed when you first get in touch with the Software."));
+        //    Helpfile.Add(new KeyValuePair<string, string>("Market", ""));
+        //    Helpfile.Add(new KeyValuePair<string, string>("Limit", ""));
+        //    Helpfile.Add(new KeyValuePair<string, string>("Stop", ""));
+        //    Helpfile.Add(new KeyValuePair<string, string>("Amount", "Amount of the Currency you want to buy/sell.\nInsert a decimal number with your local decimal separator.\n - Use a decimal point in British / American English and Thai; e.g. 1.23\n - Use a decimal comma in most other languages; e.g. 1,23"));
+        //    Helpfile.Add(new KeyValuePair<string, string>("Size", ""));
+        //    Helpfile.Add(new KeyValuePair<string, string>("", ""));
+        //}
 
         async void DirSearch(StorageFolder sDir, int level = 0)
         {
@@ -1129,7 +1028,7 @@ namespace ConTeXt_UWP
                         {
                             if (!cancelWords.Contains(f.FileType))
                             {
-                                SubFolder.Children.Add(new FileItem(f) { File = f, FilePath = f.Path, Type = FileItem.ExplorerItemType.File, FileName = f.Name, IsRoot = false });
+                                SubFolder.Children.Add(new FileItem(f) { File = f, Type = FileItem.ExplorerItemType.File, FileName = f.Name, IsRoot = false });
                             }
                         }
                         list.Add(SubFolder);
@@ -1142,14 +1041,14 @@ namespace ConTeXt_UWP
                     {
                         if (!cancelWords.Contains(f.FileType))
                         {
-                            list.Add(new FileItem(f) { File = f, FilePath = f.Path, Type = FileItem.ExplorerItemType.File, FileName = f.Name, IsRoot = false });
+                            list.Add(new FileItem(f) { File = f, Type = FileItem.ExplorerItemType.File, FileName = f.Name, IsRoot = false });
                         }
                     }
                 }
             }
             catch (Exception excpt)
             {
-                Message("Error in generating the directory tree: "+excpt.Message);
+                Message("Error in generating the directory tree: " + excpt.Message);
             }
         }
         async void DirWalk(StorageFolder sDir, FileItem currFolder = null, int level = 0)
@@ -1174,11 +1073,14 @@ namespace ConTeXt_UWP
                 {
                     if (!f.Name.StartsWith(".") && !cancelWords.Contains(f.FileType))
                     {
-                        var fi = new FileItem(f) { File = f, FilePath = f.Path, Type = FileItem.ExplorerItemType.File, FileName = f.Name, IsRoot = false };
+                        var fi = new FileItem(f) { File = f, Type = FileItem.ExplorerItemType.File, FileName = f.Name, IsRoot = false };
                         if (level > 0)
                             currFolder.Children.Add(fi);
                         else
+                        {
+                            fi.IsRoot = fi.FileName == rootFile;
                             list.Add(fi);
+                        }
                     }
                 }
             }
@@ -1201,6 +1103,26 @@ namespace ConTeXt_UWP
             get { return Get<bool>(); }
             set { Set(value); }
         }
+    }
+
+    public class Helpfile : Bindable
+    {
+        public string FileName
+        {
+            get { return Get<string>(); }
+            set { Set(value); }
+        }
+        public string FriendlyName
+        {
+            get { return Get<string>(); }
+            set { Set(value); }
+        }
+        public string Path
+        {
+            get { return Get<string>(); }
+            set { Set(value); }
+        }
+
     }
 
     public class TemplateSelection : Bindable
@@ -1232,13 +1154,15 @@ namespace ConTeXt_UWP
         /// <typeparam name="T"></typeparam>
         /// <param name="name"></param>
         /// <returns></returns>
-        protected T Get<T>([CallerMemberName] string name = null)
+        protected T Get<T>(T defaultVal = default, [CallerMemberName] string name = null)
         {
             Debug.Assert(name != null, "name != null");
             object value = null;
-            if (_properties.TryGetValue(name, out value))
-                return value == null ? default(T) : (T)value;
-            return default(T);
+            if (!_properties.TryGetValue(name, out value))
+            {
+                value = _properties[name] = defaultVal;
+            }
+            return (T)value;
         }
 
         /// <summary>
@@ -1251,7 +1175,7 @@ namespace ConTeXt_UWP
         protected void Set<T>(T value, [CallerMemberName] string name = null)
         {
             Debug.Assert(name != null, "name != null");
-            if (Equals(value, Get<T>(name)))
+            if (Equals(value, Get<T>(value, name)))
                 return;
             _properties[name] = value;
             OnPropertyChanged(name);
@@ -1265,6 +1189,19 @@ namespace ConTeXt_UWP
             if (handler != null)
             {
                 handler(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+    }
+    public static class Extensions
+    {
+        public static void Sort<T>(this ObservableCollection<T> collection, Comparison<T> comparison)
+        {
+            var sortableList = new List<T>(collection);
+            sortableList.Sort(comparison);
+            App.VM.LOG("sorting");
+            for (int i = 0; i < sortableList.Count; i++)
+            {
+                collection.Move(collection.IndexOf(sortableList[i]), i);
             }
         }
     }
