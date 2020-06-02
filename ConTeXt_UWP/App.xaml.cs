@@ -159,7 +159,7 @@ namespace ConTeXt_UWP
                     sp.Children.Add(downloadlinktb);
                     cd.Title = "First Start: Install the ConTeXt (LuaMetaTeX) Distribution";
                     cd.Content = sp;
-                    cd.PrimaryButtonText = "Install";
+                    cd.PrimaryButtonText = @"Install (~ 270 MB)";
                     cd.CloseButtonText = "Skip (Setup in the Settings!)";
                     if (await cd.ShowAsync() == ContentDialogResult.Primary)
                     {

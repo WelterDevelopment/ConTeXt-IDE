@@ -56,7 +56,7 @@
     <DefaultLanguage>en-US</DefaultLanguage>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <EntryPointProjectUniqueName>..\ConTeXt_UWP\ConTeXt_UWP.csproj</EntryPointProjectUniqueName>
-    <PackageCertificateThumbprint>B28644D09F8DDF74525023B491AF00AAB8CB107D</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>AA983BA5E14D5AE051DE05BC82B91E93830AE7B2</PackageCertificateThumbprint>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
@@ -160,5 +160,4 @@
     <Content Include="Images\Wide310x150Logo.scale-400.png" />
   </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
-  
 </Project>
