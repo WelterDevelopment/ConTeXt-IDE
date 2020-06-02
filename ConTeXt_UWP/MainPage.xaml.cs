@@ -19,6 +19,7 @@ using Windows.UI.Xaml.Controls.Primitives;
 using Windows.ApplicationModel.DataTransfer;
 using System.Collections.Generic;
 using System.Linq;
+using System.Collections.ObjectModel;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -105,7 +106,7 @@ namespace ConTeXt_UWP
 
                 foreach (NavigationViewItemBase item in nvSample.MenuItems)
                 {
-                    if (App.VM.CurrentProject.Folder != null)
+                    if (App.VM.CurrentProject.Folder != null | App.VM.FileActivatedEvents.Count > 0)
                     {
                         if (item is NavigationViewItem && item.Tag.ToString() == "IDE")
                         {
@@ -129,7 +130,6 @@ namespace ConTeXt_UWP
                 if (ApiInformation.IsApiContractPresent("Windows.ApplicationModel.FullTrustAppContract", 1))
                 {
                     await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Parameters");
-                    //Thread.Sleep(5000);
                 }
                 nvSample.IsBackEnabled = contentFrame.CanGoBack;
             }
@@ -140,8 +140,6 @@ namespace ConTeXt_UWP
 
         }
 
-
-        // Handles system-level BackRequested events and page-level back button Click events
         private bool On_BackRequested()
         {
             if (contentFrame.CanGoBack)
@@ -187,7 +185,6 @@ namespace ConTeXt_UWP
 
         }
 
-        PageStackEntry Editor = new PageStackEntry(typeof(Editor), null, new DrillInNavigationTransitionInfo());
         private async void NvSample_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
         {
 
@@ -256,15 +253,6 @@ namespace ConTeXt_UWP
             this.KeyboardAccelerators.Add(goBack);
         }
 
-
-
-        private void About_Tapped(object sender, TappedRoutedEventArgs e)
-        {
-            nvSample.SelectedItem = (sender as NavigationViewItem);
-            contentFrame.Navigate(typeof(About), null, new DrillInNavigationTransitionInfo());
-
-        }
-
         private void ContentFrame_Navigated(object sender, NavigationEventArgs e)
         {
             //nvSample.IsBackEnabled = contentFrame.CanGoBack;
@@ -300,19 +288,12 @@ namespace ConTeXt_UWP
         {
             nvSample.IsBackEnabled = contentFrame.CanGoBack;
 
-            //currentViewModel.NVHeader = contentFrame.Content.GetType().Name;
         }
 
         private void ContentFrame_Loaded(object sender, RoutedEventArgs e)
         {
 
         }
-
-        private void ClearLog_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
 
         private void NavigationTree_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)
         {
@@ -329,7 +310,7 @@ namespace ConTeXt_UWP
             var ei = (FileItem)(sender as FrameworkElement).DataContext;
             ei.IsRoot = true;
             App.VM.CurrentProject.RootFile = ei.FileName;
-            App.VM.UpdateMRUEntry(App.VM.CurrentProject);
+            //App.VM.UpdateMRUEntry(App.VM.CurrentProject);
         }
 
         private async void Delete_Click(object sender, RoutedEventArgs e)
@@ -347,9 +328,11 @@ namespace ConTeXt_UWP
         {
             try
             {
-                var fi = (FileItem)(sender as FrameworkElement).DataContext;
-                fi.FileName = await rename(fi.Type, fi.FileName);
-                await fi.File.RenameAsync(fi.FileName, NameCollisionOption.GenerateUniqueName);
+                var fi = (sender as FrameworkElement).DataContext as FileItem;
+                string newname = await rename(fi.Type, fi.FileName);
+
+                await fi.File.RenameAsync(newname, NameCollisionOption.GenerateUniqueName);
+                fi.FileName = newname;
             }
             catch (Exception ex)
             {
@@ -359,43 +342,41 @@ namespace ConTeXt_UWP
 
         private async Task<string> rename(FileItem.ExplorerItemType type, string startstring)
         {
-            string newstring = startstring;
 
-            var cd = new ContentDialog() { Title = "Rename " + type, PrimaryButtonText = "rename", CloseButtonText = "cancel" };
+            var cd = new ContentDialog() { Title = "Rename " + type.ToString().ToLower(), PrimaryButtonText = "rename", DefaultButton = ContentDialogButton.Primary };
             TextBox tb = new TextBox() { Text = startstring };
             cd.Content = tb;
-            cd.PrimaryButtonClick += (a, b) =>
+            var res = await cd.ShowAsync();
+            if (res == ContentDialogResult.Primary)
             {
-                newstring = tb.Text;
-            };
-            await cd.ShowAsync();
-            return newstring;
+                App.VM.LOG($"Renaming {type.ToString().ToLower()} {startstring} to {tb.Text}");
+                return tb.Text;
+            }
+            else
+                return startstring;
         }
 
         private async void AddFile_Click(object sender, RoutedEventArgs e)
         {
-
             try
             {
                 string name = "file.tex";
                 var cd = new ContentDialog() { Title = "Set file name", PrimaryButtonText = "ok", CloseButtonText = "cancel", DefaultButton = ContentDialogButton.Primary };
                 TextBox tb = new TextBox() { Text = name };
                 cd.Content = tb;
-                cd.PrimaryButtonClick += (a, b) =>
-                {
-                    name = tb.Text;
-                };
-                await cd.ShowAsync();
 
-                var folder = App.VM.CurrentProject.Folder;
-                if (await folder.TryGetItemAsync(name) == null)
+                if (await cd.ShowAsync() == ContentDialogResult.Primary)
                 {
-                    var file = await folder.CreateFileAsync(name);
-                    var fi = new FileItem(file) { Type = FileItem.ExplorerItemType.File, FileLanguage = FileItem.GetFileLanguage(file.FileType) };
-                    App.VM.CurrentProject.Directory.Add(fi);
+                    var folder = App.VM.CurrentProject.Folder;
+                    if (await folder.TryGetItemAsync(tb.Text) == null)
+                    {
+                        var file = await folder.CreateFileAsync(tb.Text);
+                        var fi = new FileItem(file) { Type = FileItem.ExplorerItemType.File, FileLanguage = FileItem.GetFileLanguage(file.FileType) };
+                        App.VM.CurrentProject.Directory.Add(fi);
+                    }
+                    else
+                        App.VM.LOG(name + " does already exist.");
                 }
-                else
-                    App.VM.LOG(name + " does already exist.");
             }
             catch (Exception ex)
             {
@@ -439,33 +420,37 @@ namespace ConTeXt_UWP
 
         private void TreeView_DropCompleted(UIElement sender, DropCompletedEventArgs args)
         {
-            App.VM.LOG("TreeView_DropCompleted");
         }
 
         private void TreeView_Drop(object sender, DragEventArgs e)
         {
-            App.VM.LOG(e.GetType().FullName);
-            e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
-
-           // e.Handled = true;
+            e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Move;
         }
 
         private async void NewFile_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-
                 var fileitem = (sender as FrameworkElement).DataContext as FileItem;
-                string name = "bla.tex";
-                var folder = fileitem.File as StorageFolder;
-                if (await folder.TryGetItemAsync(name) == null)
+                string name = "newfile.tex";
+                var cd = new ContentDialog() { Title = "Set file name", PrimaryButtonText = "Ok", CloseButtonText = "Cancel", DefaultButton = ContentDialogButton.Primary };
+                TextBox tb = new TextBox() { Text = name };
+                cd.Content = tb;
+
+                var res = await cd.ShowAsync();
+                if (res == ContentDialogResult.Primary)
                 {
-                    var file = await folder.CreateFileAsync(name);
-                    var fi = new FileItem(file) { Type = FileItem.ExplorerItemType.File, FileLanguage = Path.GetExtension(file.Path) };
-                    fileitem.Children.Add(fi);
+                    name = tb.Text;
+                    var folder = fileitem.File as StorageFolder;
+                    if (await folder.TryGetItemAsync(name) == null)
+                    {
+                        var subfile = await folder.CreateFileAsync(name);
+                        var fi = new FileItem(subfile) { Type = FileItem.ExplorerItemType.File };
+                        fileitem.Children.Add(fi);
+                    }
+                    else
+                        App.VM.LOG(name + " does already exist.");
                 }
-                else
-                    App.VM.LOG(name + " does already exist.");
             }
             catch (Exception ex)
             {
@@ -473,57 +458,45 @@ namespace ConTeXt_UWP
             }
         }
 
-        private void TreeView_DragItemsStarting(TreeView sender, TreeViewDragItemsStartingEventArgs args)
-        {
-            App.VM.LOG("TreeView_DragItemsStarting" + (args.Items[0] as FileItem).FileName);
-            args.Data.RequestedOperation = DataPackageOperation.Move;
-        }
+        //private void TreeView_DragItemsStarting(TreeView sender, TreeViewDragItemsStartingEventArgs args)
+        //{
+        //    App.VM.LOG("TreeView_DragItemsStarting" + (args.Items[0] as FileItem).FileName);
+        //    args.Data.RequestedOperation = DataPackageOperation.Move;
+        //}
 
-        private void TreeView_DragItemsCompleted(TreeView sender, TreeViewDragItemsCompletedEventArgs args)
-        {
-            App.VM.LOG("TreeView_DragItemsCompleted" + (args.Items[0] as FileItem).FileName + "\n" + string.Join(", ", (new List<FileItem>(App.VM.CurrentProject.Directory)).Select(x => x.FileName).ToArray()));
-        }
+        //private void TreeView_DragItemsCompleted(TreeView sender, TreeViewDragItemsCompletedEventArgs args)
+        //{
+        //    App.VM.LOG("TreeView_DragItemsCompleted" + (args.Items[0] as FileItem).FileName + "\n" + string.Join(", ", (new List<FileItem>(App.VM.CurrentProject.Directory)).Select(x => x.FileName).ToArray()));
+        //}
 
-        private void TreeViewItem_Drop(object sender, DragEventArgs e)
-        {
-            e.AcceptedOperation = DataPackageOperation.Move;
-            var target = (sender as Microsoft.UI.Xaml.Controls.TreeViewItem).DataContext as FileItem;
-            var source = (e.OriginalSource as Microsoft.UI.Xaml.Controls.TreeViewItem).DataContext as FileItem;
-            if (source.File is StorageFolder)
-            {
-                Tree.CanReorderItems = false;
-                e.AcceptedOperation = DataPackageOperation.None;
-                // e.Handled = false;
-            }
-            else
-            {
-                if (target.File is StorageFile storageFile)
-                {
-                    Tree.CanReorderItems = false;
-                    e.AcceptedOperation = DataPackageOperation.None;
-                    //e.Handled = false;
-                }
-                else
-                {
-                    Tree.CanReorderItems = true;
-                    e.AcceptedOperation = DataPackageOperation.Move;
-                    // e.Handled = true;
-                }
-            }
-            // e.Handled = true;
-        }
-
-        private void TreeViewItem_DropCompleted(UIElement sender, DropCompletedEventArgs args)
-        {
-        }
-
-        private void TreeView_DragStarting(UIElement sender, DragStartingEventArgs args)
-        {
-            // App.VM.LOG(args.OriginalSource.GetType().FullName);
-        }
+        //private void TreeViewItem_Drop(object sender, DragEventArgs e)
+        //{
+        //    e.AcceptedOperation = DataPackageOperation.Move;
+        //    var target = (sender as Microsoft.UI.Xaml.Controls.TreeViewItem).DataContext as FileItem;
+        //    var source = (e.OriginalSource as Microsoft.UI.Xaml.Controls.TreeViewItem).DataContext as FileItem;
+        //    if (source.File is StorageFolder)
+        //    {
+        //        Tree.CanReorderItems = false;
+        //        e.AcceptedOperation = DataPackageOperation.None;
+        //    }
+        //    else
+        //    {
+        //        if (target.File is StorageFile storageFile)
+        //        {
+        //            Tree.CanReorderItems = false;
+        //            e.AcceptedOperation = DataPackageOperation.None;
+        //        }
+        //        else
+        //        {
+        //            Tree.CanReorderItems = true;
+        //            e.AcceptedOperation = DataPackageOperation.Move;
+        //        }
+        //    }
+        //}
 
         private void NavigationTree_ItemInvoked(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewItemInvokedEventArgs args)
         {
+
             var fileitem = (FileItem)args.InvokedItem;
             if (fileitem.Type == FileItem.ExplorerItemType.File)
             {
@@ -534,11 +507,6 @@ namespace ConTeXt_UWP
 
         private void TreeView_DragItemsStarting(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewDragItemsStartingEventArgs args)
         {
-            // if ((args.Items[0] as FileItem).File is StorageFolder)
-            //     sender.CanReorderItems = false;
-            // else
-            //     sender.CanReorderItems = true;
-            //// App.VM.LOG("TreeView_DragItemsStarting" + (args.Items[0] as FileItem).FileName);
             try
             {
                 foreach (FileItem item in args.Items)
@@ -552,22 +520,25 @@ namespace ConTeXt_UWP
             }
         }
 
-        private void TreeView_DragItemsCompleted(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewDragItemsCompletedEventArgs args)
+        private async void TreeView_DragItemsCompleted(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewDragItemsCompletedEventArgs args)
         {
-            //  App.VM.LOG("TreeView_DragItemsCompleted" + (args.Items[0] as FileItem).FileName + "\n" + string.Join(", ", (new List<FileItem>(App.VM.CurrentProject.Directory)).Select(x => x.FileName).ToArray()));
             try
             {
-                //App.VM.LOG(args.Items.Count.ToString());
-                //if (args.DropResult != DataPackageOperation.None)
-                //    foreach (FileItem item in args.Items)
-                //    {
-                //        if (args.NewParentItem != null)
-                //        {
-                //            var parent = args.NewParentItem as FileItem;
-                //            parent.Children.Add(item);
-                //        }
-                //    }
+                if (args.DropResult != DataPackageOperation.None)
+                    foreach (FileItem item in args.Items)
+                    {
 
+                        if (args.NewParentItem != null)
+                        {
+                            var fi = args.NewParentItem as FileItem;
+                            if (fi.File.Path == item.FileFolder)
+                            {
+                                App.VM.CurrentProject.Directory.Add(item);
+                                await Task.Delay(100);
+                                App.VM.CurrentProject = new Project(App.VM.CurrentProject.Name, App.VM.CurrentProject.Folder, App.VM.GenerateTreeView(App.VM.CurrentProject.Folder, App.VM.CurrentProject.RootFile));
+                            }
+                        }
+                    }
                 DraggedItems.Clear();
             }
             catch (Exception ex)
@@ -577,8 +548,45 @@ namespace ConTeXt_UWP
         }
         private void Tree_Drop(object sender, DragEventArgs e)
         {
-            App.VM.LOG("Tree_Drop");
             e.Handled = true;
+        }
+
+        private async void NewFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var fileitem = (sender as FrameworkElement).DataContext as FileItem;
+                string name = "";
+                var cd = new ContentDialog() { Title = "Set folder name", PrimaryButtonText = "ok", CloseButtonText = "cancel", DefaultButton = ContentDialogButton.Primary };
+                TextBox tb = new TextBox() { Text = name };
+                cd.Content = tb;
+
+                var res = await cd.ShowAsync();
+                if (res == ContentDialogResult.Primary)
+                {
+                    name = tb.Text;
+                    var folder = fileitem.File as StorageFolder;
+                    if (await folder.TryGetItemAsync(name) == null)
+                    {
+                        var subfolder = await folder.CreateFolderAsync(name);
+                        var fi = new FileItem(subfolder) { Type = FileItem.ExplorerItemType.Folder };
+                        fileitem.Children.Insert(0, fi);
+                    }
+                    else
+                        App.VM.LOG(name + " does already exist.");
+                }
+            }
+            catch (Exception ex)
+            {
+                App.VM.LOG(ex.Message);
+            }
+        }
+
+        private async void Compile_Click(object sender, RoutedEventArgs e)
+        {
+            FileItem fi = (sender as FrameworkElement).DataContext as FileItem;
+            await App.VM.UWPSaveAll();
+            await Editor.CurrentEditor.Compile(false, fi);
         }
     }
     class MyTreeViewItem : Microsoft.UI.Xaml.Controls.TreeViewItem
@@ -587,21 +595,31 @@ namespace ConTeXt_UWP
         {
             try
             {
+                e.AcceptedOperation = DataPackageOperation.None;
                 var draggedItem = MainPage.DraggedItems[0];
                 var draggedOverItem = DataContext as FileItem;
                 // Block TreeViewNode auto expanding if we are dragging a group onto another group
                 if (draggedItem.File is StorageFolder && draggedOverItem.File is StorageFolder)
                 {
-                    e.Handled = true;
+                    // e.Handled = true;
                 }
+                if (draggedItem.File is StorageFile sf && draggedOverItem.File is StorageFolder fold)
+                {
 
+                    if (draggedItem.FileFolder == fold.Path)
+                    {
+                        //App.VM.LOG("DRAGENTER "+ draggedItem.FileFolder + " :: " + fold.Path);
+                        e.AcceptedOperation = DataPackageOperation.None;
+
+                        e.Handled = true;
+                    }
+                }
                 base.OnDragEnter(e);
             }
             catch (Exception ex)
             {
-                App.VM.LOG("OnDrop" + ex.Message);
+                App.VM.LOG("OnDragEnter" + ex.Message);
             }
-
         }
 
         protected override void OnDragOver(DragEventArgs e)
@@ -613,20 +631,23 @@ namespace ConTeXt_UWP
 
                 if (draggedItem.File is StorageFolder && draggedOverItem.File is StorageFolder)
                 {
-                    //- Group
-                    //-- Leaf1
-                    //-- (Group2) <- Blocks dropping another Group here
-                    //-- Leaf2
                     e.Handled = true;
                 }
+                if (draggedItem.File is StorageFile sf && draggedOverItem.File is StorageFolder fold)
+                {
+                    if (draggedItem.FileFolder == fold.Path)
+                    {
+                        e.AcceptedOperation = DataPackageOperation.None;
+                    }
+                    else e.AcceptedOperation = draggedOverItem.File is StorageFolder && !(draggedItem.File is StorageFolder) ? DataPackageOperation.Move : DataPackageOperation.None;
+                }
+                else e.AcceptedOperation = draggedOverItem.File is StorageFolder && !(draggedItem.File is StorageFolder) ? DataPackageOperation.Move : DataPackageOperation.None;
                 base.OnDragOver(e);
-                e.AcceptedOperation = draggedOverItem.File is StorageFolder && !(draggedItem.File is StorageFolder) ? DataPackageOperation.Move : DataPackageOperation.None;
             }
             catch (Exception ex)
             {
-                App.VM.LOG("OnDrop" + ex.Message);
+                App.VM.LOG("OnDragOver" + ex.Message);
             }
-
         }
         protected override void OnDrop(DragEventArgs e)
         {
@@ -638,7 +659,6 @@ namespace ConTeXt_UWP
                 {
                     e.Handled = true;
                 }
-
                 base.OnDrop(e);
             }
             catch (Exception ex)
@@ -646,6 +666,5 @@ namespace ConTeXt_UWP
                 App.VM.LOG("OnDrop" + ex.Message);
             }
         }
-
     }
 }

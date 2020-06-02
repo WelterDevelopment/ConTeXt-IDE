@@ -1,185 +1,152 @@
-﻿using Monaco.Editor;
+﻿using Microsoft.UI.Xaml.Controls;
+using Monaco.Editor;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.Storage;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Data;
 
 namespace ConTeXt_UWP
 {
-    public class Settings : ObservableSettings
+    public static class SettingsExtensions
     {
-        public Settings() : base(ApplicationData.Current.LocalSettings) { }
-
-        [DefaultSettingValue(Value = true)]
-        public bool StartWithLastActiveProject
+        public static void SaveSettings(this Settings settings)
         {
-            get { return Get<bool>(); }
-            set { Set(value); }
+            string file = "settings.json";
+            var storageFolder = ApplicationData.Current.LocalFolder;
+            string settingsPath = Path.Combine(storageFolder.Path, file);
+            string json = settings.ToJson();
+            File.WriteAllText(settingsPath, json);
         }
+    }
+    public class Settings : INotifyPropertyChanged
+    {
+        [JsonIgnore]
+        public static Settings Default { get; } = GetSettings();
 
-
-        [DefaultSettingValue(Value = 2)]
-        public int ShowLineNumbers
-        {
-            get { return Get<int>(); }
-            set { Set(value); }
-        }
-
-
-        [DefaultSettingValue(Value = true)]
-        public bool ShowLog
-        {
-            get { return Get<bool>(); }
-            set { Set(value); }
-        }
-
-        [DefaultSettingValue(Value = true)]
-        public bool UseModes
-        {
-            get { return Get<bool>(); }
-            set { Set(value); }
-        }
-
-        [DefaultSettingValue(Value = true)]
-        public bool InternalViewer
-        {
-            get { return Get<bool>(); }
-            set { Set(value); }
-        }
-
-        [DefaultSettingValue(Value = false)]
-        public bool Outputready
-        {
-            get { return Get<bool>(); }
-            set { Set(value); }
-        }
-
-        [DefaultSettingValue(Value = "Left")]
-        public string NavigationViewPaneMode
-        {
-            get { return Get<string>(); }
-            set { Set(value); }
-        }
-
-        [DefaultSettingValue(Value = true)]
-        public bool NavigationViewPaneOpen
-        {
-            get { return Get<bool>(); }
-            set { Set(value); }
-        }
-
-        [DefaultSettingValue(Value = 200)]
-        public int NavigationViewPaneOpenLength
-        {
-            get { return Get<int>(); }
-            set { Set(value); }
-        }
-
-        [DefaultSettingValue(Value = @"")]
-        public string ContextDistributionPath
-        {
-            get { return Get<string>(); }
-            set { Set(value); }
-        }
-
-        [DefaultSettingValue(Value = @"")]
-        public string TexFilePath
-        {
-            get { return Get<string>(); }
-            set { Set(value); }
-        }
-
-        [DefaultSettingValue(Value = @"")]
-        public string TexFileFolder
-        {
-            get { return Get<string>(); }
-            set { Set(value); }
-        }
-
-        [DefaultSettingValue(Value = "")]
-        public string LastActiveProject
-        {
-            get { return Get<string>(); }
-            set { Set(value); }
-        }
-
-        [DefaultSettingValue(Value = "")]
-        public string LastActiveFileName
-        {
-            get { return Get<string>(); }
-            set { Set(value); }
-        }
         
-        [DefaultSettingValue(Value = @"http://lmtx.pragma-ade.nl/install-lmtx/context-win64.zip")]
-        public string ContextDownloadLink
+
+        private static Settings GetSettings()
         {
-            get { return Get<string>(); }
-            set { Set(value); }
-        }
-        [DefaultSettingValue(Value = "Dark")]
-        public string Theme
-        {
-            get { return Get<string>(); }
-            set { Set(value); }
-        }
-        [DefaultSettingValue(Value = @"bla.tex")]
-        public string TexFileName
-        {
-            get { return Get<string>(); }
-            set { Set(value); }
-        }
-        [DefaultSettingValue(Value = "")]
-        public string Modes
-        {
-            get { return Get<string>(); }
-            set { Set(value); }
-        }
-        [DefaultSettingValue(Value = true)]
-        public bool CodeFolding
-        {
-            get { return Get<bool>(); }
-            set { Set(value); }
-        }
-        [DefaultSettingValue(Value = true)]
-        public bool MiniMap
-        {
-            get { return Get<bool>(); }
-            set { Set(value); }
+            string file = "settings.json";
+            var storageFolder = ApplicationData.Current.LocalFolder;
+            string settingsPath = Path.Combine(storageFolder.Path, file);
+            Settings settings;
+            if (!File.Exists(settingsPath))
+            {
+                settings = new Settings();
+                string json = settings.ToJson();
+                File.WriteAllText(settingsPath, json);
+            }
+            else
+            {
+                string json = File.ReadAllText(settingsPath);
+                settings = FromJson(json);
+            }
+
+            settings.PropertyChanged += (o, a) =>
+            {
+                string json = settings.ToJson();
+                File.WriteAllText(settingsPath, json);
+            };
+
+            settings.ProjectList.CollectionChanged += (o, a) =>
+            {
+                string json = settings.ToJson();
+                File.WriteAllText(settingsPath, json);
+            };
+           
+            return settings;
+
         }
 
-        [DefaultSettingValue(Value = true)]
-        public bool SuggestStartStop
-        {
-            get { return Get<bool>(); }
-            set { Set(value); }
-        }
-        [DefaultSettingValue(Value = true)]
-        public bool SuggestPrimitives
-        {
-            get { return Get<bool>(); }
-            set { Set(value); }
-        }
-        [DefaultSettingValue(Value = true)]
-        public bool SuggestCommands
-        {
-            get { return Get<bool>(); }
-            set { Set(value); }
-        }
-        [DefaultSettingValue(Value = @"")]
-        public string PackageID
-        {
-            get { return Get<string>(); }
-            set { Set(value); }
-        }
+       
 
+        int quoteFrequency = 15;
+        public int QuoteFrequency { get => quoteFrequency; set => Set(ref quoteFrequency, value); }
+
+        
+        bool startWithLastActiveProject = true;
+        public bool StartWithLastActiveProject { get => startWithLastActiveProject; set => Set(ref startWithLastActiveProject, value); }
+
+        int showLineNumbers = (int)LineNumbersType.On;
+        public int ShowLineNumbers{ get => showLineNumbers; set => Set(ref showLineNumbers, value); }
+
+
+        bool showLog = true;
+        public bool ShowLog { get => showLog; set => Set(ref showLog, value); }
+
+        bool useModes = true;
+        public bool UseModes { get => useModes; set => Set(ref useModes, value); }
+
+        bool autoOpenPDF = true;
+        public bool AutoOpenPDF { get => autoOpenPDF; set => Set(ref autoOpenPDF, value); }
+
+        bool internalViewer = true;
+        public bool InternalViewer{ get => internalViewer; set => Set(ref internalViewer, value); }
+
+        string navigationViewPaneMode = "Auto";
+        public string NavigationViewPaneMode{ get => navigationViewPaneMode; set => Set(ref navigationViewPaneMode, value); }
+
+        bool navigationViewPaneOpen = true;
+        public bool NavigationViewPaneOpen { get => navigationViewPaneOpen; set => Set(ref navigationViewPaneOpen, value); }
+
+        int navigationViewPaneOpenLength = 250;
+        public int NavigationViewPaneOpenLength { get => navigationViewPaneOpenLength; set => Set(ref navigationViewPaneOpenLength, value); }
+
+
+        string contextDistributionPath = "";
+        public string ContextDistributionPath{ get => contextDistributionPath; set => Set(ref contextDistributionPath, value); }
+
+        string texFilePath = "";
+        public string TexFilePath{ get => texFilePath; set => Set(ref texFilePath, value); }
+
+        string texFileFolder = "";
+        public string TexFileFolder { get => texFileFolder; set => Set(ref texFileFolder, value); }
+
+        string lastActiveProject = "";
+        public string LastActiveProject { get => lastActiveProject; set => Set(ref lastActiveProject, value); }
+
+        string contextDownloadLink = @"http://lmtx.pragma-ade.nl/install-lmtx/context-mswin.zip";
+        public string ContextDownloadLink{ get => contextDownloadLink; set => Set(ref contextDownloadLink, value); }
+
+        string theme = "Dark";
+        public string Theme{ get => theme; set => Set(ref theme, value); }
+
+        string texFileName = @"";
+        public string TexFileName{ get => texFileName; set => Set(ref texFileName, value); }
+
+        string modes = "";
+        public string Modes { get => modes; set => Set(ref modes, value); }
+
+        bool codeFolding = true;
+        public bool CodeFolding{ get => codeFolding; set => Set(ref codeFolding, value); }
+
+        bool miniMap = true;
+        public bool MiniMap { get => miniMap; set => Set(ref miniMap, value); }
+       
+        bool suggestStartStop = true;
+        public bool SuggestStartStop{ get => suggestStartStop; set => Set(ref suggestStartStop, value); }
+
+        bool suggestPrimitives = true;
+        public bool SuggestPrimitives{ get => suggestPrimitives; set => Set(ref suggestPrimitives, value); }
+
+        bool suggestCommands = true;
+        public bool SuggestCommands{ get => suggestCommands; set => Set(ref suggestCommands, value); }
+
+        string packageID = @"";
+        public string PackageID { get => packageID; set => Set(ref packageID, value); }
+
+        ObservableCollection<Project> projectList = new ObservableCollection<Project>();
+        public ObservableCollection<Project> ProjectList { get => projectList; set => Set(ref projectList, value); }
+
+
+
+        [JsonIgnore]
         public List<string> ShowLineNumberOptions
         {
             get
@@ -193,15 +160,17 @@ namespace ConTeXt_UWP
                 return myDic;
             }
         }
+        [JsonIgnore]
         public string[] NavigationOption
         {
             get
             {
-                
+
                 string[] nav = Enum.GetNames(typeof(NavigationViewPaneDisplayMode)); // { "Left", "LeftCompact", "Auto", "Top", "LeftMinimal" };
                 return nav;
             }
         }
+        [JsonIgnore]
         public string[] ThemeOption
         {
             get
@@ -210,78 +179,39 @@ namespace ConTeXt_UWP
                 return nav;
             }
         }
-    }
 
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-    public sealed class DefaultSettingValueAttribute : Attribute
-    {
-        public DefaultSettingValueAttribute()
+        public static Settings FromJson(string json) => JsonConvert.DeserializeObject<Settings>(json);
+
+        protected bool Set<T>(ref T backingStore, T value,
+            [CallerMemberName]string propertyName = "",
+            Action onChanged = null)
         {
-        }
+            if (EqualityComparer<T>.Default.Equals(backingStore, value))
+                return false;
+            
 
-        public DefaultSettingValueAttribute(object value)
-        {
-            Value = value;
-        }
-
-        public object Value { get; set; }
-
-       
-
-    }
-
-    public class ObservableSettings : INotifyPropertyChanged
-    {
-        private readonly ApplicationDataContainer settings;
-
-        public ObservableSettings(ApplicationDataContainer settings)
-        {
-            this.settings = settings;
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected bool Set<T>(T value, [CallerMemberName] string propertyName = null)
-        {
-            if (settings.Values.ContainsKey(propertyName))
-            {
-                var currentValue = (T)settings.Values[propertyName];
-                if (EqualityComparer<T>.Default.Equals(currentValue, value))
-                    return false;
-            }
-   
-            settings.Values[propertyName] = value;
-            //PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            backingStore = value;
+            onChanged?.Invoke();
             OnPropertyChanged(propertyName);
-
             return true;
         }
 
-        protected void OnPropertyChanged(string name)
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = "")
         {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(name));
-                //if (name == "Outputready") { ((Window.Current.Content as Frame) as MainPage).nv };
-            }
-        }
+            var changed = PropertyChanged;
+            if (changed == null)
+                return;
 
-        protected T Get<T>([CallerMemberName] string propertyName = null)
-        {
-
-            if (settings.Values.ContainsKey(propertyName))
-                return (T)settings.Values[propertyName];
-
-            var attributes = GetType().GetTypeInfo().GetDeclaredProperty(propertyName).CustomAttributes.Where(ca => ca.AttributeType == typeof(DefaultSettingValueAttribute)).ToList();
-            if (attributes.Count == 1)
-                return (T)attributes[0].NamedArguments[0].TypedValue.Value;
-
-            return default(T);
+            changed.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
-    public class DetailItem
+
+    public static class Serialize
     {
-        public int Value { get; set; }
-        public string Text { get; set; }
+        
+        public static string ToJson(this Settings self) => JsonConvert.SerializeObject(self, Formatting.Indented);
+
     }
+
 }

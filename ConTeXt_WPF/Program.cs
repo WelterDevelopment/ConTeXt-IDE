@@ -1,19 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Windows;
 using System.Threading.Tasks;
-using System.Windows.Threading;
+using System.Windows;
 using Windows.ApplicationModel.AppService;
 using Windows.Foundation.Collections;
 using Windows.Storage;
-using System.Threading;
 
 namespace ConTeXt_WPF
 {
@@ -45,18 +41,18 @@ namespace ConTeXt_WPF
             // InitializeComponent();
             var handle = GetConsoleWindow();
             ShowWindow(handle, SW_HIDE);
-            Log(Settings.Default.PackageID);
+            Log(jsonSettings.Default.PackageID);
             InitializeAppServiceConnection();
-            Log(Settings.Default.ContextDistributionPath);
+            Log(jsonSettings.Default.ContextDistributionPath);
         }
 
         private string getversion()
         {
-            if (Directory.Exists(Settings.Default.ContextDistributionPath + @"\tex\texmf-win64"))
+            if (Directory.Exists(jsonSettings.Default.ContextDistributionPath + @"\tex\texmf-win64"))
             {
                 return @"\texmf-win64";
             }
-            else if (Directory.Exists(Settings.Default.ContextDistributionPath + @"\tex\texmf-mswin"))
+            else if (Directory.Exists(jsonSettings.Default.ContextDistributionPath + @"\tex\texmf-mswin"))
             {
                 return @"\texmf-mswin";
             }
@@ -78,7 +74,7 @@ namespace ConTeXt_WPF
         private void Compile()
         {
             Process p = new Process();
-            Log(Settings.Default.TexFilePath);
+            Log(jsonSettings.Default.TexFilePath);
             ProcessStartInfo info = new ProcessStartInfo(@"C:\Windows\System32\cmd.exe")
             {
                 RedirectStandardInput = true,
@@ -87,7 +83,7 @@ namespace ConTeXt_WPF
                 CreateNoWindow = true,
                 WindowStyle = ProcessWindowStyle.Hidden,
                 UseShellExecute = false,
-                WorkingDirectory = Settings.Default.TexFileFolder
+                WorkingDirectory = jsonSettings.Default.TexFileFolder
             };
             p.OutputDataReceived += (e, f) => { Log(f.Data); };
             //p.ErrorDataReceived += (e, f) => {Log(f.Data); };
@@ -105,10 +101,10 @@ namespace ConTeXt_WPF
                 Log("compiling...");
                 // await sw.WriteLineAsync("cd sample");
                 string param = "";
-                if (Settings.Default.Modes.Length > 0)
-                    param = "--mode=" + Settings.Default.Modes + " ";
+                if (jsonSettings.Default.Modes.Length > 0)
+                    param = "--mode=" + jsonSettings.Default.Modes + " ";
 
-                sw.WriteLine(Settings.Default.ContextDistributionPath + @"\tex" + getversion() + @"\bin\context.exe"+ " " + param + Settings.Default.TexFileName);
+                sw.WriteLine(jsonSettings.Default.ContextDistributionPath + @"\tex" + getversion() + @"\bin\context.exe"+ " " + param + jsonSettings.Default.TexFileName);
 
                 // Thread.Sleep(5000);
             }
@@ -134,7 +130,7 @@ namespace ConTeXt_WPF
                             {
                                 Compile();
                                 Log("\nOpening...");
-                                var sf = File.Exists(Settings.Default.TexFilePath + @"-error.log");
+                                var sf = File.Exists(jsonSettings.Default.TexFilePath + @"-error.log");
                                 Log(sf.ToString());
                                 if (!sf)
                                 {
@@ -147,7 +143,7 @@ namespace ConTeXt_WPF
                                 }
                                 else
                                 {
-                                    var ff = await StorageFile.GetFileFromPathAsync(Settings.Default.TexFilePath + @"\" + Path.GetFileNameWithoutExtension(Settings.Default.TexFileName) + @"-error.log");
+                                    var ff = await StorageFile.GetFileFromPathAsync(jsonSettings.Default.TexFilePath + @"\" + Path.GetFileNameWithoutExtension(jsonSettings.Default.TexFileName) + @"-error.log");
                                     ValueSet response = new ValueSet();
                                     Log("file opened");
                                     var text = await FileIO.ReadTextAsync(ff);
@@ -172,10 +168,10 @@ namespace ConTeXt_WPF
                         {
                             try
                             {
-                                var file = await StorageFile.GetFileFromPathAsync(Settings.Default.TexFilePath + @"\" + Settings.Default.TexFileName);
+                                var file = await StorageFile.GetFileFromPathAsync(jsonSettings.Default.TexFilePath + @"\" + jsonSettings.Default.TexFileName);
 
                                 StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
-                                StorageFile sampleFile = await storageFolder.GetFileAsync(Settings.Default.TexFileName);
+                                StorageFile sampleFile = await storageFolder.GetFileAsync(jsonSettings.Default.TexFileName);
                                 string text = await FileIO.ReadTextAsync(sampleFile);
                                 await FileIO.WriteTextAsync(file, text);
                                 await Task.Delay(500);
@@ -194,7 +190,7 @@ namespace ConTeXt_WPF
                         }
                     case "newtexfile":
                         {
-                            string path = Settings.Default.TexFilePath + @"\" + Settings.Default.TexFileName;
+                            string path = jsonSettings.Default.TexFilePath + @"\" + jsonSettings.Default.TexFileName;
                             if (!File.Exists(path))
                             {
                                 using (StreamWriter sw = File.CreateText(path))
@@ -216,10 +212,10 @@ namespace ConTeXt_WPF
                             {
                                 case "update":
                                     {
-                                        Update();
+                                        bool updated = Update();
                                         ValueSet response = new ValueSet
                                         {
-                                            { "response", "updated" }
+                                            { "response", updated }
                                         };
                                         await args.Request.SendResponseAsync(response);
                                         break;
@@ -227,7 +223,7 @@ namespace ConTeXt_WPF
                                 case "install":
                                     {
                                         Log("installing");
-                                        bool installed = Install(Settings.Default.ContextDistributionPath);
+                                        bool installed = Install();
                                         
                                         ValueSet response = new ValueSet
                                         {
@@ -263,22 +259,24 @@ namespace ConTeXt_WPF
             connection = new AppServiceConnection
             {
                 AppServiceName = "Compiler",
-                PackageFamilyName = Settings.Default.PackageID
+                PackageFamilyName = jsonSettings.Default.PackageID
             };
             connection.RequestReceived += Connection_RequestReceived;
             connection.ServiceClosed += Connection_ServiceClosed;
             var status = await connection.OpenAsync();
             Log("Started");
         }
-        private bool Install(string contextDistributionPath)
+        private bool Install()
         {
             try
             {
-                string installurl = Settings.Default.ContextDownloadLink;
+                string installurl = jsonSettings.Default.ContextDownloadLink;
+                string contextDistributionPath = jsonSettings.Default.ContextDistributionPath;
                 Log("Setting up Web Client");
                 using (WebClient client = new WebClient())
                 {
                     Log("Downloading");
+                    
                     DirectoryInfo di = Directory.CreateDirectory(contextDistributionPath);
                     client.DownloadFile(installurl, contextDistributionPath + @"\context.zip");
                     Log("Download finished");
@@ -324,9 +322,9 @@ namespace ConTeXt_WPF
         private void Openinapp()
         {
             string local = ApplicationData.Current.LocalFolder.Path;
-            string curFile = Path.GetFileName(Settings.Default.TexFilePath + @"\" + Settings.Default.TexFileName);
+            string curFile = Path.GetFileName(jsonSettings.Default.TexFilePath + @"\" + jsonSettings.Default.TexFileName);
             string curPDF = Path.GetFileNameWithoutExtension(curFile) + ".pdf";
-            string curPDFPath = Path.Combine(Settings.Default.TexFilePath, curPDF);
+            string curPDFPath = Path.Combine(jsonSettings.Default.TexFilePath, curPDF);
             string newPathToFile = Path.Combine(local, curPDF);
             File.Copy(curPDFPath, newPathToFile, true);
         }
@@ -343,7 +341,7 @@ namespace ConTeXt_WPF
                     CreateNoWindow = true,
                     WindowStyle = ProcessWindowStyle.Hidden,
                     UseShellExecute = false,
-                    WorkingDirectory = Settings.Default.ContextDistributionPath
+                    WorkingDirectory = jsonSettings.Default.ContextDistributionPath
                 };
                 p.OutputDataReceived += (e, f) => { updateoutput++; Log(f.Data); };
                 p.StartInfo = info;
@@ -354,13 +352,9 @@ namespace ConTeXt_WPF
                 {
                     sw.WriteLine(@"install.bat --modules=all");
                     Log("Setting up PATH");
-                    sw.WriteLine("setx path \"%PATH%;" + Settings.Default.ContextDistributionPath + @"\tex\texmf-win64\bin" + "\"");
+                    sw.WriteLine("setx path \"%PATH%;" + jsonSettings.Default.ContextDistributionPath + @"\tex\texmf-win64\bin" + "\"");
                 }
-                //string output = p.StandardOutput.ReadToEnd();
-                //Log(output);
-                //Thread.Sleep(10000);
                 p.WaitForExit();
-                Log("count = " + updateoutput.ToString());
                 return true;
             }
             catch { return false; }

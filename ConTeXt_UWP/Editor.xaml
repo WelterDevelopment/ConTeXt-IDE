@@ -38,6 +38,7 @@
                 <RowDefinition Height="Auto"></RowDefinition>
                 <RowDefinition Height="Auto"></RowDefinition>
                 <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -47,7 +48,10 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*" MinWidth="50"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <!--<AppBarButton AccessKey="R" Icon="Play" Name="btncompile" Height="40" Click="Btncompile_Click" ToolTipService.ToolTip="Compile Main file">
                     <AppBarButton.KeyboardAccelerators>
@@ -56,33 +60,76 @@
         Key="B" />
                     </AppBarButton.KeyboardAccelerators>
                 </AppBarButton>-->
-                <Button Grid.Column="0"  IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Style="{ThemeResource ButtonRevealStyle}" Click="Btncompile_Click" >
+                <Button Grid.Column="0" Visibility="{Binding IsFileItemLoaded, Converter={StaticResource BoolToVisibility}}" ToolTipService.ToolTip="Save &amp; Compile current file" IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Style="{ThemeResource ButtonRevealStyle}" Click="Btncompile_Click" >
                     <Button.Content>
-                        <SymbolIcon Symbol="Play"></SymbolIcon>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <SymbolIcon Symbol="Play"></SymbolIcon>
+                            <TextBlock Text="current" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}"></TextBlock>
+                        </StackPanel>
                     </Button.Content>
                 </Button>
-                <Button Grid.Column="1" ToolTipService.ToolTip="Select modes">
+                <Button Grid.Column="1" Visibility="{Binding IsProjectLoaded, Converter={StaticResource BoolToVisibility}}" ToolTipService.ToolTip="Save &amp; Compile root file" IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Style="{ThemeResource ButtonRevealStyle}" Click="Btncompileroot_Click" >
                     <Button.Content>
-                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE70D;"></FontIcon>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <SymbolIcon Symbol="Play"></SymbolIcon>
+                            <TextBlock Text="root" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}"></TextBlock>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+                <Button Grid.Column="2" ToolTipService.ToolTip="Select compile modes" Visibility="{Binding Default.UseModes,Mode=OneWay}">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE70D;"></FontIcon>
+                            <TextBlock Text="Modes" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}"></TextBlock>
+                        </StackPanel>
+                       
                     </Button.Content>
                     <Button.Flyout>
                         <Flyout>
-                            <ListView SelectionMode="None" ItemsSource="{Binding CurrentProject.Modes}" >
-                                <ListView.ItemTemplate>
-                                    <DataTemplate>
-                                        <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}"></CheckBox>
-                                       </DataTemplate>
-                                </ListView.ItemTemplate>
-                            </ListView>
+                            <StackPanel Spacing="6">
+                                <Button  ToolTipService.ToolTip="Add a Mode" Click="addMode_Click">
+                                    <Button.Content>
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <SymbolIcon Symbol="Add"></SymbolIcon>
+                                            <TextBlock Text="Add mode" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}"></TextBlock>
+                                        </StackPanel>
+                                    </Button.Content>
+                                </Button>
+                                <ListView SelectionMode="None" ItemsSource="{Binding CurrentProject.Modes}" >
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}" Checked="CheckBox_Checked">
+                                                <CheckBox.ContextFlyout>
+                                                    <MenuFlyout>
+                                                        <MenuFlyoutItem x:Name="RemoveMode" Icon="Delete" Click="RemoveMode_Click" Text="Remove mode"></MenuFlyoutItem>
+                                                        
+                                                    </MenuFlyout>
+                                                </CheckBox.ContextFlyout>
+                                            </CheckBox>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </StackPanel>
                         </Flyout>
                     </Button.Flyout>
                 </Button>
-                <Button Grid.Column="2" IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Name="btnsave" Style="{ThemeResource ButtonRevealStyle}" Click="Btnsave_Click" ToolTipService.ToolTip="Save current file">
+                <Button Grid.Column="3" Visibility="{Binding IsFileItemLoaded, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Name="btnsave" Style="{ThemeResource ButtonRevealStyle}" Click="Btnsave_Click" ToolTipService.ToolTip="Save current file">
                     <Button.Content>
-                        <SymbolIcon Symbol="Save"></SymbolIcon>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <SymbolIcon Symbol="Save"></SymbolIcon>
+                            <TextBlock Text="Save" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}"></TextBlock>
+                        </StackPanel>
                     </Button.Content>
                 </Button>
-                <contr:ProgressBar Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}" ShowPaused="{Binding IsPaused}" Grid.Column="3" HorizontalAlignment="Stretch"  IsIndeterminate="True" ShowError="{Binding IsError}">
+                <Button Grid.Column="4" Visibility="{Binding IsFileItemLoaded, Converter={StaticResource BoolToVisibility}}" IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Name="btnsaveall" Style="{ThemeResource ButtonRevealStyle}" Click="btnsaveall_Click" ToolTipService.ToolTip="Save all opened files">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <SymbolIcon Symbol="Save"></SymbolIcon>
+                            <TextBlock Text="Save all" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}"></TextBlock>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+                <contr:ProgressBar Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}" ShowPaused="{Binding IsPaused}" Grid.Column="5" HorizontalAlignment="Stretch"  IsIndeterminate="True" ShowError="{Binding IsError}">
                     <animations:Implicit.ShowAnimations>
                         <animations:TranslationAnimation Duration="0:0:0.75" From="0, -20, 0" To="0" ></animations:TranslationAnimation>
                         <animations:OpacityAnimation Duration="0:0:0.75" From="0" To="1"></animations:OpacityAnimation>
@@ -92,6 +139,29 @@
                         <animations:OpacityAnimation Duration="0:0:0.75" From="1" To="0"></animations:OpacityAnimation>
                     </animations:Implicit.HideAnimations>
                 </contr:ProgressBar>
+                <Button Grid.Column="6" ToolTipService.ToolTip="Open a Manual">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <SymbolIcon Symbol="Help"></SymbolIcon>
+                            <TextBlock Text="Help" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}"></TextBlock>
+                        </StackPanel>
+
+                    </Button.Content>
+                    <Button.Flyout>
+                        <Flyout>
+                            <ListView  SelectionMode="None" IsItemClickEnabled="True" ItemClick="Help_ItemClick" ItemsSource="{Binding HelpFiles}" >
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,0,0,6" Spacing="0">
+                                            <TextBlock Text="{Binding FriendlyName}" Style="{ThemeResource BodyTextBlockStyle}"></TextBlock>
+                                            <TextBlock Text="{Binding FileName}" Style="{ThemeResource CaptionTextBlockStyle}"></TextBlock>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
                 <!--<AppBarButton IsEnabled="{Binding 
                 Saving}" Icon="OpenFile" Name="btnopen" Height="40" Click="Btnopen_Click"></AppBarButton>-->
 
@@ -201,7 +271,7 @@
         GripperForeground="{ThemeResource ContentAcrylicBrush}" >
         </controls:GridSplitter>
 
-        <Grid  Tag="LogView" Grid.Row="2" Grid.ColumnSpan="3" Visibility="Visible" x:FieldModifier="public" x:Name="logview" Background="{ThemeResource LogAcrylicBrush}" Padding="15,0,15,15">
+        <Grid MaxHeight="500" Tag="LogView" Grid.Row="2" Grid.ColumnSpan="3" Visibility="Visible" x:FieldModifier="public" x:Name="logview" Background="{ThemeResource LogAcrylicBrush}" Padding="15,0,15,15">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="203*"/>
                 <ColumnDefinition Width="277*"/>

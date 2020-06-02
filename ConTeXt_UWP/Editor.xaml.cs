@@ -35,12 +35,14 @@ namespace ConTeXt_UWP
     /// </summary>
     public sealed partial class Editor : Page
     {
+        public static Editor CurrentEditor { get; set; }
         public bool loaded = false;
         public ViewModel currentViewModel = App.VM;
         public Editor()
         {
             this.InitializeComponent();
-            this.NavigationCacheMode = NavigationCacheMode.Enabled;
+            this.NavigationCacheMode = NavigationCacheMode.Disabled;
+            CurrentEditor = this;
             //App.AppViewModel.FileItems.CollectionChanged += FileItems_CollectionChanged;
         }
 
@@ -60,95 +62,119 @@ namespace ConTeXt_UWP
             App.VM.FileActivatedEvents.Clear();
             loaded = true;
         }
-      
-        public async Task Compile()
+
+        public async Task Compile(bool compileRoot = false, FileItem fileToCompile = null)
         {
-            if (App.VM.CurrentFileItem != null)
-                if (App.VM.CurrentFileItem.File != null)
-                    try
+            if (!App.VM.IsSaving)
+                try
+                {
+                    App.VM.IsSaving = true;
+                    App.VM.IsPaused = false;
+                    string[] modes = new string[] { };
+                    if (App.VM.CurrentProject != null)
+                        modes = App.VM.CurrentProject.Modes.Where(x => x.IsSelected).Select(x => x.Name).ToArray();
+                    if (modes.Length > 0)
+                        App.VM.Default.Modes = string.Join(",", modes);
+                    else App.VM.Default.Modes = "";
+
+                    FileItem filetocompile = null;
+                    if (compileRoot)
                     {
-                        
-                        App.VM.IsSaving = true;
-                        App.VM.IsPaused = false;
-                        var m = App.VM.CurrentProject.Modes.Where(x => x.IsSelected).Select(x => x.Name).ToArray();
-                        if (m.Length > 0)
-                            App.VM.Default.Modes = string.Join(",", m);
-                        else App.VM.Default.Modes = "";
-                        string logtext = "Compiling " + App.VM.CurrentFileItem.File.Name;
-                        if (m.Length > 0)
-                            logtext = logtext + " with modes: " + App.VM.Default.Modes;
-                        App.VM.LOG(logtext);
-                        ValueSet request = new ValueSet { { "compile", true } };
-                        AppServiceResponse response = await App.VM.appServiceConnection.SendMessageAsync(request);
-                        // display the response key/value pairs
-                        foreach (string key in response.Message.Keys)
+                        FileItem[] root = new FileItem[] { };
+                        if (App.VM.CurrentProject != null)
+                            root = App.VM.CurrentProject.Directory.Where(x => x.IsRoot).ToArray();
+                        if (root.Length > 0)
+                            filetocompile = root.FirstOrDefault();
+                        else
+                            filetocompile = fileToCompile ?? App.VM.CurrentFileItem;
+                    }
+                    else
+                    {
+                        filetocompile = fileToCompile ?? App.VM.CurrentFileItem;
+                    }
+                    string logtext = "Compiling " + filetocompile.File.Name;
+                    if (modes.Length > 0)
+                        logtext = logtext + " with modes: " + App.VM.Default.Modes;
+                    App.VM.LOG(logtext);
+                    App.VM.Default.TexFileFolder = filetocompile.FileFolder;
+                    App.VM.Default.TexFileName = filetocompile.FileName;
+                    App.VM.Default.TexFilePath = filetocompile.File.Path;
+                    ValueSet request = new ValueSet { { "compile", true } };
+                    AppServiceResponse response = await App.VM.appServiceConnection.SendMessageAsync(request);
+                    // display the response key/value pairs
+                    foreach (string key in response.Message.Keys)
+                    {
+                        if ((string)response.Message[key] == "compiled")
                         {
-                            if ((string)response.Message[key] == "compiled")
+                            string local = ApplicationData.Current.LocalFolder.Path;
+                            string curFile = System.IO.Path.GetFileName(App.VM.Default.TexFilePath);
+                            string filewithoutext = System.IO.Path.GetFileNameWithoutExtension(curFile);
+                            string curPDF = filewithoutext + ".pdf";
+                            string curPDFPath = System.IO.Path.Combine(App.VM.Default.TexFilePath, curPDF);
+                            string newPathToFile = System.IO.Path.Combine(local, curPDF);
+                            StorageFolder currFolder = await StorageFolder.GetFolderFromPathAsync(App.VM.Default.TexFileFolder);
+                            App.VM.LOG("Opening " + System.IO.Path.GetFileNameWithoutExtension(App.VM.Default.TexFileName) + ".pdf");
+                            //StorageFile file = await ApplicationData.Current.LocalFolder.GetFileAsync(curPDF);
+
+                            if (App.VM.Default.AutoOpenPDF)
                             {
-                                string local = ApplicationData.Current.LocalFolder.Path;
-                                string curFile = System.IO.Path.GetFileName(App.VM.Default.TexFilePath);
-                                string filewithoutext = System.IO.Path.GetFileNameWithoutExtension(curFile);
-                                string curPDF = filewithoutext + ".pdf";
-                                string curPDFPath = System.IO.Path.Combine(App.VM.Default.TexFilePath, curPDF);
-                                string newPathToFile = System.IO.Path.Combine(local, curPDF);
-                                StorageFolder currFolder = await StorageFolder.GetFolderFromPathAsync(App.VM.Default.TexFileFolder);
-                                App.VM.LOG("Opening " + System.IO.Path.GetFileNameWithoutExtension(App.VM.Default.TexFileName) + ".pdf");
-                                //StorageFile file = await ApplicationData.Current.LocalFolder.GetFileAsync(curPDF);
+                                StorageFile pdfout = await currFolder.TryGetItemAsync(System.IO.Path.GetFileNameWithoutExtension(App.VM.Default.TexFileName) + ".pdf") as StorageFile;
+                                if (pdfout != null)
+                                {
+                                    if (App.VM.Default.InternalViewer)
+                                    {
+                                        Stream stream = await pdfout.OpenStreamForReadAsync();
+                                        byte[] buffer = new byte[stream.Length];
+                                        stream.Read(buffer, 0, (int)stream.Length);
+                                        var asBase64 = Convert.ToBase64String(buffer);
+                                        await PDFReader.InvokeScriptAsync("openPdfAsBase64", new[] { asBase64 });
+                                    }
+                                    else
+                                    {
+                                        await Launcher.LaunchFileAsync(pdfout);
+                                    }
+                                }
+                            }
 
-                                if (App.VM.Default.InternalViewer)
-                                {
-                                    var fil = await currFolder.GetFileAsync(System.IO.Path.GetFileNameWithoutExtension(App.VM.Default.TexFileName) + ".pdf");
-                                    Stream stream = await fil.OpenStreamForReadAsync();
-                                    byte[] buffer = new byte[stream.Length];
-                                    stream.Read(buffer, 0, (int)stream.Length);
-                                    var asBase64 = Convert.ToBase64String(buffer);
-                                    await PDFReader.InvokeScriptAsync("openPdfAsBase64", new[] { asBase64 });
-                                }
-                                else
-                                {
-                                    var file = await App.VM.CurrentProject.Folder.GetFileAsync(System.IO.Path.GetFileNameWithoutExtension(App.VM.Default.TexFileName) + ".pdf");
-                                    if (file != null)
-                                        await Launcher.LaunchFileAsync(file);
-                                }
+                            var error = await currFolder.TryGetItemAsync(System.IO.Path.GetFileNameWithoutExtension(App.VM.Default.TexFileName) + "-error.log");
+                            if (error != null)
+                            {
+                                App.VM.IsError = true;
+                                var errorfile = error as StorageFile;
+                                //var stream = await errorfile.OpenStreamForReadAsync();
+                                //byte[] buffer = new byte[stream.Length];
+                                //stream.Read(buffer,0,(int)stream.Length);
+                                //string text = Convert.ToString(buffer);
+                                string text = await FileIO.ReadTextAsync(errorfile);
+                                App.VM.LOG(text);
 
-                                var error = await currFolder.TryGetItemAsync(System.IO.Path.GetFileNameWithoutExtension(App.VM.Default.TexFileName) + "-error.log");
-                                if (error != null)
-                                {
-                                    App.VM.IsError = true;
-                                    var errorfile = error as StorageFile;
-                                    //var stream = await errorfile.OpenStreamForReadAsync();
-                                    //byte[] buffer = new byte[stream.Length];
-                                    //stream.Read(buffer,0,(int)stream.Length);
-                                    //string text = Convert.ToString(buffer);
-                                    string text = await FileIO.ReadTextAsync(errorfile);
-                                    App.VM.LOG(text);
-
-                                }
-                                else
-                                {
-                                    App.VM.IsPaused = true;
-                                    await Task.Delay(2000);
-                                    App.VM.IsVisible = false;
-                                }
                             }
                             else
                             {
-                                App.VM.LOG(key + "lol");
+                                App.VM.IsPaused = true;
+                                await Task.Delay(2000);
+                                App.VM.IsVisible = false;
                             }
                         }
+                        else
+                        {
+                            App.VM.LOG("Compiler error");
+                        }
+                    }
 
-                    }
-                    catch (Exception f)
-                    {
-                        App.VM.IsError = true;
-                        App.VM.LOG("Error on opening PDF file: " + f.Message);
-                    }
+                }
+                catch (Exception f)
+                {
+                    App.VM.IsError = true;
+                    App.VM.LOG("Error on opening PDF file: " + f.Message);
+                }
             App.VM.IsSaving = false;
-           
+
         }
         private async void Btncompile_Click(object sender, RoutedEventArgs e)
         {
-            await App.VM.UWPSave((App.VM.CurrentFileItem).File as StorageFile);
+
+            await App.VM.UWPSave();
             await Compile();
         }
 
@@ -192,8 +218,9 @@ namespace ConTeXt_UWP
         }
         private async void Btnsave_Click(object sender, RoutedEventArgs e)
         {
-
-            await App.VM.UWPSave(App.VM.CurrentFileItem?.File as StorageFile);
+            Edit.Options.WordWrap = WordWrap.On;
+            Edit.Options.LineNumbers = LineNumbersType.Relative;
+            await App.VM.UWPSave();
         }
 
 
@@ -212,11 +239,47 @@ namespace ConTeXt_UWP
                 await languages.RegisterCompletionItemProviderAsync("context", new LanguageProvider());
 
                 await (sender as CodeEditor).AddActionAsync(new RunAction());
+                await (sender as CodeEditor).AddActionAsync(new RunRootAction());
+
                 await (sender as CodeEditor).AddActionAsync(new SaveAction());
+                await (sender as CodeEditor).AddActionAsync(new SaveAllAction());
+                edit.Options.DetectIndentation = false;
+                edit.Options.UseTabStops = true;
+                edit.Options.TabSize = 2;
+                edit.Options.CopyWithSyntaxHighlighting = true;
+                edit.Options.InsertSpaces = false;
+                edit.Options.WordWrap = WordWrap.On;
+                edit.Options.WordBasedSuggestions = false;
+                edit.Options.SuggestOnTriggerCharacters = true;
+                edit.Options.AcceptSuggestionOnCommitCharacter = true;
+                edit.Options.AcceptSuggestionOnEnter = AcceptSuggestionOnEnter.On;
+                edit.Options.TabCompletion = TabCompletion.Off;
+                edit.Options.SuggestSelection = SuggestSelection.RecentlyUsed;
+                edit.Options.WrappingIndent = WrappingIndent.Indent;
+                edit.Options.AutoIndent = AutoIndent.Keep;
+                edit.Options.CodeLens = true;
+                edit.Options.Contextmenu = true;
+                edit.Options.ParameterHints = new IEditorParameterHintOptions() { Cycle = false, Enabled = true };
+                edit.Options.Minimap = new EditorMinimapOptions() { Enabled = App.VM.Default.MiniMap, ShowSlider = Show.Always, RenderCharacters = true, };
+                edit.Options.CursorBlinking = CursorBlinking.Solid;
+                edit.Options.DragAndDrop = true;
+                edit.Options.ScrollBeyondLastLine = false;
+                edit.Options.Folding = App.VM.Default.CodeFolding;
+                edit.Options.FoldingStrategy = FoldingStrategy.Auto;
+                edit.Options.FormatOnPaste = true;
+                edit.Options.Hover = new EditorHoverOptions() { Enabled = true, Delay = 100, Sticky = true };
+                edit.Options.LineNumbers = (LineNumbersType)App.VM.Default.ShowLineNumbers;
+                edit.Options.RenderControlCharacters = true;
+                edit.Options.QuickSuggestions = true;
+                edit.Options.SnippetSuggestions = SnippetSuggestions.Inline;
+                edit.Options.Links = true;
+                edit.Options.MouseWheelZoom = true;
+                edit.Options.OccurrencesHighlight = false;
+                edit.Options.RoundedSelection = true;
                 editloadet = true;
             }
-            //edit.RequestedTheme = RequestedTheme;
-            edit.InvokeScriptAsync("revealLineInCenter(15)");
+            // edit.RequestedTheme = App.VM.Default.Theme == "Light" ? ElementTheme.Light : App.VM.Default.Theme == "Dark" ? ElementTheme.Dark : ElementTheme.Default;
+            //edit.InvokeScriptAsync("revealLineInCenter(15)");
         }
 
         private readonly List<string[]> ContextEnvironmentStructureKeywords = new List<string[]>() {
@@ -246,10 +309,6 @@ namespace ConTeXt_UWP
             new string[]{ "startbackmatter","stopbackmatter", "To print the bibliography, declaration of authorship, ...","backpart"},
         };
 
-        private readonly List<EnvironmentItem> EnvItems = new List<EnvironmentItem>()
-        {
-            new EnvironmentItem(){  },
-        };
         private Hover RegisterHover(WordAtPosition word, IPosition position)
         {
             if (word != null && word.Word != null)
@@ -301,39 +360,7 @@ namespace ConTeXt_UWP
         private void Edit_Loaded(object sender, RoutedEventArgs e)
         {
             var edit = (sender as CodeEditor);
-            edit.Options.DetectIndentation = false;
-            edit.Options.UseTabStops = true;
-            edit.Options.TabSize = 2;
-            edit.Options.CopyWithSyntaxHighlighting = true;
-            edit.Options.InsertSpaces = false;
-            edit.Options.WordWrap = WordWrap.On;
-            edit.Options.WordBasedSuggestions = false;
-            edit.Options.SuggestOnTriggerCharacters = true;
-            edit.Options.AcceptSuggestionOnCommitCharacter = true;
-            edit.Options.AcceptSuggestionOnEnter = AcceptSuggestionOnEnter.On;
-            edit.Options.TabCompletion = TabCompletion.Off;
-            edit.Options.SuggestSelection = SuggestSelection.RecentlyUsed;
-            edit.Options.WrappingIndent = WrappingIndent.Indent;
-            edit.Options.AutoIndent = AutoIndent.Keep;
-            edit.Options.CodeLens = true;
-            edit.Options.Contextmenu = true;
-            edit.Options.ParameterHints = new IEditorParameterHintOptions() { Cycle = false, Enabled = true };
-            edit.Options.Minimap = new EditorMinimapOptions() { Enabled = App.VM.Default.MiniMap, ShowSlider = Show.Always, RenderCharacters = true, };
-            edit.Options.CursorBlinking = CursorBlinking.Solid;
-            edit.Options.DragAndDrop = true;
-            edit.Options.ScrollBeyondLastLine = false;
-            edit.Options.Folding = App.VM.Default.CodeFolding;
-            edit.Options.FoldingStrategy = FoldingStrategy.Auto;
-            edit.Options.FormatOnPaste = true;
-            edit.Options.Hover = new EditorHoverOptions() { Enabled = true, Delay = 100, Sticky = true };
-            edit.Options.LineNumbers = (LineNumbersType)App.VM.Default.ShowLineNumbers;
-            edit.Options.RenderControlCharacters = true;
-            edit.Options.QuickSuggestions = true;
-            edit.Options.SnippetSuggestions = SnippetSuggestions.Inline;
-            edit.Options.Links = true;
-            edit.Options.MouseWheelZoom = true;
-            edit.Options.OccurrencesHighlight = false;
-            edit.Options.RoundedSelection = true;
+            
 
 
 
@@ -343,8 +370,8 @@ namespace ConTeXt_UWP
             //BindingOperations.SetBinding(edit, CodeEditor.TextProperty, myBinding);
 
 
-
             edit.Focus(FocusState.Programmatic);
+            // edit.RequestedTheme = App.VM.Default.Theme == "Light" ? ElementTheme.Light : App.VM.Default.Theme == "Dark" ? ElementTheme.Dark : ElementTheme.Default;
         }
 
         public string CodeContent
@@ -442,15 +469,6 @@ namespace ConTeXt_UWP
             //};
         }
 
-        private CodeEditor NewCodeEditor(string Content = "")
-        {
-            CodeEditor ce = new CodeEditor() { };
-            ce.CodeLanguage = "context";
-            ce.Loaded += Edit_Loaded;
-            ce.Loading += Edit_Loading;
-            ce.Text = Content;
-            return ce;
-        }
         private Rectangle NewRectangle()
         {
             return new Rectangle()
@@ -466,7 +484,7 @@ namespace ConTeXt_UWP
 
         private async void ControlEnter_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
-            await App.VM.UWPSave(App.VM.CurrentFileItem?.File as StorageFile);
+            await App.VM.UWPSave();
             await Compile();
         }
 
@@ -516,15 +534,62 @@ namespace ConTeXt_UWP
 
         }
 
-    }
+        private async void Help_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            try
+            {
+                var hf = e.ClickedItem as Helpfile;
+                var lsf = ApplicationData.Current.LocalFolder;
+                App.VM.LOG("Opening " + lsf.Path + hf.Path + hf.FileName);
+                var sf = await StorageFile.GetFileFromPathAsync(lsf.Path + hf.Path + hf.FileName);
 
-    public class EnvironmentItem
-    {
-        public string Start { get; set; }
-        public string Stop { get; set; }
-        public string Info1 { get; set; }
-        public string Info2 { get; set; }
-        public string Info3 { get; set; }
+                await Launcher.LaunchFileAsync(sf);
+            }
+            catch (Exception ex)
+            {
+                App.VM.LOG(ex.Message);
+            }
+        }
+
+        private async void btnsaveall_Click(object sender, RoutedEventArgs e)
+        {
+            await App.VM.UWPSaveAll();
+        }
+
+        private async void Btncompileroot_Click(object sender, RoutedEventArgs e)
+        {
+            await App.VM.UWPSaveAll();
+            await Compile(true);
+        }
+
+        private async void addMode_Click(object sender, RoutedEventArgs e)
+        {
+            Mode mode = new Mode();
+            string name = "";
+            var cd = new ContentDialog() { Title = "Add mode", PrimaryButtonText = "ok", CloseButtonText = "cancel", DefaultButton = ContentDialogButton.Primary };
+            TextBox tb = new TextBox() { Text = name };
+            cd.Content = tb;
+            if (await cd.ShowAsync() == ContentDialogResult.Primary)
+            {
+                mode.IsSelected = true;
+                mode.Name = tb.Text;
+                App.VM.CurrentProject.Modes.Add(mode);
+                App.VM.Default.SaveSettings();
+            }
+
+        }
+
+        private void CheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            App.VM.Default.SaveSettings();
+        }
+
+        private void RemoveMode_Click(object sender, RoutedEventArgs e)
+        {
+            Mode m = (sender as FrameworkElement).DataContext as Mode;
+            App.VM.CurrentProject.Modes.Remove(m);
+            App.VM.Default.SaveSettings();
+        }
     }
 
     public class LanguageProvider : CompletionItemProvider
@@ -581,7 +646,7 @@ namespace ConTeXt_UWP
     }
     class RunAction : IActionDescriptor
     {
-        public string ContextMenuGroupId => "navigation";
+        public string ContextMenuGroupId => "compile";
         public float ContextMenuOrder => 1.5f;
         public string Id => "compile";
         public string KeybindingContext => null;
@@ -592,14 +657,34 @@ namespace ConTeXt_UWP
 
         public async void Run(CodeEditor editor, object[] obj)
         {
-            await App.VM.UWPSave((App.VM.CurrentFileItem).File as StorageFile);
-            await (((Window.Current.Content as Frame).Content as MainPage).contentFrame.Content as Editor).Compile();
+            await App.VM.UWPSave();
+            //await (((Window.Current.Content as Frame).Content as MainPage).contentFrame.Content as Editor).Compile();
+            await Editor.CurrentEditor.Compile();
+            editor.Focus(Windows.UI.Xaml.FocusState.Programmatic);
+        }
+    }
+    class RunRootAction : IActionDescriptor
+    {
+        public string ContextMenuGroupId => "compile";
+        public float ContextMenuOrder => 1.5f;
+        public string Id => "compileroot";
+        public string KeybindingContext => null;
+        //public int[] Keybindings => new int[] { Monaco.KeyMod.Chord(Monaco.KeyMod.CtrlCmd | Monaco.KeyCode.Enter, Monaco.KeyCode.F5) };
+        public int[] Keybindings => new int[] { KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.Enter };
+        public string Label => "Save all & Compile root";
+        public string Precondition => null;
+
+        public async void Run(CodeEditor editor, object[] obj)
+        {
+            await App.VM.UWPSaveAll();
+            //await (((Window.Current.Content as Frame).Content as MainPage).contentFrame.Content as Editor).Compile();
+            await Editor.CurrentEditor.Compile(true);
             editor.Focus(Windows.UI.Xaml.FocusState.Programmatic);
         }
     }
     class SaveAction : IActionDescriptor
     {
-        public string ContextMenuGroupId => "navigation";
+        public string ContextMenuGroupId => "save";
         public float ContextMenuOrder => 1.5f;
         public string Id => "save";
         public string KeybindingContext => null;
@@ -610,7 +695,24 @@ namespace ConTeXt_UWP
 
         public async void Run(CodeEditor editor, object[] obj)
         {
-            await App.VM.UWPSave((App.VM.CurrentFileItem).File as StorageFile);
+            await App.VM.UWPSave();
+            editor.Focus(Windows.UI.Xaml.FocusState.Programmatic);
+        }
+    }
+    class SaveAllAction : IActionDescriptor
+    {
+        public string ContextMenuGroupId => "save";
+        public float ContextMenuOrder => 1.5f;
+        public string Id => "saveall";
+        public string KeybindingContext => null;
+        //public int[] Keybindings => new int[] { Monaco.KeyMod.Chord(Monaco.KeyMod.CtrlCmd | Monaco.KeyCode.Enter, Monaco.KeyCode.F5) };
+        public int[] Keybindings => new int[] { KeyMod.CtrlCmd | KeyCode.Shift | KeyCode.KEY_S };
+        public string Label => "Save all";
+        public string Precondition => null;
+
+        public async void Run(CodeEditor editor, object[] obj)
+        {
+            await App.VM.UWPSaveAll();
             editor.Focus(Windows.UI.Xaml.FocusState.Programmatic);
         }
     }

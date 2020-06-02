@@ -25,18 +25,18 @@
                 </StackPanel.Resources>
                 <TextBlock Style="{ThemeResource SubheaderTextBlockStyle}" Text="General" FontFamily="Segoe UI"></TextBlock>
                 <CheckBox Content="Start with last active Project" IsChecked="{Binding Default.StartWithLastActiveProject, Mode=TwoWay}" />
-                <TextBlock Style="{ThemeResource SubheaderTextBlockStyle}" Text="Compiler" FontFamily="Segoe UI"></TextBlock>
+                <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Compiler" FontFamily="Segoe UI"></TextBlock>
                 
                 <CheckBox Content="Internal PDF viewer (not quite exact results as with Adobe Reader)" IsChecked="{Binding Default.InternalViewer, Mode=TwoWay}" />
-                <CheckBox Content="Use ConTEXt modes" IsChecked="{Binding Default.InternalViewer, Mode=TwoWay}" />
-                <CheckBox Content="Open the PDF file after compilation automatically" IsChecked="{Binding Default.InternalViewer, Mode=TwoWay}" />
+                <CheckBox Content="Use ConTEXt modes" IsChecked="{Binding Default.AutoOpenPDF, Mode=TwoWay}" />
+                <CheckBox Content="Open the PDF file after compile" IsChecked="{Binding Default.AutoOpenPDF, Mode=TwoWay}" />
                 <CheckBox Content="Show log" IsChecked="{Binding Default.ShowLog, Mode=TwoWay}" />
-              
-                <TextBlock Style="{ThemeResource SubheaderTextBlockStyle}" Text="Appearance" FontFamily="Segoe UI"></TextBlock>
+
+                <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Appearance" FontFamily="Segoe UI"></TextBlock>
                 <ComboBox Header="Navigation pane display mode" Name="PaneControl"  ItemsSource="{Binding Default.NavigationOption}" SelectedItem="{Binding Default.NavigationViewPaneMode, Mode=TwoWay}"  FontFamily="Segoe UI"/>
-                <ComboBox Header="Theme (needs restart)" Name="ThemeControl"  ItemsSource="{Binding Default.ThemeOption}" SelectionChangedTrigger="Always" SelectedItem="{Binding Default.Theme, Mode=TwoWay}"  FontFamily="Segoe UI"/>
+                <ComboBox SelectionChanged="ThemeControl_SelectionChanged" Header="Theme" Name="ThemeControl"  ItemsSource="{Binding Default.ThemeOption}" SelectionChangedTrigger="Always" SelectedItem="{Binding Default.Theme, Mode=TwoWay}"  FontFamily="Segoe UI"/>
                 <Slider Header="Open navigation pane width" Minimum="100" Maximum="800" Value="{Binding Default.NavigationViewPaneOpenLength, Mode=TwoWay}"></Slider>
-                <TextBlock Style="{ThemeResource SubheaderTextBlockStyle}" Text="Editor" FontFamily="Segoe UI"></TextBlock>
+                <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Editor" FontFamily="Segoe UI"></TextBlock>
                 <ComboBox Header="Line numbers" ItemsSource="{Binding Default.ShowLineNumberOptions}" SelectionChangedTrigger="Always" SelectedItem="{Binding Default.ShowLineNumbers, Mode=TwoWay, Converter={StaticResource EnumToString},ConverterParameter=LineNumbersType}"  FontFamily="Segoe UI"/>
                 <!--<CheckBox Content="Text wrapping (prevents horizontal scrollbar)" IsChecked="{Binding Default.wrap, Mode=TwoWay}"/>-->
                 <!--<CheckBox Content="Show command info on hover" IsChecked="{Binding Default.ShowLineNumbers, Mode=TwoWay}"/>-->
@@ -45,12 +45,16 @@
                 <CheckBox Content="Suggest ConTeXt sart-stop environments" IsChecked="{Binding Default.SuggestStartStop, Mode=TwoWay}"/>
                 <CheckBox Content="Suggest ConTeXt commands" IsChecked="{Binding Default.SuggestCommands, Mode=TwoWay}"/>
                 <CheckBox Content="Suggest TeX primitives" IsChecked="{Binding Default.SuggestPrimitives, Mode=TwoWay}"/>
-                <TextBlock Style="{ThemeResource SubheaderTextBlockStyle}" Text="Distribution" FontFamily="Segoe UI"></TextBlock>
-                <TextBox Header="ConTeXt distribution path" Text="{Binding Default.ContextDistributionPath, Mode=TwoWay}"/>
-                <Button IsEnabled="{Binding IsNotSaving}" Name="Update" Click="Update_Click" Content="Update the distribution" Margin="0,10,0,0"></Button>
-                <Button IsEnabled="{Binding IsNotSaving}" Name="CleanInstall" Click="Install_Click" Content="Clean install" Margin="0,10,0,0"></Button>
-        
-                
+                <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Distribution" FontFamily="Segoe UI"></TextBlock>
+                <TextBox IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Header="ConTeXt distribution path" Text="{Binding Default.ContextDistributionPath, Mode=TwoWay}"/>
+                <Button IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Name="Update" Click="Update_Click" Content="Update the distribution" Margin="0,10,0,0"></Button>
+                <Button IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Name="CleanInstall" Click="Install_Click" Content="First install" Margin="0,10,0,0"></Button>
+                <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="ConTeXt IDE"></TextBlock>
+                <TextBlock x:Name="Version" Style="{ThemeResource BodyTextBlockStyle}" Text=""></TextBlock>
+                <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Text="by wdev (wdev@outlook.de)"></TextBlock>
+
+                <Button Click="Disclaimer_Click" Content="Show legal disclaimer" Margin="0,10,0,0"></Button>
+                <WebView Visibility="Collapsed" x:Name="DisclaimerView" Height="500" DefaultBackgroundColor="#88FFFFFF" ScrollViewer.VerticalScrollMode="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto" Source="ms-appx-web:///web/About.html"></WebView>
             </StackPanel>
         </ScrollViewer>
     </Grid>
