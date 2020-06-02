@@ -354,11 +354,7 @@ namespace ConTeXt_WPF
                     Log("Setting up PATH");
                     sw.WriteLine("setx path \"%PATH%;" + jsonSettings.Default.ContextDistributionPath + @"\tex\texmf-win64\bin" + "\"");
                 }
-                //string output = p.StandardOutput.ReadToEnd();
-                //Log(output);
-                //Thread.Sleep(10000);
                 p.WaitForExit();
-                Log("count = " + updateoutput.ToString());
                 return true;
             }
             catch { return false; }

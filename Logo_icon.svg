@@ -21,9 +21,9 @@
    height="80"
    sodipodi:docname="Logo_icon.svg"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
-   inkscape:export-filename="C:\Users\Welter\OneDrive\texapp\2\ConTeXt\Logo_icon.png"
-   inkscape:export-xdpi="3600"
-   inkscape:export-ydpi="3600"
+   inkscape:export-filename="C:\Users\Welter\source\repos\WelterDevelopment\ConTeXt-IDE2\Logo_icon2.png"
+   inkscape:export-xdpi="1296"
+   inkscape:export-ydpi="1296"
    style="enable-background:new"><metadata
    id="metadata21"><rdf:RDF><cc:Work
        rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
@@ -124,7 +124,7 @@
    inkscape:snap-bbox-edge-midpoints="true"
    inkscape:bbox-paths="true"
    inkscape:zoom="5.6568542"
-   inkscape:cx="43.104249"
+   inkscape:cx="9.1631232"
    inkscape:cy="50.251576"
    inkscape:window-x="-13"
    inkscape:window-y="-13"
@@ -206,6 +206,7 @@
      x="8.3455877"
      id="tspan3726"
      sodipodi:role="line">C</tspan></text>
+
 
 
 

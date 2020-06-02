@@ -118,20 +118,21 @@ namespace ConTeXt_UWP
 
                             if (App.VM.Default.AutoOpenPDF)
                             {
-                                if (App.VM.Default.InternalViewer)
+                                StorageFile pdfout = await currFolder.TryGetItemAsync(System.IO.Path.GetFileNameWithoutExtension(App.VM.Default.TexFileName) + ".pdf") as StorageFile;
+                                if (pdfout != null)
                                 {
-                                    var fil = await currFolder.GetFileAsync(System.IO.Path.GetFileNameWithoutExtension(App.VM.Default.TexFileName) + ".pdf");
-                                    Stream stream = await fil.OpenStreamForReadAsync();
-                                    byte[] buffer = new byte[stream.Length];
-                                    stream.Read(buffer, 0, (int)stream.Length);
-                                    var asBase64 = Convert.ToBase64String(buffer);
-                                    await PDFReader.InvokeScriptAsync("openPdfAsBase64", new[] { asBase64 });
-                                }
-                                else
-                                {
-                                    var file = await App.VM.CurrentProject.Folder.GetFileAsync(System.IO.Path.GetFileNameWithoutExtension(App.VM.Default.TexFileName) + ".pdf");
-                                    if (file != null)
-                                        await Launcher.LaunchFileAsync(file);
+                                    if (App.VM.Default.InternalViewer)
+                                    {
+                                        Stream stream = await pdfout.OpenStreamForReadAsync();
+                                        byte[] buffer = new byte[stream.Length];
+                                        stream.Read(buffer, 0, (int)stream.Length);
+                                        var asBase64 = Convert.ToBase64String(buffer);
+                                        await PDFReader.InvokeScriptAsync("openPdfAsBase64", new[] { asBase64 });
+                                    }
+                                    else
+                                    {
+                                        await Launcher.LaunchFileAsync(pdfout);
+                                    }
                                 }
                             }
 
@@ -217,7 +218,8 @@ namespace ConTeXt_UWP
         }
         private async void Btnsave_Click(object sender, RoutedEventArgs e)
         {
-
+            Edit.Options.WordWrap = WordWrap.On;
+            Edit.Options.LineNumbers = LineNumbersType.Relative;
             await App.VM.UWPSave();
         }
 
@@ -241,6 +243,39 @@ namespace ConTeXt_UWP
 
                 await (sender as CodeEditor).AddActionAsync(new SaveAction());
                 await (sender as CodeEditor).AddActionAsync(new SaveAllAction());
+                edit.Options.DetectIndentation = false;
+                edit.Options.UseTabStops = true;
+                edit.Options.TabSize = 2;
+                edit.Options.CopyWithSyntaxHighlighting = true;
+                edit.Options.InsertSpaces = false;
+                edit.Options.WordWrap = WordWrap.On;
+                edit.Options.WordBasedSuggestions = false;
+                edit.Options.SuggestOnTriggerCharacters = true;
+                edit.Options.AcceptSuggestionOnCommitCharacter = true;
+                edit.Options.AcceptSuggestionOnEnter = AcceptSuggestionOnEnter.On;
+                edit.Options.TabCompletion = TabCompletion.Off;
+                edit.Options.SuggestSelection = SuggestSelection.RecentlyUsed;
+                edit.Options.WrappingIndent = WrappingIndent.Indent;
+                edit.Options.AutoIndent = AutoIndent.Keep;
+                edit.Options.CodeLens = true;
+                edit.Options.Contextmenu = true;
+                edit.Options.ParameterHints = new IEditorParameterHintOptions() { Cycle = false, Enabled = true };
+                edit.Options.Minimap = new EditorMinimapOptions() { Enabled = App.VM.Default.MiniMap, ShowSlider = Show.Always, RenderCharacters = true, };
+                edit.Options.CursorBlinking = CursorBlinking.Solid;
+                edit.Options.DragAndDrop = true;
+                edit.Options.ScrollBeyondLastLine = false;
+                edit.Options.Folding = App.VM.Default.CodeFolding;
+                edit.Options.FoldingStrategy = FoldingStrategy.Auto;
+                edit.Options.FormatOnPaste = true;
+                edit.Options.Hover = new EditorHoverOptions() { Enabled = true, Delay = 100, Sticky = true };
+                edit.Options.LineNumbers = (LineNumbersType)App.VM.Default.ShowLineNumbers;
+                edit.Options.RenderControlCharacters = true;
+                edit.Options.QuickSuggestions = true;
+                edit.Options.SnippetSuggestions = SnippetSuggestions.Inline;
+                edit.Options.Links = true;
+                edit.Options.MouseWheelZoom = true;
+                edit.Options.OccurrencesHighlight = false;
+                edit.Options.RoundedSelection = true;
                 editloadet = true;
             }
             // edit.RequestedTheme = App.VM.Default.Theme == "Light" ? ElementTheme.Light : App.VM.Default.Theme == "Dark" ? ElementTheme.Dark : ElementTheme.Default;
@@ -325,39 +360,7 @@ namespace ConTeXt_UWP
         private void Edit_Loaded(object sender, RoutedEventArgs e)
         {
             var edit = (sender as CodeEditor);
-            edit.Options.DetectIndentation = false;
-            edit.Options.UseTabStops = true;
-            edit.Options.TabSize = 2;
-            edit.Options.CopyWithSyntaxHighlighting = true;
-            edit.Options.InsertSpaces = false;
-            edit.Options.WordWrap = WordWrap.On;
-            edit.Options.WordBasedSuggestions = false;
-            edit.Options.SuggestOnTriggerCharacters = true;
-            edit.Options.AcceptSuggestionOnCommitCharacter = true;
-            edit.Options.AcceptSuggestionOnEnter = AcceptSuggestionOnEnter.On;
-            edit.Options.TabCompletion = TabCompletion.Off;
-            edit.Options.SuggestSelection = SuggestSelection.RecentlyUsed;
-            edit.Options.WrappingIndent = WrappingIndent.Indent;
-            edit.Options.AutoIndent = AutoIndent.Keep;
-            edit.Options.CodeLens = true;
-            edit.Options.Contextmenu = true;
-            edit.Options.ParameterHints = new IEditorParameterHintOptions() { Cycle = false, Enabled = true };
-            edit.Options.Minimap = new EditorMinimapOptions() { Enabled = App.VM.Default.MiniMap, ShowSlider = Show.Always, RenderCharacters = true, };
-            edit.Options.CursorBlinking = CursorBlinking.Solid;
-            edit.Options.DragAndDrop = true;
-            edit.Options.ScrollBeyondLastLine = false;
-            edit.Options.Folding = App.VM.Default.CodeFolding;
-            edit.Options.FoldingStrategy = FoldingStrategy.Auto;
-            edit.Options.FormatOnPaste = true;
-            edit.Options.Hover = new EditorHoverOptions() { Enabled = true, Delay = 100, Sticky = true };
-            edit.Options.LineNumbers = (LineNumbersType)App.VM.Default.ShowLineNumbers;
-            edit.Options.RenderControlCharacters = true;
-            edit.Options.QuickSuggestions = true;
-            edit.Options.SnippetSuggestions = SnippetSuggestions.Inline;
-            edit.Options.Links = true;
-            edit.Options.MouseWheelZoom = true;
-            edit.Options.OccurrencesHighlight = false;
-            edit.Options.RoundedSelection = true;
+            
 
 
 
