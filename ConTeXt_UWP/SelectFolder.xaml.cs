@@ -22,11 +22,13 @@ namespace ConTeXt_UWP
 {
     public sealed partial class SelectFolder : ContentDialog
     {
+        ViewModel vm = App.VM;
         public SelectFolder()
         {
+            App.VM.SelectedPath = "";
             this.InitializeComponent();
         }
-        ViewModel vm = App.VM;
+      
 
         public StorageFolder folder;
 
@@ -42,6 +44,7 @@ namespace ConTeXt_UWP
             if (folder != null)
             {
                 App.VM.SelectedPath = folder.Path;
+                this.PrimaryButtonText = "Select";
             }
         }
     }

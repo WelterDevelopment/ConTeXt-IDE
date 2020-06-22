@@ -56,7 +56,7 @@
     <DefaultLanguage>en-US</DefaultLanguage>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <EntryPointProjectUniqueName>..\ConTeXt_UWP\ConTeXt_UWP.csproj</EntryPointProjectUniqueName>
-    <PackageCertificateThumbprint>AA983BA5E14D5AE051DE05BC82B91E93830AE7B2</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>376AA6396FAAAAC1B11EBBAA23AC4CF8C258291F</PackageCertificateThumbprint>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>

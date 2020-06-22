@@ -27,17 +27,17 @@
                 <CheckBox Content="Start with last active Project" IsChecked="{Binding Default.StartWithLastActiveProject, Mode=TwoWay}" />
                 <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Compiler" FontFamily="Segoe UI"></TextBlock>
                 
-                <CheckBox Content="Internal PDF viewer (not quite exact results as with Adobe Reader)" IsChecked="{Binding Default.InternalViewer, Mode=TwoWay}" />
-                <CheckBox Content="Use ConTEXt modes" IsChecked="{Binding Default.AutoOpenPDF, Mode=TwoWay}" />
+                <CheckBox Content="Internal PDF viewer (restart required)" IsChecked="{Binding Default.InternalViewer, Mode=TwoWay}" />
+                <CheckBox Content="Use ConTEXt modes" IsChecked="{Binding Default.UseModes, Mode=TwoWay}" />
                 <CheckBox Content="Open the PDF file after compile" IsChecked="{Binding Default.AutoOpenPDF, Mode=TwoWay}" />
-                <CheckBox Content="Show log" IsChecked="{Binding Default.ShowLog, Mode=TwoWay}" />
+                <CheckBox Content="Show log (restart required)" IsChecked="{Binding Default.ShowLog, Mode=TwoWay}" />
 
                 <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Appearance" FontFamily="Segoe UI"></TextBlock>
                 <ComboBox Header="Navigation pane display mode" Name="PaneControl"  ItemsSource="{Binding Default.NavigationOption}" SelectedItem="{Binding Default.NavigationViewPaneMode, Mode=TwoWay}"  FontFamily="Segoe UI"/>
                 <ComboBox SelectionChanged="ThemeControl_SelectionChanged" Header="Theme" Name="ThemeControl"  ItemsSource="{Binding Default.ThemeOption}" SelectionChangedTrigger="Always" SelectedItem="{Binding Default.Theme, Mode=TwoWay}"  FontFamily="Segoe UI"/>
                 <Slider Header="Open navigation pane width" Minimum="100" Maximum="800" Value="{Binding Default.NavigationViewPaneOpenLength, Mode=TwoWay}"></Slider>
                 <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Editor" FontFamily="Segoe UI"></TextBlock>
-                <ComboBox Header="Line numbers" ItemsSource="{Binding Default.ShowLineNumberOptions}" SelectionChangedTrigger="Always" SelectedItem="{Binding Default.ShowLineNumbers, Mode=TwoWay, Converter={StaticResource EnumToString},ConverterParameter=LineNumbersType}"  FontFamily="Segoe UI"/>
+                <ComboBox Header="Line numbers" ItemsSource="{Binding Default.ShowLineNumberOptions}" SelectionChangedTrigger="Always" SelectedItem="{Binding Default.ShowLineNumbers, Mode=TwoWay}"  FontFamily="Segoe UI"/>
                 <!--<CheckBox Content="Text wrapping (prevents horizontal scrollbar)" IsChecked="{Binding Default.wrap, Mode=TwoWay}"/>-->
                 <!--<CheckBox Content="Show command info on hover" IsChecked="{Binding Default.ShowLineNumbers, Mode=TwoWay}"/>-->
                 <CheckBox Content="Enable code folding" IsChecked="{Binding Default.CodeFolding, Mode=TwoWay}"/>

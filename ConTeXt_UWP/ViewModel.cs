@@ -128,34 +128,34 @@ namespace ConTeXt_UWP
         }
     }
 
-    public class EnumToStringConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, string language)
-        {
-            int val = (int)value;
-            string enu = (string)parameter;
-            switch (enu)
-            {
-                case "LineNumbersType":
-                    return Enum.GetName(typeof(LineNumbersType), val);
-                default: return 0;
+    //public class EnumToStringConverter : IValueConverter
+    //{
+    //    public object Convert(object value, Type targetType, object parameter, string language)
+    //    {
+    //        int val = (int)value;
+    //        string enu = (string)parameter;
+    //        switch (enu)
+    //        {
+    //            case "LineNumbersType":
+    //                return Enum.GetName(typeof(LineNumbersType), val);
+    //            default: return 0;
 
-            }
-        }
+    //        }
+    //    }
 
-        public object ConvertBack(object value, Type targetType, object parameter, string language)
-        {
-            string val = (string)value;
-            string enu = (string)parameter;
-            switch (enu)
-            {
-                case "LineNumbersType":
-                    return (int)(LineNumbersType)Enum.Parse(typeof(LineNumbersType), val);
-                default: return 0;
+    //    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    //    {
+    //        string val = (string)value;
+    //        string enu = (string)parameter;
+    //        switch (enu)
+    //        {
+    //            case "LineNumbersType":
+    //                return (int)(LineNumbersType)Enum.Parse(typeof(LineNumbersType), val);
+    //            default: return 0;
 
-            }
-        }
-    }
+    //        }
+    //    }
+    //}
 
     public class ExplorerItemTemplateSelector : DataTemplateSelector
     {
@@ -698,6 +698,7 @@ namespace ConTeXt_UWP
             FileItems = new ObservableCollection<FileItem>();
             CurrentFileItem = FileItems.Count > 0 ? FileItems.FirstOrDefault() : new FileItem(null);
             FileItems.CollectionChanged += FileItems_CollectionChanged1;
+           // EditorOptions = new StandaloneEditorConstructionOptions();
         }
 
         private async void FileItems_CollectionChanged1(object sender, NotifyCollectionChangedEventArgs e)
@@ -751,6 +752,8 @@ namespace ConTeXt_UWP
         public bool IsProjectLoaded { get => Get(false); set => Set(value); }
 
         public string NVHead { get => Get(""); set => Set(value); }
+
+        public StandaloneEditorConstructionOptions EditorOptions { get => Get<StandaloneEditorConstructionOptions>(); set => Set(value); }
 
         public StorageItemMostRecentlyUsedList RecentAccessList { get => Get<StorageItemMostRecentlyUsedList>(); set => Set(value); }
 
@@ -923,6 +926,7 @@ namespace ConTeXt_UWP
         {
             try
             {
+               // UpdateRecentAccessList();
                 if (Default.StartWithLastActiveProject)
                 {
                     RecentAccessList = StorageApplicationPermissions.MostRecentlyUsedList;
@@ -973,11 +977,10 @@ namespace ConTeXt_UWP
         public async void UpdateRecentAccessList()
         {
             App.VM.IsSaving = true;
-
+            LOG("upd1");
+            if (App.VM.Default.ProjectList == null) App.VM.Default.ProjectList = new ObservableCollection<Project>();
             if (App.VM.Default.ProjectList.Count == 0)
             {
-
-
                 RecentAccessList = StorageApplicationPermissions.MostRecentlyUsedList;
                 var accesslist = RecentAccessList.Entries;
                 App.VM.Default.ProjectList.Clear();

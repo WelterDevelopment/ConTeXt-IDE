@@ -65,7 +65,7 @@ namespace Monaco.Editor
         /// Defaults to advanced.
         /// </summary>
         [JsonProperty("autoIndent", NullValueHandling = NullValueHandling.Ignore)]
-        AutoIndent? AutoIndent { get; set; }
+        string AutoIndent { get; set; }
 
         /// <summary>
         /// Enable that the editor will install an interval to check if its container dom node size
@@ -126,7 +126,7 @@ namespace Monaco.Editor
         /// Defaults to 'blink'.
         /// </summary>
         [JsonProperty("cursorBlinking", NullValueHandling = NullValueHandling.Ignore)]
-        CursorBlinking? CursorBlinking { get; set; }
+        string CursorBlinking { get; set; }
 
         /// <summary>
         /// Enable smooth caret animation.
@@ -240,7 +240,7 @@ namespace Monaco.Editor
         /// Defaults to 'auto'.
         /// </summary>
         [JsonProperty("foldingStrategy", NullValueHandling = NullValueHandling.Ignore)]
-        FoldingStrategy? FoldingStrategy { get; set; }
+        string FoldingStrategy { get; set; }
 
         /// <summary>
         /// The font family
@@ -357,7 +357,7 @@ namespace Monaco.Editor
         /// Defaults to `on`.
         /// </summary>
         [JsonProperty("lineNumbers", NullValueHandling = NullValueHandling.Ignore)]
-        LineNumbersType? LineNumbers { get; set; }
+        string LineNumbers { get; set; }
 
         /// <summary>
         /// Control the width of line numbers, by reserving horizontal space for rendering at least
@@ -617,7 +617,7 @@ namespace Monaco.Editor
         /// Enable snippet suggestions. Default to 'true'.
         /// </summary>
         [JsonProperty("snippetSuggestions", NullValueHandling = NullValueHandling.Ignore)]
-        SnippetSuggestions? SnippetSuggestions { get; set; }
+        string SnippetSuggestions { get; set; }
 
         /// <summary>
         /// Performance guard: Stop rendering a line after x characters.
@@ -658,7 +658,7 @@ namespace Monaco.Editor
         /// The history mode for suggestions.
         /// </summary>
         [JsonProperty("suggestSelection", NullValueHandling = NullValueHandling.Ignore)]
-        SuggestSelection? SuggestSelection { get; set; }
+        string SuggestSelection { get; set; }
 
         /// <summary>
         /// Enable tab completion.
@@ -689,7 +689,7 @@ namespace Monaco.Editor
         /// Defaults to "off".
         /// </summary>
         [JsonProperty("wordWrap", NullValueHandling = NullValueHandling.Ignore)]
-        WordWrap? WordWrap { get; set; }
+        string WordWrap { get; set; }
 
         /// <summary>
         /// Configure word wrapping characters. A break will be introduced after these characters.
@@ -728,7 +728,7 @@ namespace Monaco.Editor
         /// Defaults to 'same' in vscode and to 'none' in monaco-editor.
         /// </summary>
         [JsonProperty("wrappingIndent", NullValueHandling = NullValueHandling.Ignore)]
-        WrappingIndent? WrappingIndent { get; set; }
+        string WrappingIndent { get; set; }
 
         /// <summary>
         /// Controls the wrapping strategy to use.

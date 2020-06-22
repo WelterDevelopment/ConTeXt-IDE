@@ -96,7 +96,7 @@ namespace Monaco.Editor
         /// Defaults to false.
         /// </summary>
         [JsonProperty("autoIndent", NullValueHandling = NullValueHandling.Ignore)]
-        public AutoIndent? AutoIndent { get => GetPropertyValue<AutoIndent?>(); set => SetPropertyValue(value); }
+        public string AutoIndent { get => GetPropertyValue<string>(); set => SetPropertyValue(value); }
 
         /// <summary>
         /// Enable that the editor will install an interval to check if its container dom node size
@@ -158,7 +158,7 @@ namespace Monaco.Editor
         /// Defaults to 'blink'.
         /// </summary>
         [JsonProperty("cursorBlinking", NullValueHandling = NullValueHandling.Ignore)]
-        public CursorBlinking? CursorBlinking { get => GetPropertyValue<CursorBlinking?>(); set => SetPropertyValue(value); }
+        public string CursorBlinking { get => GetPropertyValue<string>(); set => SetPropertyValue(value); }
 
         /// <summary>
         /// Enable smooth caret animation.
@@ -272,7 +272,7 @@ namespace Monaco.Editor
         /// Defaults to 'auto'.
         /// </summary>
         [JsonProperty("foldingStrategy", NullValueHandling = NullValueHandling.Ignore)]
-        public FoldingStrategy? FoldingStrategy { get => GetPropertyValue<FoldingStrategy?>(); set => SetPropertyValue(value); }
+        public string FoldingStrategy { get => GetPropertyValue<string>(); set => SetPropertyValue(value); }
 
         /// <summary>
         /// The font family
@@ -389,7 +389,9 @@ namespace Monaco.Editor
         /// Defaults to true.
         /// </summary>
         [JsonProperty("lineNumbers", NullValueHandling = NullValueHandling.Ignore)]
-        public LineNumbersType? LineNumbers { get => GetPropertyValue<LineNumbersType?>(); set => SetPropertyValue(value); }
+        public string LineNumbers { get => GetPropertyValue<string>(); set => SetPropertyValue(value); }
+        //[JsonProperty("lineNumbers", NullValueHandling = NullValueHandling.Ignore)]
+        //public LineNumbersType? LineNumbers { get => GetPropertyValue<LineNumbersType?>(); set => SetPropertyValue(value); }
 
         /// <summary>
         /// Control the width of line numbers, by reserving horizontal space for rendering at least
@@ -649,7 +651,7 @@ namespace Monaco.Editor
         /// Enable snippet suggestions. Default to 'true'.
         /// </summary>
         [JsonProperty("snippetSuggestions", NullValueHandling = NullValueHandling.Ignore)]
-        public SnippetSuggestions? SnippetSuggestions { get => GetPropertyValue<SnippetSuggestions?>(); set => SetPropertyValue(value); }
+        public string SnippetSuggestions { get => GetPropertyValue<string>(); set => SetPropertyValue(value); }
 
         /// <summary>
         /// Performance guard: Stop rendering a line after x characters.
@@ -690,7 +692,7 @@ namespace Monaco.Editor
         /// The history mode for suggestions.
         /// </summary>
         [JsonProperty("suggestSelection", NullValueHandling = NullValueHandling.Ignore)]
-        public SuggestSelection? SuggestSelection { get => GetPropertyValue<SuggestSelection?>(); set => SetPropertyValue(value); }
+        public string SuggestSelection { get => GetPropertyValue<string>(); set => SetPropertyValue(value); }
 
         /// <summary>
         /// Enable tab completion.
@@ -721,7 +723,7 @@ namespace Monaco.Editor
         /// Defaults to "off".
         /// </summary>
         [JsonProperty("wordWrap", NullValueHandling = NullValueHandling.Ignore)]
-        public WordWrap? WordWrap { get => GetPropertyValue<WordWrap?>(); set => SetPropertyValue(value); }
+        public string WordWrap { get => GetPropertyValue<string>(); set => SetPropertyValue(value); }
 
         /// <summary>
         /// Configure word wrapping characters. A break will be introduced after these characters.
@@ -760,7 +762,7 @@ namespace Monaco.Editor
         /// Defaults to 'same' in vscode and to 'none' in monaco-editor.
         /// </summary>
         [JsonProperty("wrappingIndent", NullValueHandling = NullValueHandling.Ignore)]
-        public WrappingIndent? WrappingIndent { get => GetPropertyValue<WrappingIndent?>(); set => SetPropertyValue(value); }
+        public string WrappingIndent { get => GetPropertyValue<string>(); set => SetPropertyValue(value); }
 
         /// <summary>
         /// Controls the wrapping strategy to use.

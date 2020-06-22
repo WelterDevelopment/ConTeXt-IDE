@@ -153,9 +153,9 @@ namespace ConTeXt_UWP
                     var cd = new ContentDialog();
                     var sp = new StackPanel();
                     StorageFolder localFolder = ApplicationData.Current.LocalFolder;
-                    var installpathtb = new TextBox() { Header = "Install Path (changing this is experimental)", Text = localFolder.Path };
+                   // var installpathtb = new TextBox() { Header = "Install Path (changing this is experimental)", Text = localFolder.Path };
                     var downloadlinktb = new TextBox() { Header = "Download link (only change if PRAGMA ADE changed the URL)", Text = VM.Default.ContextDownloadLink };
-                    sp.Children.Add(installpathtb);
+                    //sp.Children.Add(installpathtb);
                     sp.Children.Add(downloadlinktb);
                     cd.Title = "First Start: Install the ConTeXt (LuaMetaTeX) Distribution";
                     cd.Content = sp;
@@ -163,7 +163,7 @@ namespace ConTeXt_UWP
                     cd.CloseButtonText = "Skip (Setup in the Settings!)";
                     if (await cd.ShowAsync() == ContentDialogResult.Primary)
                     {
-                        VM.Default.ContextDistributionPath = installpathtb.Text;
+                        VM.Default.ContextDistributionPath = localFolder.Path;
                         VM.Default.ContextDownloadLink = downloadlinktb.Text;
                         var installing = new ContentDialog() { Title = "Please wait while installing. This can take up to 10 minutes. Do not close this window." };
                         var prog = new Microsoft.UI.Xaml.Controls.ProgressBar() { IsIndeterminate = true };

@@ -131,9 +131,71 @@
                     </FlyoutBase.AttachedFlyout>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator></NavigationViewItemSeparator>
-                <NavigationViewItem Icon="Edit" Content="Editor" Tag="IDE"/>
-                <NavigationViewItemSeparator></NavigationViewItemSeparator>
-                <NavigationViewItem Icon="Library" Content="Projects" Tag="Projects" />
+                <!--<NavigationViewItem Icon="Edit" Content="Editor" Tag="IDE"/>
+                <NavigationViewItemSeparator></NavigationViewItemSeparator>-->
+                <NavigationViewItem Icon="Library" Content="Projects" Tag="Projects" Tapped="Tree_Tapped" SelectsOnInvoked="False">
+                    <FlyoutBase.AttachedFlyout>
+                        <Flyout>
+                            <StackPanel Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <animations:Implicit.ShowAnimations>
+                                    <animations:TranslationAnimation Duration="0:0:0.25" From="0, -50, 0" To="0" ></animations:TranslationAnimation>
+                                    <animations:OpacityAnimation Duration="0:0:0.25" From="0" To="1.0"></animations:OpacityAnimation>
+                                </animations:Implicit.ShowAnimations>
+
+                                <animations:Implicit.HideAnimations>
+                                    <animations:ScalarAnimation Target="Opacity" Duration="0:0:0.25" To="0.0"></animations:ScalarAnimation>
+                                    <animations:ScalarAnimation Target="Translation.Y" Duration="0:0:0.25" To="-50">
+                                        <animations:ScalarKeyFrame Key="0.1" Value="20"></animations:ScalarKeyFrame>
+                                        <animations:ScalarKeyFrame Key="0.5" Value="0.0"></animations:ScalarKeyFrame>
+                                    </animations:ScalarAnimation>
+                                </animations:Implicit.HideAnimations>
+                                <Button Click="Btnaddproject_Click" Style="{ThemeResource ButtonRevealStyle}" ToolTipService.ToolTip="Open a project folder">
+                                    <Button.Content>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <SymbolIcon Symbol="Add"></SymbolIcon>
+                                            <TextBlock Text="Add project folder"></TextBlock>
+                                        </StackPanel>
+                                    </Button.Content>
+
+                                </Button>
+                                <ItemsControl x:Name="tStack" Grid.Row="1" ItemsSource="{Binding Default.ProjectList, Mode=OneWay}">
+                                    <ItemsControl.Template>
+                                        <ControlTemplate>
+                                            <ScrollViewer x:Name="ScrollViewer" Padding="{TemplateBinding Padding}">
+                                                <ItemsPresenter />
+                                            </ScrollViewer>
+                                        </ControlTemplate>
+                                    </ItemsControl.Template>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,6,0,0">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"></RowDefinition>
+                                                    <RowDefinition Height="Auto"></RowDefinition>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                                    <ColumnDefinition Width="50"></ColumnDefinition>
+                                                </Grid.ColumnDefinitions>
+                                                <!--<TextBlock VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Text="{Binding Name}" Style="{ThemeResource BodyTextBlockStyle}"></TextBlock>-->
+                                                <Button  ToolTipService.ToolTip="{Binding Folder.Path}" Click="BtnLoad_Click" Grid.Row="0" Grid.Column="1" Content="{Binding Name}" Style="{ThemeResource ButtonRevealStyle}"></Button>
+                                                <Button Name="Btndeleteproject" Click="Btndeleteproject_Click" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="0" Grid.Column="3" >
+                                                    <Button.Content>
+                                                        <SymbolIcon Symbol="Delete"></SymbolIcon>
+                                                    </Button.Content>
+                                                </Button>
+                                                <!--<TreeView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" ItemsSource="{Binding Directory}" ItemTemplateSelector="{StaticResource ExplorerItemTemplateSelector}" 
+                            HorizontalAlignment="Left" VerticalAlignment="Top" SelectionMode="None" CanDragItems="False" AllowDrop="False" />-->
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Flyout>
+                    </FlyoutBase.AttachedFlyout>
+                </NavigationViewItem>
 
                 <NavigationViewItemSeparator Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToNotVisibility}}"></NavigationViewItemSeparator>
                 <!--<NavigationViewItem Visibility="{Binding Default.NavigationViewPaneMode, Mode=OneWay,Converter={StaticResource NavToNotVisibility}}" SelectsOnInvoked="True" Icon="Help" Tag="About" Content="About" ></NavigationViewItem>-->
@@ -192,43 +254,79 @@
                        CanDragItems="True" AllowDrop="True" 
                          />-->
 
-                    <Grid Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition MinWidth="400" Width="139*" />
-                            <ColumnDefinition Width="511*"/>
-                            <ColumnDefinition MinWidth="0" MaxWidth="400" Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Frame Grid.Column="0" Navigated="ContentFrame_Navigated"  Loaded="ContentFrame_Loaded" x:Name="contentFrame" x:FieldModifier="public" FontFamily="Segoe MDL2 Assets" Grid.ColumnSpan="2">
-                            <Frame.ContentTransitions>
-                                <TransitionCollection>
-                                    <NavigationThemeTransition/>
-                                </TransitionCollection>
-                            </Frame.ContentTransitions>
-                        </Frame>
+                    <SplitView x:Name="SettingsPane" IsPaneOpen="False" Grid.Row="1"
+           DisplayMode="Inline" PaneBackground="Transparent" 
+           OpenPaneLength="300">
+                        <SplitView.Pane>
+                            <Grid >
+                                <ScrollViewer HorizontalScrollMode="Disabled" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" Padding="24,0,24,24">
+                                    <StackPanel Orientation="Vertical">
+                                        <StackPanel.Resources>
+                                            <Style TargetType="TextBox">
+                                                <Setter Property="Margin" Value="0,20,0,0"/>
+                                            </Style>
+                                            <Style TargetType="ComboBox">
+                                                <Setter Property="Margin" Value="0,10,0,0"/>
+                                            </Style>
+                                        </StackPanel.Resources>
+                                        <TextBlock Style="{ThemeResource SubheaderTextBlockStyle}" Text="General" FontFamily="Segoe UI"></TextBlock>
+                                        <CheckBox Content="Start with last active Project" IsChecked="{Binding Default.StartWithLastActiveProject, Mode=TwoWay}" />
+                                        <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Compiler" FontFamily="Segoe UI"></TextBlock>
 
-                        <!--<Grid Grid.Column="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition  Width="Auto" />
-                            <ColumnDefinition MinWidth="200" MaxWidth="400" Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Border ManipulationMode="TranslateX" x:Name="GridSep" Grid.Column="0" Margin="0,15,0,15" BorderBrush="{ThemeResource AppBarSeparatorForegroundThemeBrush}" BorderThickness="2,0,0,0" Padding="0,0,0,0">
-                        </Border>
-                        <Grid Width="200" Grid.Column="1"  x:Name="HelpText" x:FieldModifier="public"  Padding="15,0,15,0" Margin="0,15,0,15">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Help" Style="{StaticResource TitleTextBlockStyle}"></TextBlock>
-                            <TextBlock Grid.Row="1" x:Name="HelpTextTitle" Text="" Style="{StaticResource SubtitleTextBlockStyle}"></TextBlock>
-                            <TextBlock Grid.Row="2" x:Name="HelpTextBlock" TextWrapping="Wrap" Text=""></TextBlock>
+                                        <CheckBox Content="Internal PDF viewer (restart required)" IsChecked="{Binding Default.InternalViewer, Mode=TwoWay}" />
+                                        <CheckBox Content="Use ConTEXt modes" IsChecked="{Binding Default.UseModes, Mode=TwoWay}" />
+                                        <CheckBox Content="Open the PDF file after compile" IsChecked="{Binding Default.AutoOpenPDF, Mode=TwoWay}" />
+                                        <CheckBox Content="Show log (restart required)" IsChecked="{Binding Default.ShowLog, Mode=TwoWay}" />
+
+                                        <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Appearance" FontFamily="Segoe UI"></TextBlock>
+                                        <ComboBox Header="Navigation pane display mode" Name="PaneControl"  ItemsSource="{Binding Default.NavigationOption}" SelectedItem="{Binding Default.NavigationViewPaneMode, Mode=TwoWay}" SelectionChanged="PaneControl_SelectionChanged"  FontFamily="Segoe UI"/>
+                                        <ComboBox SelectionChanged="ThemeControl_SelectionChanged" Header="Theme" Name="ThemeControl"  ItemsSource="{Binding Default.ThemeOption}" SelectionChangedTrigger="Always" SelectedItem="{Binding Default.Theme, Mode=TwoWay}"  FontFamily="Segoe UI"/>
+                                        <Slider Header="Open navigation pane width" Minimum="100" Maximum="800" Value="{Binding Default.NavigationViewPaneOpenLength, Mode=TwoWay}"></Slider>
+                                        <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Editor" FontFamily="Segoe UI"></TextBlock>
+                                        <ComboBox Header="Line numbers" ItemsSource="{Binding Default.ShowLineNumberOptions}" SelectionChangedTrigger="Always" SelectedItem="{Binding Default.ShowLineNumbers, Mode=TwoWay}"  FontFamily="Segoe UI"/>
+                                        <!--<CheckBox Content="Text wrapping (prevents horizontal scrollbar)" IsChecked="{Binding Default.wrap, Mode=TwoWay}"/>-->
+                                        <!--<CheckBox Content="Show command info on hover" IsChecked="{Binding Default.ShowLineNumbers, Mode=TwoWay}"/>-->
+                                        <CheckBox Content="Enable code folding" IsChecked="{Binding Default.CodeFolding, Mode=TwoWay}"/>
+                                        <CheckBox Content="Show minimap" IsChecked="{Binding Default.MiniMap, Mode=TwoWay}"/>
+                                        <CheckBox Content="Suggest ConTeXt sart-stop environments" IsChecked="{Binding Default.SuggestStartStop, Mode=TwoWay}"/>
+                                        <CheckBox Content="Suggest ConTeXt commands" IsChecked="{Binding Default.SuggestCommands, Mode=TwoWay}"/>
+                                        <CheckBox Content="Suggest TeX primitives" IsChecked="{Binding Default.SuggestPrimitives, Mode=TwoWay}"/>
+                                        <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Distribution" FontFamily="Segoe UI"></TextBlock>
+                                        <!--<TextBox IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Header="ConTeXt distribution path" Text="{Binding Default.ContextDistributionPath, Mode=TwoWay}"/>-->
+                                        <Button IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Name="Update" Click="Update_Click" Content="Update the distribution" Margin="0,10,0,0"></Button>
+                                        <Button IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Name="CleanInstall" Click="Install_Click" Content="First install" Margin="0,10,0,0"></Button>
+                                        <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="ConTeXt IDE"></TextBlock>
+                                        <TextBlock Style="{ThemeResource BodyTextBlockStyle}" FontSize="20" Text="About"></TextBlock>
+                                        <TextBlock x:Name="Version" Style="{ThemeResource BodyTextBlockStyle}" Text=""></TextBlock>
+                                        <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Text="by wdev (wdev@outlook.de)"></TextBlock>
+                                        <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Text="This application is not in any way related to Pragma ADE"></TextBlock>
+                                        <TextBlock Style="{ThemeResource BodyTextBlockStyle}" FontSize="20" Text="Dependencies and references"></TextBlock>
+                                        <HyperlinkButton Content="LuaMetaTeX (Pragma ADE)" NavigateUri="http://www.pragma-ade.nl/"></HyperlinkButton>
+                                        <HyperlinkButton Content="monaco-editor (Microsoft Corporation)" NavigateUri="https://github.com/Microsoft/monaco-editor"></HyperlinkButton>
+                                        <HyperlinkButton Content="MonacoEditorComponent (hawkerm)" NavigateUri="https://github.com/hawkerm/monaco-editor-uwp"></HyperlinkButton>
+                                        <HyperlinkButton Content="PDF.js (Mozilla)" NavigateUri="https://github.com/mozilla/pdf.js/"></HyperlinkButton>
+                                        <Button Click="Disclaimer_Click" Content="Show legal disclaimer" Margin="0,10,0,0"></Button>
+                                        <WebView Visibility="Collapsed" x:Name="DisclaimerView" Height="500" DefaultBackgroundColor="#88FFFFFF" ScrollViewer.VerticalScrollMode="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto" Source="ms-appx-web:///web/About.html"></WebView>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+                        </SplitView.Pane>
+
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition MinWidth="400" Width="139*" />
+                                <ColumnDefinition Width="511*"/>
+                                <ColumnDefinition MinWidth="0" MaxWidth="400" Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Frame Grid.Column="0" Navigated="ContentFrame_Navigated"  Loaded="ContentFrame_Loaded" x:Name="contentFrame" x:FieldModifier="public" FontFamily="Segoe MDL2 Assets" Grid.ColumnSpan="2">
+                                <Frame.ContentTransitions>
+                                    <TransitionCollection>
+                                        <NavigationThemeTransition/>
+                                    </TransitionCollection>
+                                </Frame.ContentTransitions>
+                            </Frame>
                         </Grid>
-                    </Grid>-->
-                    </Grid>
-
-
-
-
+                    </SplitView>
                 </Grid>
 
             </NavigationView.Content>

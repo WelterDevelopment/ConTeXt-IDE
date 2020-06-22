@@ -41,18 +41,14 @@ namespace ConTeXt_WPF
 
         }
 
-
-
-        int quoteFrequency = 15;
-        public int QuoteFrequency { get => quoteFrequency; set => Set(ref quoteFrequency, value); }
-
-
         bool startWithLastActiveProject = true;
         public bool StartWithLastActiveProject { get => startWithLastActiveProject; set => Set(ref startWithLastActiveProject, value); }
 
-        int showLineNumbers = 1;
-        public int ShowLineNumbers { get => showLineNumbers; set => Set(ref showLineNumbers, value); }
+        //int showLineNumbers = (int)LineNumbersType.On;
+        //public int ShowLineNumbers{ get => showLineNumbers; set => Set(ref showLineNumbers, value); }
 
+        string showLineNumbers = "on";
+        public string ShowLineNumbers { get => showLineNumbers; set { Set(ref showLineNumbers, value); } }
 
         bool showLog = true;
         public bool ShowLog { get => showLog; set => Set(ref showLog, value); }
@@ -60,10 +56,13 @@ namespace ConTeXt_WPF
         bool useModes = true;
         public bool UseModes { get => useModes; set => Set(ref useModes, value); }
 
+        bool autoOpenPDF = true;
+        public bool AutoOpenPDF { get => autoOpenPDF; set => Set(ref autoOpenPDF, value); }
+
         bool internalViewer = true;
         public bool InternalViewer { get => internalViewer; set => Set(ref internalViewer, value); }
 
-        string navigationViewPaneMode = "Left";
+        string navigationViewPaneMode = "Auto";
         public string NavigationViewPaneMode { get => navigationViewPaneMode; set => Set(ref navigationViewPaneMode, value); }
 
         bool navigationViewPaneOpen = true;
@@ -85,7 +84,7 @@ namespace ConTeXt_WPF
         string lastActiveProject = "";
         public string LastActiveProject { get => lastActiveProject; set => Set(ref lastActiveProject, value); }
 
-        string contextDownloadLink = @"http://lmtx.pragma-ade.nl/install-lmtx/context-win64.zip";
+        string contextDownloadLink = @"http://lmtx.pragma-ade.nl/install-lmtx/context-mswin.zip";
         public string ContextDownloadLink { get => contextDownloadLink; set => Set(ref contextDownloadLink, value); }
 
         string theme = "Dark";
@@ -98,10 +97,10 @@ namespace ConTeXt_WPF
         public string Modes { get => modes; set => Set(ref modes, value); }
 
         bool codeFolding = true;
-        public bool CodeFolding { get => codeFolding; set => Set(ref codeFolding, value); }
+        public bool CodeFolding { get => codeFolding; set { Set(ref codeFolding, value);  } }
 
         bool miniMap = true;
-        public bool MiniMap { get => miniMap; set => Set(ref miniMap, value); }
+        public bool MiniMap { get => miniMap; set { Set(ref miniMap, value); } }
 
         bool suggestStartStop = true;
         public bool SuggestStartStop { get => suggestStartStop; set => Set(ref suggestStartStop, value); }

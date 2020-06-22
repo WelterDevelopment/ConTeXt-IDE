@@ -30,27 +30,27 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="4"/>
-            <RowDefinition MaxHeight="500" Height="Auto"/>
+            <RowDefinition MaxHeight="500" Height="150"/>
         </Grid.RowDefinitions>
 
         <Grid Name="editgrid" Grid.Column="0" Grid.Row="0" HorizontalAlignment="Stretch">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="10"></RowDefinition>
                 <RowDefinition Height="Auto"></RowDefinition>
                 <RowDefinition Height="*"></RowDefinition>
-                <RowDefinition Height="Auto"></RowDefinition>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Grid ColumnSpacing="6" HorizontalAlignment="Stretch" Background="Transparent"  Height="40"  Margin="6,0,6,0">
+            <Grid ColumnSpacing="6" Grid.Row="0" HorizontalAlignment="Stretch" Background="Transparent"  Height="40"  Margin="6,0,6,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*" MinWidth="50"/>
+                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <!--<AppBarButton AccessKey="R" Icon="Play" Name="btncompile" Height="40" Click="Btncompile_Click" ToolTipService.ToolTip="Compile Main file">
@@ -129,16 +129,7 @@
                         </StackPanel>
                     </Button.Content>
                 </Button>
-                <contr:ProgressBar Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}" ShowPaused="{Binding IsPaused}" Grid.Column="5" HorizontalAlignment="Stretch"  IsIndeterminate="True" ShowError="{Binding IsError}">
-                    <animations:Implicit.ShowAnimations>
-                        <animations:TranslationAnimation Duration="0:0:0.75" From="0, -20, 0" To="0" ></animations:TranslationAnimation>
-                        <animations:OpacityAnimation Duration="0:0:0.75" From="0" To="1"></animations:OpacityAnimation>
-                    </animations:Implicit.ShowAnimations>
-                    <animations:Implicit.HideAnimations>
-                        <animations:TranslationAnimation Duration="0:0:0.75" From="0, 0, 0" To="-20" ></animations:TranslationAnimation>
-                        <animations:OpacityAnimation Duration="0:0:0.75" From="1" To="0"></animations:OpacityAnimation>
-                    </animations:Implicit.HideAnimations>
-                </contr:ProgressBar>
+                
                 <Button Grid.Column="6" ToolTipService.ToolTip="Open a Manual">
                     <Button.Content>
                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -173,7 +164,16 @@
                     </ComboBox.ItemTemplate>
                 </ComboBox>-->
             </Grid>
-
+            <contr:ProgressBar Grid.Row="1" VerticalAlignment="Center" Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}" ShowPaused="{Binding IsPaused}" HorizontalAlignment="Stretch"  IsIndeterminate="True" ShowError="{Binding IsError}">
+                <animations:Implicit.ShowAnimations>
+                    <!--<animations:TranslationAnimation Duration="0:0:0.75" From="0, -20, 0" To="0" ></animations:TranslationAnimation>-->
+                    <animations:OpacityAnimation Duration="0:0:0.75" From="0" To="1"></animations:OpacityAnimation>
+                </animations:Implicit.ShowAnimations>
+                <animations:Implicit.HideAnimations>
+                    <!--<animations:TranslationAnimation Duration="0:0:0.75" From="0, 0, 0" To="-20" ></animations:TranslationAnimation>-->
+                    <animations:OpacityAnimation Duration="0:0:0.75" From="1" To="0"></animations:OpacityAnimation>
+                </animations:Implicit.HideAnimations>
+            </contr:ProgressBar>
 
             <!--<ListView  Width="100" ItemsSource="{Binding LineNumberList}"   Grid.Row="1" Name="LineNumbers" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled">
             <ListView.ItemContainerStyle>
@@ -187,8 +187,8 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>-->
-            <contr:TabView x:Name="Tabs" Grid.Row="1" RequestedTheme="{Binding Default.Theme, Mode=OneWay, Converter={StaticResource StringToTheme}}"
-                       TabWidthMode="Equal"  IsAddTabButtonVisible="False"
+            <contr:TabView x:Name="Tabs" Grid.Row="2" RequestedTheme="{Binding Default.Theme, Mode=OneWay, Converter={StaticResource StringToTheme}}"
+                       TabWidthMode="Compact"  IsAddTabButtonVisible="False" 
                       CloseButtonOverlayMode="Always" SelectionChanged="Tabs_SelectionChanged"
                    TabCloseRequested="Tabs_TabCloseRequested" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch"
                       CanDragTabs="True" Background="Transparent"
@@ -221,13 +221,13 @@
                     </DataTemplate>
                 </contr:TabView.TabItemTemplate>
             </contr:TabView>
-            <Grid Grid.Row="2" VerticalAlignment="Stretch">
+            <Grid Grid.Row="3" VerticalAlignment="Stretch">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"></RowDefinition>
                     <RowDefinition Height="Auto"></RowDefinition>
                 </Grid.RowDefinitions>
 
-                <monaco:CodeEditor Grid.Row="0" RequestedTheme="{Binding Default.Theme, Mode=OneWay, Converter={StaticResource StringToTheme}}" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch"   x:Name="Edit" Loading="Edit_Loading" Loaded="Edit_Loaded" Text="{Binding CurrentFileItem.FileContent,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" CodeLanguage="{Binding CurrentFileItem.FileLanguage, Mode=OneWay}">
+                <monaco:CodeEditor Options="{Binding EditorOptions, Mode=OneWay}" Grid.Row="0" RequestedTheme="{Binding Default.Theme, Mode=OneWay, Converter={StaticResource StringToTheme}}" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch"   x:Name="Edit" Loading="Edit_Loading" Loaded="Edit_Loaded" Text="{Binding CurrentFileItem.FileContent,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" CodeLanguage="{Binding CurrentFileItem.FileLanguage, Mode=OneWay}">
 
                     <monaco:CodeEditor.KeyboardAccelerators>
                         <KeyboardAccelerator x:Name="ControlEnter" Key="F1" Modifiers="Control" Invoked="ControlEnter_Invoked" ></KeyboardAccelerator>
@@ -264,14 +264,14 @@
         Height="4" CursorBehavior="ChangeOnSplitterHover"
         Background="{ThemeResource LogAcrylicBrush}"
         GripperCursor="SizeNorthSouth" FocusVisualPrimaryBrush="DarkGray" FocusVisualSecondaryBrush="DarkGray"
-        HorizontalAlignment="Stretch"
+        HorizontalAlignment="Stretch" Visibility="{Binding Default.ShowLog, Converter={StaticResource BoolToVisibility}}"
          Grid.Column="0"  Grid.ColumnSpan="3" Grid.Row="1"
         ResizeDirection="Rows"
         ResizeBehavior="PreviousAndNext"
         GripperForeground="{ThemeResource ContentAcrylicBrush}" >
         </controls:GridSplitter>
 
-        <Grid MaxHeight="500" Tag="LogView" Grid.Row="2" Grid.ColumnSpan="3" Visibility="Visible" x:FieldModifier="public" x:Name="logview" Background="{ThemeResource LogAcrylicBrush}" Padding="15,0,15,15">
+        <Grid MaxHeight="500" Tag="LogView" Grid.Row="2" Grid.ColumnSpan="3" Visibility="{Binding Default.ShowLog, Converter={StaticResource BoolToVisibility}}" x:FieldModifier="public" x:Name="logview" Background="{ThemeResource LogAcrylicBrush}" Padding="15,0,15,15">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="203*"/>
                 <ColumnDefinition Width="277*"/>

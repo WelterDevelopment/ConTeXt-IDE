@@ -2,7 +2,7 @@
 <Directives xmlns="http://schemas.microsoft.com/netfx/2013/01/metadata">
   <Library Name="MonacoEditorComponent">
     <!-- Add your library directives here -->
-    <Namespace Name="Monaco.Editor" Serialize="All" Dynamic="All"/>
+    <Namespace Name="Monaco.Editor" Serialize="Required Public" Dynamic="Required All"/>
     <Namespace Name="Monaco.Helpers" Serialize="All" Dynamic="All"/>
     <Namespace Name="Monaco.Languages" Serialize="All" Dynamic="All"/>
     <Namespace Name="Monaco" Serialize="All" Dynamic="All"/>

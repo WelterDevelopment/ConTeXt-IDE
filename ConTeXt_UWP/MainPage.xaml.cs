@@ -20,6 +20,11 @@ using Windows.ApplicationModel.DataTransfer;
 using System.Collections.Generic;
 using System.Linq;
 using System.Collections.ObjectModel;
+using Windows.UI.ViewManagement;
+using Windows.UI;
+using Windows.Foundation.Collections;
+using Windows.ApplicationModel.AppService;
+using Windows.Storage.AccessCache;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -44,6 +49,11 @@ namespace ConTeXt_UWP
             //KeyboardAccelerator AltLeft = new KeyboardAccelerator();
             //AltLeft.Key = VirtualKey.Left;
             //AltLeft.Invoked += BackInvoked;
+            Version.Text = string.Format("Version: {0}.{1}.{2}.{3}",
+                  Package.Current.Id.Version.Major,
+                  Package.Current.Id.Version.Minor,
+                  Package.Current.Id.Version.Build,
+                  Package.Current.Id.Version.Revision);
             KeyboardAccelerator ButtonBack = new KeyboardAccelerator
             {
                 Key = VirtualKey.XButton1
@@ -103,30 +113,30 @@ namespace ConTeXt_UWP
                 else
                     Window.Current.SetTitleBar(Header as FrameworkElement);
                 coreTitleBar.ExtendViewIntoTitleBar = true;
+                contentFrame.Navigate(typeof(Editor), null, new DrillInNavigationTransitionInfo());
+                //foreach (NavigationViewItemBase item in nvSample.MenuItems)
+                //{
+                //    if (App.VM.CurrentProject.Folder != null | App.VM.FileActivatedEvents.Count > 0)
+                //    {
+                //        if (item is NavigationViewItem && item.Tag.ToString() == "IDE")
+                //        {
+                //            nvSample.SelectedItem = item;
 
-                foreach (NavigationViewItemBase item in nvSample.MenuItems)
-                {
-                    if (App.VM.CurrentProject.Folder != null | App.VM.FileActivatedEvents.Count > 0)
-                    {
-                        if (item is NavigationViewItem && item.Tag.ToString() == "IDE")
-                        {
-                            nvSample.SelectedItem = item;
+                //            contentFrame.Navigate(typeof(Editor), null, new DrillInNavigationTransitionInfo());
+                //            break;
+                //        }
+                //    }
+                //    else
+                //    {
+                //        if (item is NavigationViewItem && item.Tag.ToString() == "Projects")
+                //        {
+                //            nvSample.SelectedItem = item;
 
-                            contentFrame.Navigate(typeof(Editor), null, new DrillInNavigationTransitionInfo());
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        if (item is NavigationViewItem && item.Tag.ToString() == "Projects")
-                        {
-                            nvSample.SelectedItem = item;
-
-                            contentFrame.Navigate(typeof(Projects), null, new DrillInNavigationTransitionInfo());
-                            break;
-                        }
-                    }
-                }
+                //            contentFrame.Navigate(typeof(Projects), null, new DrillInNavigationTransitionInfo());
+                //            break;
+                //        }
+                //    }
+                //}
                 if (ApiInformation.IsApiContractPresent("Windows.ApplicationModel.FullTrustAppContract", 1))
                 {
                     await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Parameters");
@@ -187,20 +197,21 @@ namespace ConTeXt_UWP
 
         private async void NvSample_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
         {
-
+            nvSample.SelectedItem = null;
             if (args.IsSettingsInvoked)
-                contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo());
+                SettingsPane.IsPaneOpen = !SettingsPane.IsPaneOpen;
+            //contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo());
 
             else
                 try
                 {
                     switch (args.InvokedItemContainer.Tag)
                     {
-                        case "IDE": contentFrame.Navigate(typeof(Editor), null, new DrillInNavigationTransitionInfo()); break;
-                        case "Settings": contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo()); break;
-                        case "Projects": contentFrame.Navigate(typeof(Projects), null, new DrillInNavigationTransitionInfo()); break;
-                        case "About": contentFrame.Navigate(typeof(About), null, new DrillInNavigationTransitionInfo()); break;
-                        default: Console.WriteLine("Not a valid Page Type"); break;
+                       // case "IDE": contentFrame.Navigate(typeof(Editor), null, new DrillInNavigationTransitionInfo()); break;
+                        case "Settings": SettingsPane.IsPaneOpen = !SettingsPane.IsPaneOpen; break;
+                       // case "Projects": contentFrame.Navigate(typeof(Projects), null, new DrillInNavigationTransitionInfo()); break;
+                       // case "About": contentFrame.Navigate(typeof(About), null, new DrillInNavigationTransitionInfo()); break;
+                        default: break;
                     }
                 }
                 catch (Exception e)
@@ -221,7 +232,7 @@ namespace ConTeXt_UWP
                     switch (args.InvokedItemContainer.Tag)
                     {
                         case "IDE": contentFrame.Navigate(typeof(Editor), null, new DrillInNavigationTransitionInfo()); break;
-                        case "Settings": contentFrame.Navigate(typeof(SettingsPage), null, new DrillInNavigationTransitionInfo()); break;
+                        case "Settings": SettingsPane.IsPaneOpen = !SettingsPane.IsPaneOpen; break;
                         case "Projects": contentFrame.Navigate(typeof(Projects), null, new DrillInNavigationTransitionInfo()); break;
                         case "About": contentFrame.Navigate(typeof(About), null, new DrillInNavigationTransitionInfo()); break;
                         default: Console.WriteLine("Not a valid Page Type"); break;
@@ -588,6 +599,268 @@ namespace ConTeXt_UWP
             await App.VM.UWPSaveAll();
             await Editor.CurrentEditor.Compile(false, fi);
         }
+
+        private void PaneControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if ((string)(sender as ComboBox).SelectedItem == "Top")
+            {
+                Window.Current.SetTitleBar(nvSample.PaneCustomContent as FrameworkElement);
+                //((Window.Current.Content as Frame).Content as MainPage).nvSample.Header = null;
+            }
+
+            else
+            {
+                Window.Current.SetTitleBar(Header);
+                //((Window.Current.Content as Frame).Content as MainPage).nvSample.SetBinding(NavigationView.HeaderProperty, new Binding() { Path = new PropertyPath("NVHeader") });
+            }
+        }
+
+        private async void Update_Click(object sender, RoutedEventArgs e)
+        {
+            App.VM.IsSaving = true;
+
+
+            var installing = new ContentDialog() { Title = "Please wait while updating. This can take up to 5 minutes." };
+            var prog = new Microsoft.UI.Xaml.Controls.ProgressBar() { IsIndeterminate = true };
+            installing.Content = prog;
+            installing.ShowAsync();
+            ValueSet request = new ValueSet();
+            request.Add("command", "update");
+            AppServiceResponse response = await App.VM.appServiceConnection.SendMessageAsync(request);
+            foreach (string key in response.Message.Keys)
+            {
+                if (key == "response")
+                {
+                    if ((bool)response.Message[key])
+                    {
+                        App.VM.LOG("ConTeXt distribution updated.");
+                        installing.Title = "ConTeXt distribution updated!";
+                        prog.ShowPaused = true;
+
+                    }
+                    else
+                    {
+                        App.VM.LOG("Update error");
+                        installing.Title = "Error. Please try again later";
+                        prog.ShowError = true;
+                    }
+                    installing.PrimaryButtonText = "Ok";
+                    installing.IsPrimaryButtonEnabled = true;
+                    installing.DefaultButton = ContentDialogButton.Primary;
+                }
+            }
+            App.VM.IsSaving = false;
+        }
+
+        private async void Install_Click(object sender, RoutedEventArgs e)
+        {
+            App.VM.IsSaving = true;
+            try
+            {
+                var cd = new ContentDialog();
+                var sp = new StackPanel();
+                StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+                var installpathtb = new TextBox() { Header = "Install Path (changing this is experimental)", Text = localFolder.Path };
+                var downloadlinktb = new TextBox() { Header = "Download link (only change if PRAGMA ADE changed the URL)", Text = App.VM.Default.ContextDownloadLink };
+                sp.Children.Add(installpathtb);
+                sp.Children.Add(downloadlinktb);
+                cd.Title = "First Start: Install the ConTeXt (LuaMetaTeX) Distribution";
+                cd.Content = sp;
+                cd.PrimaryButtonText = "Install";
+                cd.CloseButtonText = "Skip (Setup in the Settings!)";
+                cd.PrimaryButtonClick += async (a, b) =>
+                {
+                    App.VM.Default.ContextDistributionPath = installpathtb.Text;
+                    App.VM.Default.ContextDownloadLink = downloadlinktb.Text;
+                    ValueSet request = new ValueSet();
+                    request.Add("command", "install");
+                    AppServiceResponse response = await App.VM.appServiceConnection.SendMessageAsync(request);
+                    //AppViewModel.LOG(response.Status.ToString() + " ... " + response.Message.FirstOrDefault().Key.ToString() + " Key Val " + response.Message.FirstOrDefault().Value.ToString());
+                    // display the response key/value pairs
+                    foreach (string key in response.Message.Keys)
+                    {
+                        if (key == "response")
+                        {
+                            if ((bool)response.Message[key])
+                                App.VM.LOG("ConTeXt distribution installed.");
+                            else
+                                App.VM.LOG("Installation error");
+
+                        }
+                    }
+                    //AppRestartFailureReason result = await CoreApplication.RequestRestartAsync("");
+                    //if (result == AppRestartFailureReason.NotInForeground ||
+                    //    result == AppRestartFailureReason.RestartPending ||
+                    //    result == AppRestartFailureReason.Other)
+                    //{
+                    //    AppViewModel.LOG("Restart failed");
+                    //}
+                };
+                await cd.ShowAsync();
+
+            }
+            catch (Exception ex)
+            {
+                App.VM.LOG(ex.Message);
+            }
+            App.VM.IsSaving = false;
+        }
+
+        private void ThemeControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ApplicationViewTitleBar titleBar = ApplicationView.GetForCurrentView().TitleBar;
+            var DefaultTheme = new Windows.UI.ViewManagement.UISettings();
+            var lightbrush = DefaultTheme.GetColorValue(Windows.UI.ViewManagement.UIColorType.Foreground);
+            if (App.VM.Default.Theme == "Light")
+            {
+                lightbrush = Colors.Black;
+            }
+            else if (App.VM.Default.Theme == "Dark")
+            {
+                lightbrush = Colors.White;
+            }
+
+            titleBar.ButtonBackgroundColor = Colors.Transparent;
+            titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+            titleBar.ButtonForegroundColor = titleBar.ButtonInactiveForegroundColor = lightbrush;
+            titleBar.BackgroundColor = Colors.Transparent;
+        }
+
+        private void Disclaimer_Click(object sender, RoutedEventArgs e)
+        {
+            DisclaimerView.Visibility = DisclaimerView.Visibility == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed;
+        }
+        private async void Btnaddproject_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectNew = new SelectNew();
+                var selectTemplate = new SelectTemplate();
+                var selectFolder = new SelectFolder();
+
+
+                var result = await selectNew.ShowAsync();
+                ContentDialogResult res;
+                if (result == ContentDialogResult.Primary)
+                {
+                    switch ((selectNew.TempList.SelectedItem as TemplateSelection).Tag)
+                    {
+                        case "empty":
+                            res = await selectFolder.ShowAsync();
+                            if (res == ContentDialogResult.Primary)
+                            {
+                                var folder = selectFolder.folder;
+                                if (folder != null)
+                                {
+                                    StorageApplicationPermissions.FutureAccessList.AddOrReplace(folder.Name, folder, "");
+                                    StorageApplicationPermissions.MostRecentlyUsedList.AddOrReplace(folder.Name, folder, "");
+                                    App.VM.RecentAccessList = StorageApplicationPermissions.MostRecentlyUsedList;
+
+                                    var proj = new Project(folder.Name, folder, App.VM.GenerateTreeView(folder, App.VM.CurrentProject.RootFile));
+                                    App.VM.CurrentProject = proj;
+                                    App.VM.Default.ProjectList.Add(proj);
+                                    App.VM.Default.LastActiveProject = proj.Name;
+                                    // App.AppViewModel.UpdateRecentAccessList();
+                                }
+                            }
+                            break;
+                        case "template":
+                            res = await selectTemplate.ShowAsync();
+                            if (res == ContentDialogResult.Primary)
+                            {
+                                string project = (selectTemplate.TempList.SelectedItem as TemplateSelection).Tag;
+
+                                res = await selectFolder.ShowAsync();
+                                if (res == ContentDialogResult.Primary)
+                                {
+                                    var folder = selectFolder.folder;
+                                    if (folder != null)
+                                    {
+                                        StorageApplicationPermissions.FutureAccessList.AddOrReplace(folder.Name, folder, "");
+                                        StorageApplicationPermissions.MostRecentlyUsedList.AddOrReplace(folder.Name, folder, "");
+                                        App.VM.RecentAccessList = StorageApplicationPermissions.MostRecentlyUsedList;
+                                        string root = Windows.ApplicationModel.Package.Current.InstalledLocation.Path;
+                                        string path = root + @"\Templates";
+                                        var templateFolder = await StorageFolder.GetFolderFromPathAsync(path + @"\" + project);
+                                        //ZipFile.ExtractToDirectory(path + @"\" + project + ".zip", folder.Path,true);
+                                        await CopyFolderAsync(templateFolder, folder);
+                                        string rootfile = "";
+                                        switch (project)
+                                        {
+                                            case "mwe": rootfile = "main.tex"; break;
+                                            case "projpres": rootfile = "prd_presentation.tex"; break;
+                                            case "projthes": rootfile = "prd_thesis.tex"; break;
+                                            case "single": rootfile = "main.tex"; break;
+                                            default: break;
+                                        }
+                                        var proj = new Project(folder.Name, folder, App.VM.GenerateTreeView(folder, rootfile)) { RootFile = rootfile };
+                                        App.VM.CurrentProject = proj;
+                                        App.VM.Default.ProjectList.Add(proj);
+                                        App.VM.Default.LastActiveProject = proj.Name;
+
+                                        // App.AppViewModel.UpdateRecentAccessList();
+                                    }
+                                }
+                            }
+                            break;
+                        default: break;
+
+                    }
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                App.VM.LOG(ex.Message);
+            }
+
+        }
+        public static async Task CopyFolderAsync(StorageFolder source, StorageFolder destinationContainer, string desiredName = null)
+        {
+            foreach (var file in await source.GetFilesAsync())
+            {
+                await file.CopyAsync(destinationContainer, file.Name, NameCollisionOption.ReplaceExisting);
+            }
+            foreach (var folder in await source.GetFoldersAsync())
+            {
+                await CopyFolderAsync(folder, destinationContainer);
+            }
+        }
+        private void Btndeleteproject_Click(object sender, RoutedEventArgs e)
+        {
+            var proj = (sender as FrameworkElement).DataContext as Project;
+            StorageApplicationPermissions.MostRecentlyUsedList.Remove(proj.Name);
+            App.VM.Default.ProjectList.Remove(proj);
+            //App.VM.UpdateRecentAccessList();
+        }
+
+        private async void BtnLoad_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+
+                var proj = (sender as FrameworkElement).DataContext as Project;
+                var f = await StorageApplicationPermissions.MostRecentlyUsedList.GetFolderAsync(proj.Name);
+                var list = App.VM.Default.ProjectList.Where(x => x.Name == f.Name);
+                if (list.Count() == 1)
+                {
+                    var project = list.FirstOrDefault();
+                    project.Folder = f;
+                    project.Directory = App.VM.GenerateTreeView(f, proj.RootFile);
+                    App.VM.CurrentProject = project;
+                }
+                App.VM.Default.LastActiveProject = proj.Name;
+                App.VM.FileItems.Clear();
+               // App.VM.CurrentFileItem.FileContent = "";
+                // var rf = StorageApplicationPermissions.MostRecentlyUsedList.Entries.Where(x => x.Token == proj.Name).FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                App.VM.LOG("Error on loading project: " + ex.Message);
+            }
+        }
+
     }
     class MyTreeViewItem : Microsoft.UI.Xaml.Controls.TreeViewItem
     {

@@ -64,18 +64,15 @@ namespace ConTeXt_UWP
 
         }
 
-       
-
-        int quoteFrequency = 15;
-        public int QuoteFrequency { get => quoteFrequency; set => Set(ref quoteFrequency, value); }
-
         
         bool startWithLastActiveProject = true;
         public bool StartWithLastActiveProject { get => startWithLastActiveProject; set => Set(ref startWithLastActiveProject, value); }
 
-        int showLineNumbers = (int)LineNumbersType.On;
-        public int ShowLineNumbers{ get => showLineNumbers; set => Set(ref showLineNumbers, value); }
+        //int showLineNumbers = (int)LineNumbersType.On;
+        //public int ShowLineNumbers{ get => showLineNumbers; set => Set(ref showLineNumbers, value); }
 
+        string showLineNumbers = "on";
+        public string ShowLineNumbers{ get => showLineNumbers; set { Set(ref showLineNumbers, value); if (App.VM.EditorOptions != null) App.VM.EditorOptions.LineNumbers = value; } }
 
         bool showLog = true;
         public bool ShowLog { get => showLog; set => Set(ref showLog, value); }
@@ -124,10 +121,10 @@ namespace ConTeXt_UWP
         public string Modes { get => modes; set => Set(ref modes, value); }
 
         bool codeFolding = true;
-        public bool CodeFolding{ get => codeFolding; set => Set(ref codeFolding, value); }
+        public bool CodeFolding{ get => codeFolding; set { Set(ref codeFolding, value); if (App.VM.EditorOptions != null) App.VM.EditorOptions.Folding = value;  } }
 
         bool miniMap = true;
-        public bool MiniMap { get => miniMap; set => Set(ref miniMap, value); }
+        public bool MiniMap { get => miniMap; set { Set(ref miniMap, value); if (App.VM.EditorOptions != null) App.VM.EditorOptions.Minimap =  new EditorMinimapOptions() { Enabled = value, ShowSlider = Show.Always, RenderCharacters = true, }; ; } }
        
         bool suggestStartStop = true;
         public bool SuggestStartStop{ get => suggestStartStop; set => Set(ref suggestStartStop, value); }
@@ -151,13 +148,14 @@ namespace ConTeXt_UWP
         {
             get
             {
-                var n = Enum.GetValues(typeof(LineNumbersType)).Cast<LineNumbersType>().ToList();
-                List<string> myDic = new List<string>();
-                foreach (LineNumbersType foo in Enum.GetValues(typeof(LineNumbersType)))
-                {
-                    myDic.Add(foo.ToString());
-                }
-                return myDic;
+                //var n = Enum.GetValues(typeof(LineNumbersType)).Cast<LineNumbersType>().ToList();
+                var n = new List<string>() { "on", "off", "interval", "relative" };
+                //List<string> myDic = new List<string>();
+                //foreach (var foo in Enum.GetValues(typeof(LineNumbersType)))
+                //{
+                //    myDic.Add(foo.ToString());
+                //}
+                return n;
             }
         }
         [JsonIgnore]

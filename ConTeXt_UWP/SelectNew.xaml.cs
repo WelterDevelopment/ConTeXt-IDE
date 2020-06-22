@@ -21,8 +21,8 @@ namespace ConTeXt_UWP
         ViewModel vm = App.VM;
 
         public ObservableCollection<TemplateSelection> templateSelections = new ObservableCollection<TemplateSelection>() {
-         new TemplateSelection(){ Content = "Empty project folder", Tag = "empty", IsSelected = false},
-         new TemplateSelection(){ Content = "Project folder with template", Tag = "template", IsSelected = false},
+         new TemplateSelection(){ Content = "Empty and/or existing project folder", Tag = "empty", IsSelected = false},
+         new TemplateSelection(){ Content = "New Project folder with template", Tag = "template", IsSelected = false},
         };
     
     }
