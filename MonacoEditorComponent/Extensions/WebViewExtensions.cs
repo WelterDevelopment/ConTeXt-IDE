@@ -1,7 +1,10 @@
 ﻿using Monaco.Helpers;
+using Monaco.Monaco;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -83,6 +86,36 @@ namespace Monaco.Extensions
 
             if (returnstring != null && returnstring != "null")
             {
+                if (typeof(T) == typeof(List<FindMatch>))
+                {
+                    var list = JsonConvert.DeserializeObject<FindMatch[]>(returnstring).ToList();
+                    return (T)(object)list; 
+                }
+                return JsonConvert.DeserializeObject<T>(returnstring);
+            }
+
+            return default;
+        }
+
+        public static async Task<T> RunScriptHelperTaskAsync<T>(this WebView _view, string script)
+        {
+            var returnstring = await _view.InvokeScriptAsync("eval", new string[] { script });
+
+            if (JsonObject.TryParse(returnstring, out JsonObject result))
+            {
+                if (result.ContainsKey("wv_internal_error") && result["wv_internal_error"].ValueType == JsonValueType.Boolean && result["wv_internal_error"].GetBoolean())
+                {
+                    throw new JavaScriptInnerException(result["message"].GetString(), result["stack"].GetString());
+                }
+            }
+
+            if (returnstring != null && returnstring != "null")
+            {
+                if (typeof(T) == typeof(List<FindMatch>))
+                {
+                    var list = JsonConvert.DeserializeObject<FindMatch[]>(returnstring).ToList();
+                    return (T)(object)list;
+                }
                 return JsonConvert.DeserializeObject<T>(returnstring);
             }
 

@@ -1,5 +1,9 @@
 ﻿using System;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net.NetworkInformation;
+using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.AppService;
@@ -23,7 +27,7 @@ namespace ConTeXt_UWP
     sealed partial class App : Application
     {
         private static ViewModel viewModel;
-        private ViewModel currViewModel = VM;
+
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -42,6 +46,10 @@ namespace ConTeXt_UWP
                 if (viewModel == null)
                     viewModel = new ViewModel();
                 return viewModel;
+            }
+            set
+            {
+                viewModel = value;
             }
         }
 
@@ -62,7 +70,6 @@ namespace ConTeXt_UWP
 
                     VM.appServiceConnection.RequestReceived += AppServiceConnection_RequestReceived;
 
-
                     //Connection.RequestReceived += (a, b) => { AppViewModel.LOG(b.Request.Message.Values.FirstOrDefault() as string); };
                     //currViewModel.appServiceConnection = Connection;
                     // currViewModel.appServiceConnection.RequestReceived += (a, b) => {  };
@@ -82,6 +89,11 @@ namespace ConTeXt_UWP
             // TODO: Handle file activation
             // The number of files received is args.Files.Size
             // The name of the first file is args.Files[0].Name
+            Resources.TryGetValue("VM", out object Vm);
+            if (Vm != null)
+            {
+                VM = Vm as ViewModel;
+            }
             if (Window.Current.Content == null)
             {
                 VM.FileActivatedEvents.Add(args);
@@ -121,109 +133,6 @@ namespace ConTeXt_UWP
             }
         }
 
-        private async void StartUp()
-        {
-            CoreApplication.GetCurrentView().TitleBar.ExtendViewIntoTitleBar = true;
-            ApplicationViewTitleBar titleBar = ApplicationView.GetForCurrentView().TitleBar;
-            var DefaultTheme = new Windows.UI.ViewManagement.UISettings();
-
-
-            var lightbrush = DefaultTheme.GetColorValue(Windows.UI.ViewManagement.UIColorType.Foreground);
-            if (VM.Default.Theme == "Light")
-            {
-                lightbrush = Colors.Black;
-            }
-            else if (VM.Default.Theme == "Dark")
-            {
-                lightbrush = Colors.White;
-            }
-
-            titleBar.ButtonBackgroundColor = Colors.Transparent;
-            titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-            titleBar.ButtonForegroundColor = titleBar.ButtonInactiveForegroundColor = lightbrush;
-            titleBar.BackgroundColor = Colors.Transparent;
-            SystemNavigationManager.GetForCurrentView().BackRequested += App_BackRequested;
-
-            if (VM.Default.ContextDistributionPath == "")
-            {
-                try
-                {
-                    VM.IsSaving = true;
-                    VM.IsPaused = false;
-                    var cd = new ContentDialog();
-                    var sp = new StackPanel();
-                    StorageFolder localFolder = ApplicationData.Current.LocalFolder;
-                   // var installpathtb = new TextBox() { Header = "Install Path (changing this is experimental)", Text = localFolder.Path };
-                    var downloadlinktb = new TextBox() { Header = "Download link (only change if PRAGMA ADE changed the URL)", Text = VM.Default.ContextDownloadLink };
-                    //sp.Children.Add(installpathtb);
-                    sp.Children.Add(downloadlinktb);
-                    cd.Title = "First Start: Install the ConTeXt (LuaMetaTeX) Distribution";
-                    cd.Content = sp;
-                    cd.PrimaryButtonText = @"Install (~ 270 MB)";
-                    cd.CloseButtonText = "Skip (Setup in the Settings!)";
-                    if (await cd.ShowAsync() == ContentDialogResult.Primary)
-                    {
-                        VM.Default.ContextDistributionPath = localFolder.Path;
-                        VM.Default.ContextDownloadLink = downloadlinktb.Text;
-                        var installing = new ContentDialog() { Title = "Please wait while installing. This can take up to 10 minutes. Do not close this window." };
-                        var prog = new Microsoft.UI.Xaml.Controls.ProgressBar() { IsIndeterminate = true };
-                        installing.Content = prog;
-                        installing.ShowAsync();
-
-                        //VM.LOG("Installing... This can take up to 10 minutes depending on your system and the download speed.");
-                        //VM.LOG("You can start editing in the meanwhile. Please go to \"Projects\" to add a project folder");
-                        ValueSet request = new ValueSet();
-                        request.Add("command", "install");
-                        AppServiceResponse response = await VM.appServiceConnection.SendMessageAsync(request);
-                        //AppViewModel.LOG(response.Status.ToString() + " ... " + response.Message.FirstOrDefault().Key.ToString() + " Key Val " + response.Message.FirstOrDefault().Value.ToString());
-                        // display the response key/value pairs
-
-                        foreach (string key in response.Message.Keys)
-                        {
-                            if (key == "response")
-                            {
-                                if ((bool)response.Message[key])
-                                {
-                                    VM.LOG("ConTeXt distribution installed.");
-                                    installing.Title = "ConTeXt distribution installed!";
-                                    prog.ShowPaused = true;
-
-                                }
-                                else
-                                {
-                                    VM.LOG("Installation error");
-                                    installing.Title = "Error. Please try again in the settings";
-                                    prog.ShowError = true;
-                                }
-                                installing.PrimaryButtonText = "Ok";
-                                installing.IsPrimaryButtonEnabled = true;
-                                installing.DefaultButton = ContentDialogButton.Primary;
-
-
-
-                            }
-                        }
-
-                        //AppRestartFailureReason result = await CoreApplication.RequestRestartAsync("");
-                        //if (result == AppRestartFailureReason.NotInForeground ||
-                        //    result == AppRestartFailureReason.RestartPending ||
-                        //    result == AppRestartFailureReason.Other)
-                        //{
-                        //    AppViewModel.LOG("Restart failed");
-                        //}
-                    }
-                    VM.IsSaving = false;
-                    VM.IsPaused = true;
-                    VM.IsVisible = false;
-
-                }
-                catch (Exception ex)
-                {
-                    VM.LOG("Error on Startup: " + ex.Message);
-                }
-            }
-        }
-
         /// <summary>
         /// Invoked when the application is launched normally by the end user. Other entry points
         /// will be used such as when the application is launched to open a specific file.
@@ -233,7 +142,19 @@ namespace ConTeXt_UWP
         {
             // Do not repeat app initialization when the Window already has content,
             // just ensure that the window is active
-            VM.Default.PackageID = Package.Current.Id.FamilyName;
+            //try
+            //{
+            //    Resources.TryGetValue("VM", out object Vm);
+            //    if (Vm != null && Vm is ViewModel vM)
+            //    {
+            //        VM = vM;
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    await new MessageDialog(ex.Message, ex.Source).ShowAsync();
+            //}
+           // VM.Default.PackageID = Package.Current.Id.FamilyName;
             if (!(Window.Current.Content is Frame rootFrame))
             {
                 // Create a Frame to act as the navigation context and navigate to the first page
@@ -257,7 +178,7 @@ namespace ConTeXt_UWP
                     // When the navigation stack isn't restored navigate to the first page,
                     // configuring the new page by passing required information as a navigation
                     // parameter
-                    VM.Startup();
+                    //VM.Startup();
                     rootFrame.Navigate(typeof(MainPage), e.Arguments);
                 }
                 // Ensure the current window is active
@@ -265,7 +186,6 @@ namespace ConTeXt_UWP
             }
 
             StartUp();
-                
         }
 
         private void App_BackRequested(object sender, BackRequestedEventArgs e)
@@ -335,6 +255,181 @@ namespace ConTeXt_UWP
             if (previousExecutionState == ApplicationExecutionState.Terminated)
             {
             }
+        }
+
+        private async void update()
+        {
+            App.VM.IsSaving = true;
+
+
+            var installing = new ContentDialog() { Title = "Please wait while updating. This can take up to 5 minutes." };
+            var prog = new Microsoft.UI.Xaml.Controls.ProgressBar() { IsIndeterminate = true };
+            installing.Content = prog;
+            installing.ShowAsync();
+            ValueSet request = new ValueSet();
+            request.Add("command", "update");
+            AppServiceResponse response = await App.VM.appServiceConnection.SendMessageAsync(request);
+            foreach (string key in response.Message.Keys)
+            {
+                if (key == "response")
+                {
+                    if ((bool)response.Message[key])
+                    {
+                        App.VM.LOG("ConTeXt distribution updated.");
+                        installing.Title = "ConTeXt distribution updated!";
+                        prog.ShowPaused = true;
+
+                    }
+                    else
+                    {
+                        App.VM.LOG("Update error");
+                        installing.Title = "Error. Please try again later";
+                        prog.ShowError = true;
+                    }
+                    installing.PrimaryButtonText = "Ok";
+                    installing.IsPrimaryButtonEnabled = true;
+                    installing.DefaultButton = ContentDialogButton.Primary;
+                }
+            }
+            App.VM.IsSaving = false;
+        }
+        private async void StartUp()
+        {
+            CoreApplication.GetCurrentView().TitleBar.ExtendViewIntoTitleBar = true;
+            ApplicationViewTitleBar titleBar = ApplicationView.GetForCurrentView().TitleBar;
+            var DefaultTheme = new Windows.UI.ViewManagement.UISettings();
+
+            var lightbrush = DefaultTheme.GetColorValue(Windows.UI.ViewManagement.UIColorType.Foreground);
+            if (VM.Default.Theme == "Light")
+            {
+                lightbrush = Colors.Black;
+            }
+            else if (VM.Default.Theme == "Dark")
+            {
+                lightbrush = Colors.White;
+            }
+
+            titleBar.ButtonBackgroundColor = Colors.Transparent;
+            titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+            titleBar.ButtonForegroundColor = titleBar.ButtonInactiveForegroundColor = lightbrush;
+            titleBar.BackgroundColor = Colors.Transparent;
+            SystemNavigationManager.GetForCurrentView().BackRequested += App_BackRequested;
+
+            StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+            if (!VM.Default.DistributionInstalled)
+            {
+                //VM.Default = Settings.RestoreSettings();
+                VM.Default.ContextDistributionPath = localFolder.Path;
+            }
+            //if (VM.Default.)
+            string file = @"tex\texmf-mswin\bin\context.exe";
+            var storageFolder = ApplicationData.Current.LocalFolder;
+            string filePath = Path.Combine(storageFolder.Path, file);
+           
+            if (VM.Default.ContextDistributionPath == "" && !File.Exists(filePath))
+            {
+                try
+                {
+                    VM.IsSaving = true;
+                    VM.IsPaused = false;
+                    //var cd = new ContentDialog();
+                    //var sp = new StackPanel();
+                    
+                    // var installpathtb = new TextBox() { Header = "Install Path (changing this is experimental)", Text = localFolder.Path };
+                    //var downloadlinktb = new TextBox() { Header = "Download link (only change if PRAGMA ADE changed the URL)", Text = VM.Default.ContextDownloadLink };
+                    ////sp.Children.Add(installpathtb);
+                    //sp.Children.Add(downloadlinktb);
+                    //cd.Title = "First Start: Install the ConTeXt (LuaMetaTeX) Distribution";
+                    //cd.Content = sp;
+                    //cd.PrimaryButtonText = @"Install (~ 270 MB)";
+                    //cd.CloseButtonText = "Skip this time";
+                    //cd.DefaultButton = ContentDialogButton.Primary;
+                    //if (await cd.ShowAsync() == ContentDialogResult.Primary)
+                    //{
+                    //    if (NetworkInterface.GetIsNetworkAvailable())
+                    //    {
+                    VM.Default.ContextDistributionPath = localFolder.Path;
+                    //VM.Default.ContextDownloadLink = downloadlinktb.Text;
+                    var installing = new ContentDialog() { Title = "Please wait while installing. This can take up to 10 minutes. Do not close this window." };
+                    var prog = new Microsoft.UI.Xaml.Controls.ProgressBar() { IsIndeterminate = true };
+                    installing.Content = prog;
+                    installing.ShowAsync();
+
+                    //var file = await localFolder.GetFileAsync("file.json");
+                    //await file.DeleteAsync();
+                    //string root = Windows.ApplicationModel.Package.Current.InstalledLocation.Path;
+                    //string path = root;
+
+                    //var templateFolder = await StorageFolder.GetFolderFromPathAsync(path);
+                    //await new MessageDialog(path, "path").ShowAsync();
+                    //var archive = await templateFolder.GetFileAsync("context-mswin.zip");
+                    //await new MessageDialog(path, "path").ShowAsync();
+
+                    //var copiedfile = await archive.CopyAsync(localFolder);
+                    //StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///context.zip"));
+                    //ZipFile.ExtractToDirectory(copiedfile.Path, localFolder.Path);
+                    //installing.Hide();
+                    //update();
+                    //VM.LOG("Installing... This can take up to 10 minutes depending on your system and the download speed.");
+                    //VM.LOG("You can start editing in the meanwhile. Please go to \"Projects\" to add a project folder");
+                    ValueSet request = new ValueSet();
+                    request.Add("command", "install");
+                    while (VM.appServiceConnection == null)
+                    {
+                        await Task.Delay(200);
+                    }
+
+                    AppServiceResponse response = await VM.appServiceConnection.SendMessageAsync(request);
+                    //AppViewModel.LOG(response.Status.ToString() + " ... " + response.Message.FirstOrDefault().Key.ToString() + " Key Val " + response.Message.FirstOrDefault().Value.ToString());
+                    // display the response key/value pairs
+                    if (response != null)
+                        foreach (string key in response.Message.Keys)
+                        {
+                            if (key == "response")
+                            {
+                                if ((bool)response.Message[key])
+                                {
+                                    VM.LOG("ConTeXt distribution installed.");
+                                    installing.Title = "ConTeXt distribution installed!";
+                                    prog.ShowPaused = true;
+                                }
+                                else
+                                {
+                                    VM.LOG("Installation error");
+                                    installing.Title = "Error. Please try again in the settings";
+                                    prog.ShowError = true;
+                                }
+                                installing.PrimaryButtonText = "Ok";
+                                installing.IsPrimaryButtonEnabled = true;
+                                installing.DefaultButton = ContentDialogButton.Primary;
+                            }
+                        }
+
+                    //AppRestartFailureReason result = await CoreApplication.RequestRestartAsync("");
+                    //if (result == AppRestartFailureReason.NotInForeground ||
+                    //    result == AppRestartFailureReason.RestartPending ||
+                    //    result == AppRestartFailureReason.Other)
+                    //{
+                    //    AppViewModel.LOG("Restart failed");
+                    //}
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    var networkerror = new ContentDialog() { Title = "You are not connected to the internet. Please enable a connection and restart this application.", PrimaryButtonText = "Ok", DefaultButton = ContentDialogButton.Primary };
+                    //    await networkerror.ShowAsync();
+                    //}
+                    VM.IsSaving = false;
+                    VM.IsPaused = true;
+                    VM.IsVisible = false;
+                }
+                catch (Exception ex)
+                {
+                    new MessageDialog(ex.Message, "App startup error").ShowAsync();
+                    VM.LOG("Error on Startup: " + ex.Message);
+                }
+            }
+            VM.Default.DistributionInstalled = true;
         }
     }
 }

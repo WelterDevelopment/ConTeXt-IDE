@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:animations="using:Microsoft.Toolkit.Uwp.UI.Animations"
+    xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls"
    xmlns:contr="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d" DataContext="{x:Bind currentViewModel}"
     RequestedTheme="{Binding Default.Theme, Mode=OneWay, Converter={StaticResource StringToTheme}}"
@@ -36,7 +37,7 @@
             <local:MyTreeViewItem Margin="0,0,20,0">
                 <local:MyTreeViewItem.ContextFlyout>
                     <MenuFlyout>
-                        <MenuFlyoutItem x:Name="CompileFlyoutButton" Icon="Play" Click="Compile_Click" Text="Compile"></MenuFlyoutItem>
+                        <MenuFlyoutItem Visibility="{Binding Source={StaticResource VM}, Path=Default.DistributionInstalled, Converter={StaticResource BoolToVisibility}}" x:Name="CompileFlyoutButton" Icon="Play" Click="Compile_Click" Text="Compile"></MenuFlyoutItem>
                         <MenuFlyoutItem x:Name="SetRoot" Icon="Favorite" Click="SetRoot_Click" IsEnabled="{Binding IsRoot, Converter={StaticResource BoolInverter}}" Text="Set as Main File"></MenuFlyoutItem>
                         <MenuFlyoutItem x:Name="Delete" Icon="Delete" Click="Delete_Click" IsEnabled="{Binding IsRoot, Converter={StaticResource BoolInverter}}" Text="Delete"></MenuFlyoutItem>
                         <MenuFlyoutItem x:Name="Rename" Icon="Rename" Click="Rename_Click" Text="Rename"></MenuFlyoutItem>
@@ -115,7 +116,7 @@
                                         <ColumnDefinition Width="Auto"></ColumnDefinition>
                                         <ColumnDefinition Width="Auto"></ColumnDefinition>
                                     </Grid.ColumnDefinitions>
-                                    <NavigationViewItemHeader Grid.Column="0" Content="{Binding CurrentProject.Name}"></NavigationViewItemHeader>
+                                    <TextBlock ToolTipService.ToolTip="{Binding CurrentProject.Folder.Path}" Style="{ThemeResource BaseTextBlockStyle}" Grid.Column="0" FontWeight="Bold" Text="{Binding CurrentProject.Name}"></TextBlock>
                                     <Button ToolTipService.ToolTip="Create file" IsEnabled="{Binding IsProjectLoaded}" Style="{ThemeResource ButtonRevealStyle}" VerticalContentAlignment="Center" Grid.Column="1"  Click="AddFile_Click">
                                         <SymbolIcon Symbol="Document"/>
                                     </Button>
@@ -133,27 +134,16 @@
                 <NavigationViewItemSeparator></NavigationViewItemSeparator>
                 <!--<NavigationViewItem Icon="Edit" Content="Editor" Tag="IDE"/>
                 <NavigationViewItemSeparator></NavigationViewItemSeparator>-->
-                <NavigationViewItem Icon="Library" Content="Projects" Tag="Projects" Tapped="Tree_Tapped" SelectsOnInvoked="False">
+                <NavigationViewItem Icon="Library" x:Uid="Projects" Content="Projects" Tag="Projects" Tapped="Tree_Tapped" SelectsOnInvoked="False">
                     <FlyoutBase.AttachedFlyout>
                         <Flyout>
                             <StackPanel Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                                <animations:Implicit.ShowAnimations>
-                                    <animations:TranslationAnimation Duration="0:0:0.25" From="0, -50, 0" To="0" ></animations:TranslationAnimation>
-                                    <animations:OpacityAnimation Duration="0:0:0.25" From="0" To="1.0"></animations:OpacityAnimation>
-                                </animations:Implicit.ShowAnimations>
-
-                                <animations:Implicit.HideAnimations>
-                                    <animations:ScalarAnimation Target="Opacity" Duration="0:0:0.25" To="0.0"></animations:ScalarAnimation>
-                                    <animations:ScalarAnimation Target="Translation.Y" Duration="0:0:0.25" To="-50">
-                                        <animations:ScalarKeyFrame Key="0.1" Value="20"></animations:ScalarKeyFrame>
-                                        <animations:ScalarKeyFrame Key="0.5" Value="0.0"></animations:ScalarKeyFrame>
-                                    </animations:ScalarAnimation>
-                                </animations:Implicit.HideAnimations>
+                                
                                 <Button Click="Btnaddproject_Click" Style="{ThemeResource ButtonRevealStyle}" ToolTipService.ToolTip="Open a project folder">
                                     <Button.Content>
                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                             <SymbolIcon Symbol="Add"></SymbolIcon>
-                                            <TextBlock Text="Add project folder"></TextBlock>
+                                            <TextBlock x:Uid="AddProjectFolder" Text="Add project folder"></TextBlock>
                                         </StackPanel>
                                     </Button.Content>
 
@@ -216,13 +206,20 @@
                             <animations:TranslationAnimation Duration="0:0:0.25" From="0, -50, 0" To="0" ></animations:TranslationAnimation>
                             <animations:OpacityAnimation Duration="0:0:0.25" From="0" To="1.0"></animations:OpacityAnimation>
                         </animations:Implicit.ShowAnimations>
-                        <Grid>
+                        <Grid Visibility="{Binding IsProjectLoaded}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"></ColumnDefinition>
                                 <ColumnDefinition Width="Auto"></ColumnDefinition>
                                 <ColumnDefinition Width="Auto"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
-                            <NavigationViewItemHeader Grid.Column="0" Content="{Binding CurrentProject.Name}"></NavigationViewItemHeader>
+                            <TextBlock Margin="6,0,0,0" RightTapped="NavigationViewItemHeader_RightTapped" ToolTipService.ToolTip="{Binding CurrentProject.Folder.Path}"  Grid.Column="0" Text="{Binding CurrentProject.Name}" Style="{ThemeResource BaseTextBlockStyle}" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Left">
+                                <FlyoutBase.AttachedFlyout>
+                                    <MenuFlyout>
+                                        <MenuFlyoutItem Icon="OpenLocal" Text="Open in Explorer" x:Uid="OpeninExplorer" Click="OpeninExplorer_Click" />
+                                        <MenuFlyoutItem Icon="Undo" Text="Unload" x:Uid="Unload" Click="Unload_Click" />
+                                    </MenuFlyout>
+                                </FlyoutBase.AttachedFlyout>
+                            </TextBlock>
                             <Button ToolTipService.ToolTip="Create file" IsEnabled="{Binding IsProjectLoaded}" Style="{ThemeResource ButtonRevealStyle}" VerticalContentAlignment="Center" Grid.Column="1"  Click="AddFile_Click">
                                 <SymbolIcon Symbol="Document"/>
                             </Button>
@@ -255,61 +252,98 @@
                          />-->
 
                     <SplitView x:Name="SettingsPane" IsPaneOpen="False" Grid.Row="1"
-           DisplayMode="Inline" PaneBackground="Transparent" 
+           DisplayMode="Inline" PanePlacement="Right" PaneBackground="Transparent"
            OpenPaneLength="300">
                         <SplitView.Pane>
-                            <Grid >
-                                <ScrollViewer HorizontalScrollMode="Disabled" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" Padding="24,0,24,24">
-                                    <StackPanel Orientation="Vertical">
-                                        <StackPanel.Resources>
-                                            <Style TargetType="TextBox">
-                                                <Setter Property="Margin" Value="0,20,0,0"/>
-                                            </Style>
-                                            <Style TargetType="ComboBox">
-                                                <Setter Property="Margin" Value="0,10,0,0"/>
-                                            </Style>
-                                        </StackPanel.Resources>
-                                        <TextBlock Style="{ThemeResource SubheaderTextBlockStyle}" Text="General" FontFamily="Segoe UI"></TextBlock>
-                                        <CheckBox Content="Start with last active Project" IsChecked="{Binding Default.StartWithLastActiveProject, Mode=TwoWay}" />
-                                        <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Compiler" FontFamily="Segoe UI"></TextBlock>
+                            <ScrollViewer HorizontalScrollMode="Disabled" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" Padding="12,0,12,12">
+                                <StackPanel Orientation="Vertical" Spacing="6">
+                                    <StackPanel.Resources>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Margin" Value="0,6,0,0"/>
+                                        </Style>
+                                        <Style TargetType="ComboBox">
+                                            <Setter Property="Margin" Value="0,6,0,0"/>
+                                        </Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Margin" Value="0"/>
+                                            <Setter Property="Padding" Value="6"/>
+                                            <Setter Property="Spacing" Value="6" />
+                                        </Style>
+                                        <Style TargetType="toolkit:Expander">
+                                            <Setter Property="HorizontalContentAlignment" Value="Left"></Setter>
+                                            <Setter Property="Background" Value="#33838383"></Setter>
+                                        </Style>
+                                        <SolidColorBrush x:Key="SystemControlBackgroundBaseLowBrush" Color="#33838383"/>
+                                        <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush" Color="#337A7A7A"/>
+                                        <SolidColorBrush x:Key="SystemControlHighlightListAccentMediumBrush" Color="#33B4B4B4"/>
+                                        <SolidColorBrush x:Key="SystemControlHighlightListAccentHighBrush" Color="#33A8A8A8"/>
+                                    </StackPanel.Resources>
+                                    <toolkit:Expander x:Uid="General" Header="General" IsExpanded="True">
+                                        <StackPanel>
+                                            <CheckBox Content="Start with last active Project" IsChecked="{Binding Default.StartWithLastActiveProject, Mode=TwoWay}" />
+                                            <CheckBox Content="Internal PDF viewer (restart required)" IsChecked="{Binding Default.InternalViewer, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </toolkit:Expander>
 
-                                        <CheckBox Content="Internal PDF viewer (restart required)" IsChecked="{Binding Default.InternalViewer, Mode=TwoWay}" />
-                                        <CheckBox Content="Use ConTEXt modes" IsChecked="{Binding Default.UseModes, Mode=TwoWay}" />
-                                        <CheckBox Content="Open the PDF file after compile" IsChecked="{Binding Default.AutoOpenPDF, Mode=TwoWay}" />
-                                        <CheckBox Content="Show log (restart required)" IsChecked="{Binding Default.ShowLog, Mode=TwoWay}" />
+                                    <toolkit:Expander Header="Compiler" IsExpanded="True">
+                                        <StackPanel>
+                                            <CheckBox Content="Use ConTeXt modes" IsChecked="{Binding Default.UseModes, Mode=TwoWay}" />
+                                            <TextBox Header="Additional compiler parameters:" Text="{Binding Default.AdditionalParameters, Mode=TwoWay}"></TextBox>
+                                            <CheckBox Content="Open the PDF file after compile" IsChecked="{Binding Default.AutoOpenPDF, Mode=TwoWay}" />
+                                            <CheckBox Content="Open the LOG file after compile" IsChecked="{Binding Default.AutoOpenLOG, Mode=TwoWay}" />
+                                            <CheckBox Margin="18,-6,0,0" Content="Only on error" Visibility="{Binding Default.AutoOpenLOG, Converter={StaticResource BoolToVisibility}}" IsChecked="{Binding Default.AutoOpenLOGOnlyOnError, Mode=TwoWay}" />
+                                            <CheckBox Content="Show application log (restart required)" IsChecked="{Binding Default.ShowLog, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </toolkit:Expander>
 
-                                        <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Appearance" FontFamily="Segoe UI"></TextBlock>
-                                        <ComboBox Header="Navigation pane display mode" Name="PaneControl"  ItemsSource="{Binding Default.NavigationOption}" SelectedItem="{Binding Default.NavigationViewPaneMode, Mode=TwoWay}" SelectionChanged="PaneControl_SelectionChanged"  FontFamily="Segoe UI"/>
-                                        <ComboBox SelectionChanged="ThemeControl_SelectionChanged" Header="Theme" Name="ThemeControl"  ItemsSource="{Binding Default.ThemeOption}" SelectionChangedTrigger="Always" SelectedItem="{Binding Default.Theme, Mode=TwoWay}"  FontFamily="Segoe UI"/>
-                                        <Slider Header="Open navigation pane width" Minimum="100" Maximum="800" Value="{Binding Default.NavigationViewPaneOpenLength, Mode=TwoWay}"></Slider>
-                                        <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Editor" FontFamily="Segoe UI"></TextBlock>
-                                        <ComboBox Header="Line numbers" ItemsSource="{Binding Default.ShowLineNumberOptions}" SelectionChangedTrigger="Always" SelectedItem="{Binding Default.ShowLineNumbers, Mode=TwoWay}"  FontFamily="Segoe UI"/>
-                                        <!--<CheckBox Content="Text wrapping (prevents horizontal scrollbar)" IsChecked="{Binding Default.wrap, Mode=TwoWay}"/>-->
-                                        <!--<CheckBox Content="Show command info on hover" IsChecked="{Binding Default.ShowLineNumbers, Mode=TwoWay}"/>-->
-                                        <CheckBox Content="Enable code folding" IsChecked="{Binding Default.CodeFolding, Mode=TwoWay}"/>
-                                        <CheckBox Content="Show minimap" IsChecked="{Binding Default.MiniMap, Mode=TwoWay}"/>
-                                        <CheckBox Content="Suggest ConTeXt sart-stop environments" IsChecked="{Binding Default.SuggestStartStop, Mode=TwoWay}"/>
-                                        <CheckBox Content="Suggest ConTeXt commands" IsChecked="{Binding Default.SuggestCommands, Mode=TwoWay}"/>
-                                        <CheckBox Content="Suggest TeX primitives" IsChecked="{Binding Default.SuggestPrimitives, Mode=TwoWay}"/>
-                                        <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="Distribution" FontFamily="Segoe UI"></TextBlock>
-                                        <!--<TextBox IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Header="ConTeXt distribution path" Text="{Binding Default.ContextDistributionPath, Mode=TwoWay}"/>-->
-                                        <Button IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Name="Update" Click="Update_Click" Content="Update the distribution" Margin="0,10,0,0"></Button>
-                                        <Button IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Name="CleanInstall" Click="Install_Click" Content="First install" Margin="0,10,0,0"></Button>
-                                        <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="ConTeXt IDE"></TextBlock>
-                                        <TextBlock Style="{ThemeResource BodyTextBlockStyle}" FontSize="20" Text="About"></TextBlock>
-                                        <TextBlock x:Name="Version" Style="{ThemeResource BodyTextBlockStyle}" Text=""></TextBlock>
-                                        <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Text="by wdev (wdev@outlook.de)"></TextBlock>
-                                        <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Text="This application is not in any way related to Pragma ADE"></TextBlock>
-                                        <TextBlock Style="{ThemeResource BodyTextBlockStyle}" FontSize="20" Text="Dependencies and references"></TextBlock>
-                                        <HyperlinkButton Content="LuaMetaTeX (Pragma ADE)" NavigateUri="http://www.pragma-ade.nl/"></HyperlinkButton>
-                                        <HyperlinkButton Content="monaco-editor (Microsoft Corporation)" NavigateUri="https://github.com/Microsoft/monaco-editor"></HyperlinkButton>
-                                        <HyperlinkButton Content="MonacoEditorComponent (hawkerm)" NavigateUri="https://github.com/hawkerm/monaco-editor-uwp"></HyperlinkButton>
-                                        <HyperlinkButton Content="PDF.js (Mozilla)" NavigateUri="https://github.com/mozilla/pdf.js/"></HyperlinkButton>
-                                        <Button Click="Disclaimer_Click" Content="Show legal disclaimer" Margin="0,10,0,0"></Button>
-                                        <WebView Visibility="Collapsed" x:Name="DisclaimerView" Height="500" DefaultBackgroundColor="#88FFFFFF" ScrollViewer.VerticalScrollMode="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto" Source="ms-appx-web:///web/About.html"></WebView>
-                                    </StackPanel>
-                                </ScrollViewer>
-                            </Grid>
+                                    <toolkit:Expander x:Uid="Appearance" Header="Appearance" IsExpanded="True">
+                                        <StackPanel>
+                                            <ComboBox Header="Navigation pane display mode" Name="PaneControl"  ItemsSource="{Binding Default.NavigationOption}" SelectedItem="{Binding Default.NavigationViewPaneMode, Mode=TwoWay}" SelectionChanged="PaneControl_SelectionChanged"  FontFamily="Segoe UI"/>
+                                            <ComboBox SelectionChanged="ThemeControl_SelectionChanged" Header="Theme" Name="ThemeControl"  ItemsSource="{Binding Default.ThemeOption}" SelectionChangedTrigger="Always" SelectedItem="{Binding Default.Theme, Mode=TwoWay}"  FontFamily="Segoe UI"/>
+                                            <Slider Header="Open navigation pane width" Minimum="100" Maximum="800" Value="{Binding Default.NavigationViewPaneOpenLength, Mode=TwoWay}"></Slider>
+                                        </StackPanel>
+                                    </toolkit:Expander>
+
+                                    <toolkit:Expander Header="Editor" IsExpanded="True">
+                                        <StackPanel>
+                                            <ComboBox Header="Line numbers" ItemsSource="{Binding Default.ShowLineNumberOptions}" SelectionChangedTrigger="Always" SelectedItem="{Binding Default.ShowLineNumbers, Mode=TwoWay}"  FontFamily="Segoe UI"/>
+                                            <!--<CheckBox Content="Text wrapping (prevents horizontal scrollbar)" IsChecked="{Binding Default.wrap, Mode=TwoWay}"/>-->
+                                            <!--<CheckBox Content="Show command info on hover" IsChecked="{Binding Default.ShowLineNumbers, Mode=TwoWay}"/>-->
+                                            <CheckBox Content="Enable code folding" IsChecked="{Binding Default.CodeFolding, Mode=TwoWay}"/>
+                                            <CheckBox Content="Show minimap" IsChecked="{Binding Default.MiniMap, Mode=TwoWay}"/>
+                                            <CheckBox Content="Show command info on hover (beta)" IsChecked="{Binding Default.Hover, Mode=TwoWay}"/>
+                                            <CheckBox Content="Suggest ConTeXt sart-stop environments" IsChecked="{Binding Default.SuggestStartStop, Mode=TwoWay}"/>
+                                            <CheckBox Content="Suggest ConTeXt commands" IsChecked="{Binding Default.SuggestCommands, Mode=TwoWay}"/>
+                                            <CheckBox Content="Suggest TeX primitives" IsChecked="{Binding Default.SuggestPrimitives, Mode=TwoWay}"/>
+                                        </StackPanel>
+                                    </toolkit:Expander>
+
+                                    <toolkit:Expander Header="Distribution" IsExpanded="False">
+                                        <StackPanel>
+                                            <!--<TextBox IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Header="ConTeXt distribution path" Text="{Binding Default.ContextDistributionPath, Mode=TwoWay}"/>-->
+                                            <Button IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Name="Update" Click="Update_Click" Content="Update ConTeXt" Margin="0,10,0,0"></Button>
+                                            <!--<Button IsEnabled="{Binding IsSaving, Converter={StaticResource BoolInverter}}" Name="CleanInstall" Click="Install_Click" Content="First install" Margin="0,10,0,0"></Button>-->
+                                        </StackPanel>
+                                    </toolkit:Expander>
+
+                                    <toolkit:Expander x:Uid="About" Header="About" IsExpanded="False">
+                                        <StackPanel>
+                                            <TextBlock Margin="0,6,0,0" Style="{ThemeResource SubheaderTextBlockStyle}" Text="ConTeXt IDE"></TextBlock>
+                                            <TextBlock Style="{ThemeResource BodyTextBlockStyle}" FontSize="20" Text="About"></TextBlock>
+                                            <TextBlock x:Name="Version" Style="{ThemeResource BodyTextBlockStyle}" Text=""></TextBlock>
+                                            <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Text="by wdev (wdev@outlook.de)"></TextBlock>
+                                            <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Text="This application is not in any way related to Pragma ADE"></TextBlock>
+                                            <TextBlock Style="{ThemeResource BodyTextBlockStyle}" FontSize="20" Text="Dependencies and references"></TextBlock>
+                                            <HyperlinkButton Content="LuaMetaTeX (Pragma ADE)" NavigateUri="http://www.pragma-ade.nl/"></HyperlinkButton>
+                                            <HyperlinkButton Content="monaco-editor (Microsoft Corporation)" NavigateUri="https://github.com/Microsoft/monaco-editor"></HyperlinkButton>
+                                            <HyperlinkButton Content="MonacoEditorComponent (hawkerm)" NavigateUri="https://github.com/hawkerm/monaco-editor-uwp"></HyperlinkButton>
+                                            <HyperlinkButton Content="PDF.js (Mozilla)" NavigateUri="https://github.com/mozilla/pdf.js/"></HyperlinkButton>
+                                            <Button Click="Disclaimer_Click" Content="Show legal disclaimer" Margin="0,10,0,0"></Button>
+                                            <WebView Visibility="Collapsed" x:Name="DisclaimerView" Height="500" DefaultBackgroundColor="#88FFFFFF" ScrollViewer.VerticalScrollMode="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto" Source="ms-appx-web:///web/About.html"></WebView>
+                                        </StackPanel>
+                                    </toolkit:Expander>
+                                </StackPanel>
+                            </ScrollViewer>
                         </SplitView.Pane>
 
                         <Grid Grid.Row="1">

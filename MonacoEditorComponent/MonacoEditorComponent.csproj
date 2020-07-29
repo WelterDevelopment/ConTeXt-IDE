@@ -202,6 +202,8 @@
     <Compile Include="Monaco\Editor\IWordAtPosition.cs" />
     <Compile Include="Monaco\Editor\WordWrap.cs" />
     <Compile Include="Monaco\Editor\WrappingIndent.cs" />
+    <Compile Include="Monaco\FindMatch.cs" />
+    <Compile Include="Monaco\IFindMatch.cs" />
     <Compile Include="Monaco\Helpers\CssGlyphStyle.cs" />
     <Compile Include="Monaco\Helpers\CssInlineStyle.cs" />
     <Compile Include="Monaco\Helpers\CssLineStyle.cs" />
@@ -242,7 +244,7 @@
       <Version>6.2.10</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.TypeScript.MSBuild">
-      <Version>3.9.2</Version>
+      <Version>3.9.6</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

@@ -106,6 +106,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Content Include="context-mswin.zip" />
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />

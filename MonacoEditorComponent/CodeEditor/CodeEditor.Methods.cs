@@ -1,5 +1,6 @@
 ﻿using Monaco.Editor;
 using Monaco.Helpers;
+using Monaco.Monaco;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -114,6 +115,11 @@ namespace Monaco
             return _view.InvokeScriptAsync("eval", new[] { script });
         }
 
+        //public IAsyncOperation<object> InvokeObjectScriptAsync(string script)
+        //{
+        //    return _view.InvokeScriptAsync("eval", new[] { script });
+        //}
+
         public IAsyncOperation<string> AddCommandAsync(int keybinding, CommandHandler handler)
         {
             return AddCommandAsync(keybinding, handler, string.Empty);
@@ -144,6 +150,11 @@ namespace Monaco
         public IAsyncOperation<IEnumerable<Marker>> GetModelMarkersAsync() // TODO: Filter (string? owner, Uri? resource, int? take)
         {
             return SendScriptAsync<IEnumerable<Marker>>("monaco.editor.getModelMarkers();").AsAsyncOperation();
+        }
+
+        public IAsyncOperation<IEnumerable<FindMatch>> FindMatchesAsync(string searchString, bool searchOnlyEditableRange, bool isRegex, bool matchCase, string wordSeparators, bool captureMatches, uint limitResultCount) // TODO: Filter (string? owner, Uri? resource, int? take)
+        {
+            return SendScriptAsync<IEnumerable<FindMatch>>("model.findMatches(" + JsonConvert.ToString(searchString) + ", " + JsonConvert.SerializeObject(searchOnlyEditableRange) + ", " + JsonConvert.SerializeObject(isRegex) + ", " + JsonConvert.SerializeObject(matchCase) + ", " + JsonConvert.SerializeObject(wordSeparators) + ", " + JsonConvert.SerializeObject(captureMatches) + ", " + "20" + ");").AsAsyncOperation();
         }
 
         public IAsyncAction SetModelMarkersAsync(string owner, [ReadOnlyArray] IMarkerData[] markers)

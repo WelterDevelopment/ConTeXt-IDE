@@ -7,6 +7,7 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
+using Windows.ApplicationModel;
 using Windows.ApplicationModel.AppService;
 using Windows.Foundation.Collections;
 using Windows.Storage;
@@ -102,7 +103,9 @@ namespace ConTeXt_WPF
                 // await sw.WriteLineAsync("cd sample");
                 string param = "";
                 if (jsonSettings.Default.Modes.Length > 0)
-                    param = "--mode=" + jsonSettings.Default.Modes + " ";
+                    param += "--mode=" + jsonSettings.Default.Modes + " ";
+                if (jsonSettings.Default.AdditionalParameters.Trim().Length > 0)
+                    param += "" + jsonSettings.Default.AdditionalParameters + " ";
 
                 sw.WriteLine(jsonSettings.Default.ContextDistributionPath + @"\tex" + getversion() + @"\bin\context.exe"+ " " + param + jsonSettings.Default.TexFileName);
 
@@ -270,28 +273,41 @@ namespace ConTeXt_WPF
         {
             try
             {
-                string installurl = jsonSettings.Default.ContextDownloadLink;
+                //string installurl = jsonSettings.Default.ContextDownloadLink;
                 string contextDistributionPath = jsonSettings.Default.ContextDistributionPath;
-                Log("Setting up Web Client");
-                using (WebClient client = new WebClient())
-                {
-                    Log("Downloading");
-                    
-                    DirectoryInfo di = Directory.CreateDirectory(contextDistributionPath);
-                    client.DownloadFile(installurl, contextDistributionPath + @"\context.zip");
-                    Log("Download finished");
-                    client.Dispose();
-                }
-                Log("Extracting Zip Archive");
-                using (ZipArchive archive = ZipFile.Open(contextDistributionPath + @"\context.zip", ZipArchiveMode.Read))
-                {
-                    archive.ExtractToDirectory(contextDistributionPath);
-                }
-                Log("Installing the Distribution");
-                var sf =  StorageFile.GetFileFromPathAsync(contextDistributionPath + @"\context.zip").AsTask().Result;
-                sf.DeleteAsync().AsTask().Wait();
+                //Log("Setting up Web Client");
+                //using (WebClient client = new WebClient())
+                //{
+                //    Log("Downloading");
 
-                return Update();
+                //    DirectoryInfo di = Directory.CreateDirectory(contextDistributionPath);
+                //    client.DownloadFile(installurl, contextDistributionPath + @"\context.zip");
+                //    Log("Download finished");
+                //    client.Dispose();
+                //}
+                string root = Package.Current.InstalledLocation.Path;
+                string path = root + @"\ConTeXt_WPF";
+
+                Log(path);
+
+                var templateFolder =  StorageFolder.GetFolderFromPathAsync(path).AsTask().Result;
+                var archive =  templateFolder.GetFileAsync("context-mswin.zip").AsTask().Result;
+
+                //var copiedfile =  archive.CopyAsync(ApplicationData.Current.LocalFolder).AsTask().Result;
+                //StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///context.zip"));
+                Log("Extracting");
+                ZipFile.ExtractToDirectory(archive.Path, ApplicationData.Current.LocalFolder.Path);
+                //Log("Extracting Zip Archive");
+                //using (ZipArchive archive = ZipFile.Open(contextDistributionPath + @"\context.zip", ZipArchiveMode.Read))
+                //{
+                //    archive.ExtractToDirectory(contextDistributionPath);
+                //}
+               
+                //var sf =  StorageFile.GetFileFromPathAsync(contextDistributionPath + @"\context-mswin.zip").AsTask().Result;
+                //sf.DeleteAsync().AsTask().Wait();
+
+                // return Update();
+                return true;
             }
             catch (Exception ex)
             {

@@ -25,6 +25,7 @@ using Windows.UI;
 using Windows.Foundation.Collections;
 using Windows.ApplicationModel.AppService;
 using Windows.Storage.AccessCache;
+using Windows.UI.Core.Preview;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -70,8 +71,24 @@ namespace ConTeXt_UWP
             // ALT routes here
             this.NavigationCacheMode = NavigationCacheMode.Enabled;
             Application.Current.Suspending += new SuspendingEventHandler(App_Suspending);
+            SystemNavigationManagerPreview.GetForCurrentView().CloseRequested += MainPage_CloseRequested; ;
 
 
+        }
+
+        private async void MainPage_CloseRequested(object sender, SystemNavigationCloseRequestedPreviewEventArgs e)
+        {
+            var deferral = e.GetDeferral();
+            bool unsaved = App.VM.FileItems.Any(x => x.IsChanged);
+            if (unsaved)
+            {
+                var save = new ContentDialog() { Title = "Do you want to save the open unsaved files before closing?", PrimaryButtonText = "Yes", SecondaryButtonText = "No", DefaultButton = ContentDialogButton.Primary };
+                if (await save.ShowAsync() == ContentDialogResult.Primary)
+                {
+                    await App.VM.UWPSaveAll();
+                }
+            }
+            deferral.Complete(); 
         }
 
         async void App_Suspending(object sender, SuspendingEventArgs e)
@@ -327,11 +344,10 @@ namespace ConTeXt_UWP
         private async void Delete_Click(object sender, RoutedEventArgs e)
         {
             var fi = (FileItem)(sender as FrameworkElement).DataContext;
-            if (App.VM.CurrentProject.Directory.Contains(fi))
-            {
+           
                 App.VM.CurrentProject.Directory.Remove(fi);
-            }
-
+           
+                App.VM.FileItems.Remove(fi);
             await fi.File.DeleteAsync();
         }
 
@@ -755,8 +771,7 @@ namespace ConTeXt_UWP
                                     StorageApplicationPermissions.FutureAccessList.AddOrReplace(folder.Name, folder, "");
                                     StorageApplicationPermissions.MostRecentlyUsedList.AddOrReplace(folder.Name, folder, "");
                                     App.VM.RecentAccessList = StorageApplicationPermissions.MostRecentlyUsedList;
-
-                                    var proj = new Project(folder.Name, folder, App.VM.GenerateTreeView(folder, App.VM.CurrentProject.RootFile));
+                                    var proj = new Project(folder.Name, folder, App.VM.GenerateTreeView(folder));
                                     App.VM.CurrentProject = proj;
                                     App.VM.Default.ProjectList.Add(proj);
                                     App.VM.Default.LastActiveProject = proj.Name;
@@ -852,8 +867,17 @@ namespace ConTeXt_UWP
                 }
                 App.VM.Default.LastActiveProject = proj.Name;
                 App.VM.FileItems.Clear();
-               // App.VM.CurrentFileItem.FileContent = "";
+                // App.VM.CurrentFileItem.FileContent = "";
                 // var rf = StorageApplicationPermissions.MostRecentlyUsedList.Entries.Where(x => x.Token == proj.Name).FirstOrDefault();
+
+                if (App.VM.CurrentProject.RootFile != null)
+                {
+                    await Task.Delay(500);
+                    FileItem root = App.VM.CurrentProject.Directory.Where(x => x.IsRoot == true).FirstOrDefault();
+                    if (root != null)
+                        App.VM.OpenFile(root);
+                }
+
             }
             catch (Exception ex)
             {
@@ -861,6 +885,21 @@ namespace ConTeXt_UWP
             }
         }
 
+        private async void OpeninExplorer_Click(object sender, RoutedEventArgs e)
+        {
+            await Launcher.LaunchFolderAsync(App.VM.CurrentProject.Folder);
+        }
+
+        private void Unload_Click(object sender, RoutedEventArgs e)
+        {
+            App.VM.CurrentProject = new Project();
+            App.VM.FileItems.Clear();
+        }
+
+        private void NavigationViewItemHeader_RightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            FlyoutBase.ShowAttachedFlyout(sender as FrameworkElement);
+        }
     }
     class MyTreeViewItem : Microsoft.UI.Xaml.Controls.TreeViewItem
     {

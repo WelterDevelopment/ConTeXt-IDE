@@ -22,7 +22,7 @@ namespace Monaco
     public sealed partial class CodeEditor : Control, INotifyPropertyChanged, IDisposable
     {
         private bool _initialized;
-        private WebView _view;
+        public WebView _view { get; set; }
         private ModelHelper _model;
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -193,6 +193,8 @@ namespace Monaco
             return default;
         }
 
+
+
         internal async Task InvokeScriptAsync(
             string method,
             object arg,
@@ -266,5 +268,6 @@ namespace Monaco
             _parentAccessor = null;
             CssStyleBroker.DetachEditor(this);
         }
+
     }
 }

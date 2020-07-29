@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Monaco.Monaco;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using Windows.Foundation;
 
@@ -38,9 +39,9 @@ namespace Monaco.Editor
         //IIdentifiedSingleEditOperation[] ApplyEditsAsync(IIdentifiedSingleEditOperation[] operations)
         //DeltaDecorationsAsync
         IAsyncAction DetectIndentationAsync(bool defaultInsertSpaces, bool defaultTabSize);
-        //FindMatchesAsync(string searchString, bool searchOnlyEditableRange, bool isRegex, ...)
-        //FindNextMatchAsync
-        //FindPreviousMatchAsync
+        //IAsyncOperation<IEnumerable<FindMatch>> FindMatchesAsync(string searchString, bool searchOnlyEditableRange, bool isRegex, bool matchCase, string wordSeparators, bool captureMatches);
+        //IAsyncOperation<FindMatch> FindNextMatchAsync();
+        //IAsyncOperation<FindMatch> FindPreviousMatchAsync();
         //GetAllDecorationsAsync
         IAsyncOperation<uint> GetAlternativeVersionIdAsync();
         //GetDecorationOptionsAsync

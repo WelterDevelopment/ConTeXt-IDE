@@ -28,9 +28,20 @@ namespace ConTeXt_UWP
         [JsonIgnore]
         public static Settings Default { get; } = GetSettings();
 
-        
+        //public static Settings RestoreSettings()
+        //{
+        //    string file = "settings.json";
+        //    var storageFolder = ApplicationData.Current.LocalFolder;
+        //    string settingsPath = Path.Combine(storageFolder.Path, file);
+        //    if (File.Exists(settingsPath))
+        //    {
+        //        File.Delete(settingsPath);
+        //    }
 
-        private static Settings GetSettings()
+        //        return GetSettings();
+        //}
+
+            private static Settings GetSettings()
         {
             string file = "settings.json";
             var storageFolder = ApplicationData.Current.LocalFolder;
@@ -68,26 +79,38 @@ namespace ConTeXt_UWP
         bool startWithLastActiveProject = true;
         public bool StartWithLastActiveProject { get => startWithLastActiveProject; set => Set(ref startWithLastActiveProject, value); }
 
-        //int showLineNumbers = (int)LineNumbersType.On;
-        //public int ShowLineNumbers{ get => showLineNumbers; set => Set(ref showLineNumbers, value); }
-
         string showLineNumbers = "on";
         public string ShowLineNumbers{ get => showLineNumbers; set { Set(ref showLineNumbers, value); if (App.VM.EditorOptions != null) App.VM.EditorOptions.LineNumbers = value; } }
 
-        bool showLog = true;
+        bool showLog = false;
         public bool ShowLog { get => showLog; set => Set(ref showLog, value); }
 
         bool useModes = true;
         public bool UseModes { get => useModes; set => Set(ref useModes, value); }
 
+        bool showOutline = true;
+        public bool ShowOutline { get => showOutline; set => Set(ref showOutline, value); }
+
         bool autoOpenPDF = true;
         public bool AutoOpenPDF { get => autoOpenPDF; set => Set(ref autoOpenPDF, value); }
+
+        bool autoOpenLOG = false;
+        public bool AutoOpenLOG { get => autoOpenLOG; set => Set(ref autoOpenLOG, value); }
+
+        bool autoOpenLOGOnlyOnError = true;
+        public bool AutoOpenLOGOnlyOnError { get => autoOpenLOGOnlyOnError; set => Set(ref autoOpenLOGOnlyOnError, value); }
 
         bool internalViewer = true;
         public bool InternalViewer{ get => internalViewer; set => Set(ref internalViewer, value); }
 
+        bool distributionInstalled = false;
+        public bool DistributionInstalled { get => distributionInstalled; set => Set(ref distributionInstalled, value); }
+
         string navigationViewPaneMode = "Auto";
         public string NavigationViewPaneMode{ get => navigationViewPaneMode; set => Set(ref navigationViewPaneMode, value); }
+
+        string additionalParameters = "--autogenerate --nonstopmode --noconsole ";
+        public string AdditionalParameters { get => additionalParameters; set => Set(ref additionalParameters, value); }
 
         bool navigationViewPaneOpen = true;
         public bool NavigationViewPaneOpen { get => navigationViewPaneOpen; set => Set(ref navigationViewPaneOpen, value); }
@@ -124,8 +147,11 @@ namespace ConTeXt_UWP
         public bool CodeFolding{ get => codeFolding; set { Set(ref codeFolding, value); if (App.VM.EditorOptions != null) App.VM.EditorOptions.Folding = value;  } }
 
         bool miniMap = true;
-        public bool MiniMap { get => miniMap; set { Set(ref miniMap, value); if (App.VM.EditorOptions != null) App.VM.EditorOptions.Minimap =  new EditorMinimapOptions() { Enabled = value, ShowSlider = Show.Always, RenderCharacters = true, }; ; } }
-       
+        public bool MiniMap { get => miniMap; set { Set(ref miniMap, value); if (App.VM.EditorOptions != null) App.VM.EditorOptions.Minimap =  new EditorMinimapOptions() { Enabled = value, ShowSlider = "always", RenderCharacters = true }; ; } }
+
+        bool hover = true;
+        public bool Hover { get => hover; set { Set(ref hover, value); if (App.VM.EditorOptions != null) App.VM.EditorOptions.Hover = new EditorHoverOptions() { Enabled = value, Delay = 100, Sticky = true }; } }
+
         bool suggestStartStop = true;
         public bool SuggestStartStop{ get => suggestStartStop; set => Set(ref suggestStartStop, value); }
 

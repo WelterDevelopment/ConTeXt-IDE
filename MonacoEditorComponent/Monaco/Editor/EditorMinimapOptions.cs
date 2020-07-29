@@ -42,13 +42,13 @@ namespace Monaco.Editor
         /// Defaults to 'mouseover'.
         /// </summary>
         [JsonProperty("showSlider", NullValueHandling = NullValueHandling.Ignore)]
-        public Show? ShowSlider { get; set; }
+        public string ShowSlider { get; set; }
 
         /// <summary>
         /// Control the side of the minimap in editor.
         /// Defaults to 'right'.
         /// </summary>
         [JsonProperty("side", NullValueHandling = NullValueHandling.Ignore)]
-        public Side? Side { get; set; }
+        public string Side { get; set; }
     }
 }

@@ -41,17 +41,15 @@ namespace ConTeXt_WPF
 
         }
 
+
         bool startWithLastActiveProject = true;
         public bool StartWithLastActiveProject { get => startWithLastActiveProject; set => Set(ref startWithLastActiveProject, value); }
 
-        //int showLineNumbers = (int)LineNumbersType.On;
-        //public int ShowLineNumbers{ get => showLineNumbers; set => Set(ref showLineNumbers, value); }
-
-        string showLineNumbers = "on";
-        public string ShowLineNumbers { get => showLineNumbers; set { Set(ref showLineNumbers, value); } }
-
-        bool showLog = true;
+        bool showLog = false;
         public bool ShowLog { get => showLog; set => Set(ref showLog, value); }
+
+        bool showOutline = true;
+        public bool ShowOutline { get => showOutline; set => Set(ref showOutline, value); }
 
         bool useModes = true;
         public bool UseModes { get => useModes; set => Set(ref useModes, value); }
@@ -59,18 +57,26 @@ namespace ConTeXt_WPF
         bool autoOpenPDF = true;
         public bool AutoOpenPDF { get => autoOpenPDF; set => Set(ref autoOpenPDF, value); }
 
+        bool autoOpenLOG = false;
+        public bool AutoOpenLOG { get => autoOpenLOG; set => Set(ref autoOpenLOG, value); }
+
+        bool autoOpenLOGOnlyOnError = true;
+        public bool AutoOpenLOGOnlyOnError { get => autoOpenLOGOnlyOnError; set => Set(ref autoOpenLOGOnlyOnError, value); }
+
         bool internalViewer = true;
         public bool InternalViewer { get => internalViewer; set => Set(ref internalViewer, value); }
 
         string navigationViewPaneMode = "Auto";
         public string NavigationViewPaneMode { get => navigationViewPaneMode; set => Set(ref navigationViewPaneMode, value); }
 
+        string additionalParameters = "--noconsole ";
+        public string AdditionalParameters { get => additionalParameters; set => Set(ref additionalParameters, value); }
+
         bool navigationViewPaneOpen = true;
         public bool NavigationViewPaneOpen { get => navigationViewPaneOpen; set => Set(ref navigationViewPaneOpen, value); }
 
         int navigationViewPaneOpenLength = 250;
         public int NavigationViewPaneOpenLength { get => navigationViewPaneOpenLength; set => Set(ref navigationViewPaneOpenLength, value); }
-
 
         string contextDistributionPath = "";
         public string ContextDistributionPath { get => contextDistributionPath; set => Set(ref contextDistributionPath, value); }
@@ -95,13 +101,7 @@ namespace ConTeXt_WPF
 
         string modes = "";
         public string Modes { get => modes; set => Set(ref modes, value); }
-
-        bool codeFolding = true;
-        public bool CodeFolding { get => codeFolding; set { Set(ref codeFolding, value);  } }
-
-        bool miniMap = true;
-        public bool MiniMap { get => miniMap; set { Set(ref miniMap, value); } }
-
+     
         bool suggestStartStop = true;
         public bool SuggestStartStop { get => suggestStartStop; set => Set(ref suggestStartStop, value); }
 

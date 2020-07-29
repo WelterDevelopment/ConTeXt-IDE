@@ -17,10 +17,16 @@
             <Style TargetType="TextBox">
                 <Setter Property="CornerRadius" Value="4"></Setter>
             </Style>
+            <Style TargetType="Button" BasedOn="{StaticResource ButtonRevealStyle}">
+                
+            </Style>
             <local:StringToNavViewConverter x:Key="StringToNav"></local:StringToNavViewConverter>
+            <local:StringComparer x:Key="StringComparer"></local:StringComparer>
             <local:StringToThemeConverter x:Key="StringToTheme"></local:StringToThemeConverter>
+            <local:StringToVisibility x:Key="StringToVisibility"></local:StringToVisibility>
             <local:NavViewToBoolConverter x:Key="NavToBool"></local:NavViewToBoolConverter>
             <local:NavViewToVisibilityConverter x:Key="NavToVisibility"></local:NavViewToVisibilityConverter>
+            <local:ErrorStringToVisibilityConverter x:Key="ErrorStringToVisibilityConverter"></local:ErrorStringToVisibilityConverter>
             <local:NavViewToNotVisibilityConverter x:Key="NavToNotVisibility"></local:NavViewToNotVisibilityConverter>
             <local:BoolToVisibilityConverter x:Key="BoolToVisibility" />
             <local:PaneVisibiltyToMarginConverter x:Key="PaneVisibiltyToMargin" />
@@ -28,7 +34,7 @@
             <!--<local:EnumToStringConverter x:Key="EnumToString" />-->
             <local:BoolToFontWeightConverter x:Key="BoolToFontWeight" />
             <local:BoolInverter x:Key="BoolInverter" />
-
+            <!--<local:ViewModel x:Key="VM" />-->
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Default">
 

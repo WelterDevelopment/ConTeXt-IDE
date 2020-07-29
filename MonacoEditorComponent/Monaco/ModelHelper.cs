@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Monaco.Monaco;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using Windows.Foundation;
@@ -30,6 +31,15 @@ namespace Monaco.Editor
                 return editor.InvokeScriptAsync("model.detectIndentationAsync", new object[] { defaultInsertSpaces, defaultTabSize }).AsAsyncAction();
             }
 
+            return null;
+        }
+
+        public IAsyncOperation<IEnumerable<FindMatch>> FindMatchesAsync(string searchString, bool searchOnlyEditableRange, bool isRegex, bool matchCase, string wordSeparators, bool captureMatches)
+        {
+            if (_editor.TryGetTarget(out CodeEditor editor))
+            {
+                return editor.SendScriptAsync<IEnumerable<FindMatch>>("model.findMatches("+searchString+", "+searchOnlyEditableRange.ToString() + ", " + isRegex.ToString() + ", " + matchCase.ToString() + ", " + wordSeparators + ", " + captureMatches.ToString()+ ");").AsAsyncOperation();
+            }
             return null;
         }
 
