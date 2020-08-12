@@ -12,6 +12,7 @@
       <GenericParameter Name="TClass" Dynamic="All" />
     </Type>
     
+
     <Type Name="Newtonsoft.Json.JsonConvert">
       <Method Name="SerializeObject">
         <Parameter Name="value" Serialize="Required All" />

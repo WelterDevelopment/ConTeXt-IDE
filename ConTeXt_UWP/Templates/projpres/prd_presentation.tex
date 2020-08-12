@@ -18,13 +18,13 @@
 \startfrontmatter
 \definemakeup[title][doublesided=no, page=right, headerstate=empty, footerstate=empty,  pagestate=start, style=bigbodyfont, align=middle]
 \starttitlemakeup
-    {\bfd \getvariable{meta}{title}}
-    \blank[3*medium]
-    {\tfb \getvariable{meta}{subtitle}}
-    \blank[3*medium]
-    {\tfa \getvariable{meta}{author}}
-    \blank[2*medium]
-    {\tfa \getvariable{meta}{date}}
+	{\bfd \getvariable{meta}{title}}
+	\blank[3*medium]
+	{\tfb \getvariable{meta}{subtitle}}
+	\blank[3*medium]
+	{\tfa \getvariable{meta}{author}}
+	\blank[2*medium]
+	{\tfa \getvariable{meta}{date}}
 \stoptitlemakeup
 
 \setupbackgrounds[header][text][frame=off, bottomframe=on]
@@ -39,15 +39,15 @@
 \startsubsection[title=Basic stepping]
 \startsteps
 	\startstep
-        ! To enable/disable stepping please enable/disable the mode \quote{screen} !
+		! To enable/disable stepping please enable/disable the mode \quote{screen} !
 
-        STEP ONE. 
+		STEP ONE. 
 
-        Step.Substep :  \currentstep.\currentsubstep 
+		Step.Substep :  \currentstep.\currentsubstep 
 
-        Page.SubPage :  \userpagenumber.\subpagenumber
+		Page.SubPage :  \userpagenumber.\subpagenumber
 
-        \blank
+		\blank
 	\stopstep
 
 	\startstep[n=7]
@@ -55,13 +55,13 @@
 
 		Step.Substep :  \currentstep.\currentsubstep 
 		\startitemize[horizontal,two,packed,broad]
-            \startsubstep \startitem 1 \stopitem \stopsubstep
-            \startsubstep \startitem 2 \stopitem \stopsubstep
-            \startsubstep \startitem 3 \stopitem \stopsubstep
-            \startsubstep \startitem 4 \stopitem \stopsubstep
-            \startsubstep \startitem 5 \stopitem \stopsubstep
-            \startsubstep \startitem 6 \stopitem \stopsubstep
-            \startsubstep \startitem 7 \stopitem \stopsubstep
+			\startsubstep \startitem 1 \stopitem \stopsubstep
+			\startsubstep \startitem 2 \stopitem \stopsubstep
+			\startsubstep \startitem 3 \stopitem \stopsubstep
+			\startsubstep \startitem 4 \stopitem \stopsubstep
+			\startsubstep \startitem 5 \stopitem \stopsubstep
+			\startsubstep \startitem 6 \stopitem \stopsubstep
+			\startsubstep \startitem 7 \stopitem \stopsubstep
 		\stopitemize		
 	\stopstep
 
@@ -77,64 +77,66 @@
 
 \startsubsection[title=Columns]
 \startsteps
-    \startstep[n=2]
-        \startcolumnset[n=2]
-            \startsubstep 
-                first col
-            \stopsubstep
-            \startsubstep 
-                \column second col 
-            \stopsubstep
-        \stopcolumnset
-    \stopstep
+	\startstep[n=2]
+		\startcolumnset[n=2]
+			\startsubstep 
+				first col
+			\stopsubstep
+			\startsubstep 
+				\column second col 
+			\stopsubstep
+		\stopcolumnset
+	\stopstep
 \stopsteps
 \stopsubsection
 
 \startsubsection[title=Tables]
 \setupTABLE[r][each][style=\tfx\it, align=center]
 \startsteps
-    \startstep
-        Tables are also working
-    \stopstep
-    \startstep[n=3]
-        \startplacetable[location=here, reference=tab:exampletable, title={Example table}]
-            \bTABLE[split=repeat,option=stretch]
-            \startsubstep
-                \bTABLEhead
-                \bTR
-                \bTH  head1 \eTH
-                \bTH  head2 \eTH
-                \eTR
-                \eTABLEhead
-            \stopsubstep
-            \bTABLEbody
-            \startsubstep
-                \bTR \bTD One \eTD \bTD two \eTD \eTR
-            \stopsubstep
-            \startsubstep
-                \bTR \bTD One \eTD \bTD two \eTD \eTR
-            \stopsubstep
-            \eTABLEbody
-            \eTABLE
-        \stopplacetable
-        \setupcaptions[table][state=stop] % Quick hack do disable the table counter
-    \stopstep
-    \startstep 
-        Some more text
-    \stopstep
+	\startstep
+		Tables are also working
+	\stopstep
+	\startstep[n=3]
+		\startplacetable[location=here, reference=tab:exampletable, title={Example table}]
+			\bTABLE[split=repeat,option=stretch]
+			\startsubstep
+				\bTABLEhead
+				\bTR
+				\bTH  head1 \eTH
+				\bTH  head2 \eTH
+				\eTR
+				\eTABLEhead
+			\stopsubstep
+			\bTABLEbody
+			\startsubstep
+				\bTR \bTD One \eTD \bTD two \eTD \eTR
+			\stopsubstep
+			\startsubstep
+				\bTR \bTD One \eTD \bTD two \eTD \eTR
+			\stopsubstep
+			\eTABLEbody
+			\eTABLE
+		\stopplacetable
+		\setupcaptions[table][state=stop] % Quick hack do disable the table counter
+	\stopstep
+	\startstep 
+		Some more text
+	\stopstep
 \stopsteps
 \stopsubsection
 \stopsection
 \stopbodymatter
 
 \startappendices
-\section{Some appendices}
-...
+\startsection[title={Some appendices}]
+	...
+\stopsection
 \stopappendices
 
 \startbackmatter
-\section{Some backup slides}
-...
+\startsection[title={Some backup slides}]
+	...
+\stopsection
 \stopbackmatter
 
 \stoptext

@@ -117,40 +117,130 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="About.Header" xml:space="preserve">
+  <data name="About.Text" xml:space="preserve">
     <value>Über</value>
   </data>
   <data name="Addmode.Text" xml:space="preserve">
     <value>Modus hinzufügen</value>
   </data>
+  <data name="AddProject.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Projektordner hinzufügen</value>
+  </data>
   <data name="AddProjectFolder.Text" xml:space="preserve">
     <value>Projektordner hinzufügen</value>
   </data>
-  <data name="Appearance.Header" xml:space="preserve">
-    <value>Aussehen</value>
+  <data name="AutoOpenLog.Text" xml:space="preserve">
+    <value>Log-Datei automatisch öffnen</value>
+  </data>
+  <data name="AutoOpenPDF.Text" xml:space="preserve">
+    <value>PDF automatisch öffnen</value>
+  </data>
+  <data name="AutoOpenProject.Text" xml:space="preserve">
+    <value>Starte mit letztem Projekt</value>
+  </data>
+  <data name="Clear.Text" xml:space="preserve">
+    <value>Aufräumen</value>
+  </data>
+  <data name="CodeFolding.Text" xml:space="preserve">
+    <value>Code-Faltung</value>
+  </data>
+  <data name="CompilerPlaceholder.Text" xml:space="preserve">
+    <value>Öffne einen Projektordner, um mit dem Kompilieren zu starten!</value>
+  </data>
+  <data name="ContextModes.Text" xml:space="preserve">
+    <value>Modi</value>
+  </data>
+  <data name="ContextParameters.Text" xml:space="preserve">
+    <value>Weitere Parameter:</value>
+  </data>
+  <data name="CreateFile.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Datei erstellen</value>
+  </data>
+  <data name="CreateFolder.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Ordner erstellen</value>
   </data>
   <data name="Current.Text" xml:space="preserve">
-    <value>Geöffnet</value>
-  </data>
-  <data name="General.Header" xml:space="preserve">
-    <value>Allgemein</value>
+    <value>Aktuell</value>
   </data>
   <data name="Help.Text" xml:space="preserve">
     <value>Hilfe</value>
   </data>
-  <data name="Modes.Text" xml:space="preserve">
-    <value>Modi</value>
+  <data name="HelpOpenInternal.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Öffne ConTeXt-Anleitungen im internen Viewer</value>
   </data>
-  <data name="Projects.Content" xml:space="preserve">
+  <data name="HoverInfo.Text" xml:space="preserve">
+    <value>Hover-Info</value>
+  </data>
+  <data name="LineNumbers.Text" xml:space="preserve">
+    <value>Zeilennummerierung:</value>
+  </data>
+  <data name="Log.Text" xml:space="preserve">
+    <value>Anwendungsprotokoll</value>
+  </data>
+  <data name="Minimap.Text" xml:space="preserve">
+    <value>Mini-Karte</value>
+  </data>
+  <data name="OnlyOnError.Text" xml:space="preserve">
+    <value>nur bei Fehlern</value>
+  </data>
+  <data name="OpenInternal.Text" xml:space="preserve">
+    <value>im internen Viewer</value>
+  </data>
+  <data name="OpenProject.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Projekt öffnen</value>
+  </data>
+  <data name="Output.Text" xml:space="preserve">
+    <value>Ausgabe</value>
+  </data>
+  <data name="PDFInternalViewer.Text" xml:space="preserve">
+    <value>im internen Viewer</value>
+  </data>
+  <data name="Projects.Text" xml:space="preserve">
     <value>Projekte</value>
+  </data>
+  <data name="RemoveProject.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Projektordner aus der App entfernen</value>
   </data>
   <data name="Root.Text" xml:space="preserve">
     <value>Hauptdokument</value>
+  </data>
+  <data name="S1.Content" xml:space="preserve">
+    <value>ConTeXt start-stop-Umgebungen</value>
+  </data>
+  <data name="S2.Content" xml:space="preserve">
+    <value>ConTeXt Kommandos</value>
+  </data>
+  <data name="S3.Content" xml:space="preserve">
+    <value>TeX-Primitiven</value>
   </data>
   <data name="Save.Text" xml:space="preserve">
     <value>Speichern</value>
   </data>
   <data name="Saveall.Text" xml:space="preserve">
     <value>Alle speichern</value>
+  </data>
+  <data name="ShowLog.Text" xml:space="preserve">
+    <value>Anwendungsprotokoll</value>
+  </data>
+  <data name="ShowProject.Text" xml:space="preserve">
+    <value>Projektleiste</value>
+  </data>
+  <data name="ShowProjects.Text" xml:space="preserve">
+    <value>Projekte</value>
+  </data>
+  <data name="Suggestions.Content" xml:space="preserve">
+    <value>Auto-Vervollständigung</value>
+  </data>
+  <data name="Theme.Text" xml:space="preserve">
+    <value>Thema:</value>
+  </data>
+  <data name="Update.Text" xml:space="preserve">
+    <value>ConTeXt aktualisieren</value>
+  </data>
+  <data name="Update.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Aktualisiert die ConTeXt-Distribution. Internetverbindung erforderlich! Dauer: bis zu 10 Minuten.</value>
+  </data>
+  <data name="View.Text" xml:space="preserve">
+    <value>Ansicht</value>
   </data>
 </root>

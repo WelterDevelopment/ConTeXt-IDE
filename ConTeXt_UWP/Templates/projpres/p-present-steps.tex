@@ -1,5 +1,5 @@
 %D \module
-%D   [      file=s-present-steps,
+%D   [       file=s-present-steps,
 %D        version=2018.05.17,
 %D          title=\CONTEXT\ Style File,
 %D       subtitle=Presentation Environment Repeated Steps,
@@ -188,13 +188,13 @@ end
 \stopmode
 
 \startnotmode[screen] % Stepping is off in other modes
-    \unexpanded\def\startsteps#1\stopsteps{#1}
-    \unexpanded\def\startstep{\dosingleempty\startstepindeed}
-    \def\startstepindeed[#1]{}
-    \unexpanded\def\stopstep{}
-    \unexpanded\def\startsubstep#1\stopsubstep{#1}
-    \unexpanded\def\currentstep{}
-    \unexpanded\def\currentsubstep{}
+	\unexpanded\def\startsteps#1\stopsteps{#1}
+	\unexpanded\def\startstep{\dosingleempty\startstepindeed}
+	\def\startstepindeed[#1]{}
+	\unexpanded\def\stopstep{}
+	\unexpanded\def\startsubstep#1\stopsubstep{#1}
+	\unexpanded\def\currentstep{}
+	\unexpanded\def\currentsubstep{}
 \stopnotmode
 
 \protect \endinput

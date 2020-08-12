@@ -1,19 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 
 <Package
-  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+ xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
      xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2"
   IgnorableNamespaces="uap rescap"
- xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
-  >
+ xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10">
 
   <Identity
     Name="7614MasterDevelopment.ConTeXtIDE"
     Publisher="CN=F3B9189F-4D2B-4342-889D-A9D7D5A98D3A"
-    Version="1.1.12.0" />
+    Version="1.2.6.0" />
 
   <Properties>
     <DisplayName>ConTeXt IDE</DisplayName>
@@ -36,57 +35,46 @@
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
         DisplayName="ConTeXt IDE"
-        Description="ConTeXt"
-        BackgroundColor="#3880e0"
+        Description="ConTeXt IDE"
+        BackgroundColor="#4287f5"
         Square150x150Logo="Images\Square150x150Logo.png"
         Square44x44Logo="Images\Square44x44Logo.png">
-        <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png"  Square71x71Logo="Images\SmallTile.png" Square310x310Logo="Images\LargeTile.png" ShortName="ConTeXt IDE">
-          <uap:ShowNameOnTiles>
-            <uap:ShowOn Tile="square150x150Logo"/>
-            <uap:ShowOn Tile="square310x310Logo"/>
-            <uap:ShowOn Tile="wide310x150Logo"/>
-          </uap:ShowNameOnTiles>
-        </uap:DefaultTile >
-        <uap:SplashScreen Image="Images\SplashScreen.png"  BackgroundColor="#3880e0"/>
-        <uap:InitialRotationPreference>
-          <uap:Rotation Preference="landscape"/>
-          <uap:Rotation Preference="portrait"/>
-          <uap:Rotation Preference="landscapeFlipped"/>
-          <uap:Rotation Preference="portraitFlipped"/>
-        </uap:InitialRotationPreference>
+        <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png"  Square71x71Logo="Images\SmallTile.png" Square310x310Logo="Images\LargeTile.png"/>
+        <uap:SplashScreen Image="Images\SplashScreen.png"  BackgroundColor="#4287f5"/>
       </uap:VisualElements>
-      <Extensions>
-        <uap:Extension Category="windows.appService">
-          <uap:AppService Name="Compiler" />
-        </uap:Extension>
-        <desktop:Extension Category="windows.fullTrustProcess"
-                           Executable="ConTeXt_WPF\ConTeXt_WPF.exe">
-          <desktop:FullTrustProcess>
-            <desktop:ParameterGroup GroupId="Background" Parameters="/background" />
-            <desktop:ParameterGroup GroupId="WPF" Parameters="/wpf" />
-            <desktop:ParameterGroup GroupId="WinForms" Parameters="/winforms" />
-            <desktop:ParameterGroup GroupId="Win32" Parameters="/win32" />
-            <desktop:ParameterGroup GroupId="RemoteDesktop" Parameters="/mstsc" />
-            <desktop:ParameterGroup GroupId="Parameters" Parameters="/parameters" />
-          </desktop:FullTrustProcess>
-        </desktop:Extension>
-        <uap:Extension Category="windows.fileTypeAssociation">
-          <uap3:FileTypeAssociation Name="tex">
-            <uap:Logo>Assets\StoreLogo.png</uap:Logo>
-            <uap:SupportedFileTypes>
-              <uap:FileType>.tex</uap:FileType>
-              <uap:FileType>.mkiv</uap:FileType>
-              <uap:FileType>.mkvi</uap:FileType>
-              <uap:FileType>.mkii</uap:FileType>
-              <uap:FileType>.mkxl</uap:FileType>
-              <uap:FileType>.mklx</uap:FileType>
-            </uap:SupportedFileTypes>
-            <uap2:SupportedVerbs>
-              <uap3:Verb Id="Edit">Edit with ConTEXt IDE</uap3:Verb>
-            </uap2:SupportedVerbs>
-          </uap3:FileTypeAssociation>
-        </uap:Extension>
-      </Extensions>
+    
+    <Extensions>
+      <uap:Extension Category="windows.appService">
+        <uap:AppService Name="Compiler" />
+      </uap:Extension>
+      <desktop:Extension Category="windows.fullTrustProcess"
+                         Executable="ConTeXt_WPF\ConTeXt_WPF.exe">
+        <desktop:FullTrustProcess>
+          <desktop:ParameterGroup GroupId="Background" Parameters="/background" />
+          <desktop:ParameterGroup GroupId="WPF" Parameters="/wpf" />
+          <desktop:ParameterGroup GroupId="WinForms" Parameters="/winforms" />
+          <desktop:ParameterGroup GroupId="Win32" Parameters="/win32" />
+          <desktop:ParameterGroup GroupId="RemoteDesktop" Parameters="/mstsc" />
+          <desktop:ParameterGroup GroupId="Parameters" Parameters="/parameters" />
+        </desktop:FullTrustProcess>
+      </desktop:Extension>
+      <uap:Extension Category="windows.fileTypeAssociation">
+        <uap3:FileTypeAssociation Name="tex">
+          <uap:Logo>Assets\StoreLogo.png</uap:Logo>
+          <uap:SupportedFileTypes>
+            <uap:FileType>.tex</uap:FileType>
+            <uap:FileType>.mkiv</uap:FileType>
+            <uap:FileType>.mkvi</uap:FileType>
+            <uap:FileType>.mkii</uap:FileType>
+            <uap:FileType>.mkxl</uap:FileType>
+            <uap:FileType>.mklx</uap:FileType>
+          </uap:SupportedFileTypes>
+          <uap2:SupportedVerbs>
+            <uap3:Verb Id="Edit">Edit with ConTEXt IDE</uap3:Verb>
+          </uap2:SupportedVerbs>
+        </uap3:FileTypeAssociation>
+      </uap:Extension>
+    </Extensions>
     </Application>
   </Applications>
 

@@ -12,7 +12,7 @@
     <TypeInstantiation Name="App1.AppClass" Arguments="System.Int32" Activate="Required Public" />
 
     Using the Namespace directive to apply reflection policy to all the types in a particular namespace
-    <Namespace Name="DataClasses.ViewModels" Serialize="All" />
+    <Namespace Name="DataClasses.ViewModels" Seralize="All" />
 -->
 
 <Directives xmlns="http://schemas.microsoft.com/netfx/2013/01/metadata">
@@ -21,11 +21,26 @@
       An Assembly element with Name="*Application*" applies to all assemblies in
       the application package. The asterisks are not wildcards.
     -->
-    <Assembly Name="*Application*" Dynamic="Required All" />
+    <Assembly Name="*Application*" Dynamic="Required All" Serialize="Required All" Activate="Required All"/>
+    <Assembly Name="System.Private.Interop" Dynamic="Required All" Serialize="Required All" /> 
+    <Namespace Name="Windows.Foundation" Dynamic="Required All" Serialize="Required All" /> 
+    <Assembly Name="Windows.Foundation" Dynamic="Required All" Serialize="Required All" />
+    <Namespace Name="Monaco" Dynamic="Required All" Serialize="Required All" />
+    <Assembly Name="Monaco" Dynamic="Required All" Serialize="Required All" />
+    <Namespace Name="ConTeXt_UWP" Dynamic="Required All" Serialize="Required All" />
+    <Assembly Name="ConTeXt_UWP" Dynamic="Required All" Serialize="Required All" />
     
+
+    <Type Name="Windows.Foundation.IReference{Double}" Dynamic="Required All" Serialize="Required All" />
     
     <!-- Add your application specific runtime directives here. -->
 
 
   </Application>
+  <Library>
+    <Assembly Name="System.Private.Interop" Dynamic="Required All" Serialize="Required All" />
+    <Namespace Name="Windows.Foundation" Dynamic="Required All" Serialize="Required All" />
+    <Assembly Name="Windows.Foundation" Dynamic="Required All" Serialize="Required All" />
+    <Type Name="Windows.Foundation.IReference{Double}" Dynamic="Required All" Serialize="Required All" />
+  </Library>
 </Directives>
