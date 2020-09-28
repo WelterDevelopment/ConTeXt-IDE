@@ -18,6 +18,7 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation.Collections;
 using Windows.Storage;
 using Windows.Storage.AccessCache;
+using Windows.Storage.Streams;
 using Windows.System;
 using Windows.UI;
 using Windows.UI.Core.Preview;
@@ -27,6 +28,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -40,7 +42,7 @@ namespace ConTeXt_UWP
         public MainPage()
         {
             this.InitializeComponent();
-
+            
             try
             {
                 var coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
@@ -117,8 +119,8 @@ namespace ConTeXt_UWP
                     {
                         FileItem[] root = new FileItem[] { };
                         if (App.VM.CurrentProject != null)
-                            root = App.VM.CurrentProject.Directory.Where(x => x.IsRoot).ToArray();
-                        if (root.Length > 0)
+                            root = App.VM.CurrentProject.Directory.FirstOrDefault()?.Children?.Where(x => x.IsRoot)?.ToArray();
+                        if (root != null && root.Length > 0)
                             filetocompile = root.FirstOrDefault();
                         else
                             filetocompile = fileToCompile ?? App.VM.CurrentFileItem;
@@ -137,7 +139,7 @@ namespace ConTeXt_UWP
                     App.VM.Default.TexFileName = filetocompile.FileName;
                     App.VM.Default.TexFilePath = filetocompile.File.Path;
                     ValueSet request = new ValueSet { { "compile", true } };
-                    AppServiceResponse response = await App.VM.appServiceConnection.SendMessageAsync(request);
+                    AppServiceResponse response = await App.VM.AppServiceConnection.SendMessageAsync(request);
                     // display the response key/value pairs
                     foreach (string key in response.Message.Keys)
                     {
@@ -401,12 +403,20 @@ namespace ConTeXt_UWP
                                             default: break;
                                         }
                                         //var proj = new Project(folder.Name, folder, await App.VM.GenerateTreeView(folder, rootfile)) { RootFile = rootfile };
+                                        StorageApplicationPermissions.FutureAccessList.AddOrReplace(folder.Name, folder, "");
+                                        StorageApplicationPermissions.MostRecentlyUsedList.AddOrReplace(folder.Name, folder, "");
+                                        App.VM.RecentAccessList = StorageApplicationPermissions.MostRecentlyUsedList;
+
                                         App.VM.FileItemsTree.Clear();
-                                        var proj = new Project(folder.Name, folder, App.VM.FileItemsTree) { RootFile = rootfile };
+                                        var proj = new Project(folder.Name, folder, App.VM.FileItemsTree);
+                                        proj.RootFile = rootfile;
                                         App.VM.Default.ProjectList.Add(proj);
                                         App.VM.CurrentProject = proj;
-                                        App.VM.GenerateTreeView(folder, rootfile);
+                                        App.VM.GenerateTreeView(folder,rootfile);
+
                                         App.VM.Default.LastActiveProject = proj.Name;
+
+                                       
 
                                         // App.AppViewModel.UpdateRecentAccessList();
                                     }
@@ -784,14 +794,42 @@ namespace ConTeXt_UWP
             ShowTeachingTip("Modes", sender);
         }
 
-        private void NavigationTree_ItemInvoked(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewItemInvokedEventArgs args)
+        string[] LanguagesToOpen = { ".tex", ".lua", ".md", ".html", ".xml", ".log", ".js", ".json", ".xml", ".mkiv", ".mkii", ".mkxl", ".mkvi" };
+        string[] BitmapsToOpen = { ".png", ".bmp" };
+
+        private async void NavigationTree_ItemInvoked(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewItemInvokedEventArgs args)
         {
             var fileitem = (FileItem)args.InvokedItem;
-            if (fileitem.Type == FileItem.ExplorerItemType.File)
+            
+            if (fileitem.Type == FileItem.ExplorerItemType.File )
             {
-                App.VM.OpenFile(fileitem);
+                if (LanguagesToOpen.Contains(((StorageFile)fileitem.File).FileType.ToLower())) 
+                {
+                    App.VM.OpenFile(fileitem); 
+                }
+                else if (BitmapsToOpen.Contains(((StorageFile)fileitem.File).FileType.ToLower()))
+                {
+                    
+                    var tip = new TeachingTip() { Title = fileitem.FileName, Target = (FrameworkElement)sender, PreferredPlacement = TeachingTipPlacementMode.RightTop, IsLightDismissEnabled = true, IsOpen = false };
+
+                    tip.HeroContent = new Image() { Source = await LoadImage((StorageFile)fileitem.File) };
+                    tip.HeroContentPlacement = TeachingTipHeroContentPlacementMode.Bottom;
+                    RootGrid.Children.Add(tip);
+                    tip.IsOpen = true;
+                }
             }
             args.Handled = true;
+        }
+
+        private static async Task<BitmapImage> LoadImage(StorageFile file)
+        {
+            BitmapImage bitmapImage = new BitmapImage();
+            FileRandomAccessStream stream = (FileRandomAccessStream)await file.OpenAsync(FileAccessMode.Read);
+
+            bitmapImage.SetSource(stream);
+
+            return bitmapImage;
+
         }
 
         private async void NewFile_Click(object sender, RoutedEventArgs e)
@@ -990,9 +1028,16 @@ namespace ConTeXt_UWP
         private void SetRoot_Click(object sender, RoutedEventArgs e)
         {
             var ei = (FileItem)(sender as FrameworkElement).DataContext;
-            ei.IsRoot = true;
-            App.VM.CurrentProject.RootFile = ei.FileName;
-            //App.VM.UpdateMRUEntry(App.VM.CurrentProject);
+            if (ei.Level == 0)
+            {
+                ei.IsRoot = true;
+                App.VM.CurrentProject.RootFile = ei.FileName;
+                //App.VM.UpdateMRUEntry(App.VM.CurrentProject);
+            }
+            else
+            {
+                App.VM.Message("As of now, the main file must be in the root folder of the project");
+            }
         }
 
         private async void Tabs_TabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
@@ -1150,7 +1195,7 @@ namespace ConTeXt_UWP
                 installing.ShowAsync();
                 ValueSet request = new ValueSet();
                 request.Add("command", "update");
-                AppServiceResponse response = await App.VM.appServiceConnection.SendMessageAsync(request);
+                AppServiceResponse response = await App.VM.AppServiceConnection.SendMessageAsync(request);
                 foreach (string key in response.Message.Keys)
                 {
                     if (key == "response")

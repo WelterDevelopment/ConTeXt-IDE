@@ -11,6 +11,8 @@
       <GenericParameter Name="TInterface" Dynamic="All" />
       <GenericParameter Name="TClass" Dynamic="All" />
     </Type>
+
+    <Type Name="Windows.Foundation.IReference{Double}" Dynamic="Required All" Serialize="Required All" />
     
 
     <Type Name="Newtonsoft.Json.JsonConvert">

@@ -13,7 +13,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <ResourceDictionary Source="Models/MDL2Assets.xaml"/>
+                <!--<ResourceDictionary Source="Models/MDL2Assets.xaml"/>-->
             </ResourceDictionary.MergedDictionaries>
                
             <vm:ViewModel x:Key="VM"></vm:ViewModel>
@@ -595,7 +595,7 @@
                     <AcrylicBrush x:Key="ItemAcrylicBrush" BackgroundSource="HostBackdrop" TintColor="#FF222222" TintOpacity="0.9" FallbackColor="#FF222222"/>
                     <AcrylicBrush x:Key="LogAcrylicBrush" BackgroundSource="HostBackdrop" TintColor="#FFA3A3A3" TintOpacity="0.9" FallbackColor="#FFA3A3A3"/>
                     <AcrylicBrush x:Key="TitlebarAcrylicBrush" BackgroundSource="HostBackdrop" TintColor="#FF9F9F9F" TintOpacity="0.9" FallbackColor="#FF9F9F9F"/>
-                    <AcrylicBrush x:Key="AccentColorAcrylicBrush" BackgroundSource="HostBackdrop" TintColor="{ThemeResource SystemAccentColorDark1}" TintOpacity="0.7" TintLuminosityOpacity="0.7" FallbackColor="{ThemeResource SystemAccentColorDark1}"/>
+                    <AcrylicBrush x:Key="AccentColorAcrylicBrush" BackgroundSource="HostBackdrop" TintColor="{ThemeResource SystemAccentColorDark1}" TintOpacity="0.85" TintLuminosityOpacity="0.7" FallbackColor="{ThemeResource SystemAccentColorDark1}"/>
                     <Color x:Key="ForegroundColor">#000000</Color>
                     <Color x:Key="BackgroundColor">#FFFFFF</Color>
                     <Color x:Key="GripperColor">#EEEEEE</Color>

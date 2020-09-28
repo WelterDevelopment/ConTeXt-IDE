@@ -1,6 +1,7 @@
 ﻿using ConTeXt_UWP.Models;
 using ConTeXt_UWP.ViewModels;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,15 +26,55 @@ namespace ConTeXt_UWP
     sealed partial class App : Application
     {
 
-        public static ViewModel VM { get; set; }
-        public static MainPage MainPage { get; set; }
-
         public App()
         {
             this.InitializeComponent();
-            
+
 
             this.Suspending += OnSuspending;
+        }
+
+        public static MainPage MainPage { get; set; }
+        public static ViewModel VM { get; set; }
+        protected override void OnCachedFileUpdaterActivated(CachedFileUpdaterActivatedEventArgs args)
+        {
+            base.OnCachedFileUpdaterActivated(args);
+        }
+
+        protected override async void OnFileActivated(FileActivatedEventArgs args)
+        {
+            Frame rootFrame = Window.Current.Content as Frame;
+            if (rootFrame == null)
+            {
+                
+
+                await StartUp();
+
+                VM.FileActivatedEvents.Add(args);
+
+                
+
+                rootFrame = new Frame();
+                rootFrame.NavigationFailed += OnNavigationFailed;
+                Window.Current.Content = rootFrame;
+
+                if (rootFrame.Content == null)
+                {
+                    // rootFrame.Navigate(typeof(MainPage), e.Arguments);
+                    MainPage = new MainPage();
+                    rootFrame.Content = MainPage;
+                }
+                Window.Current.Activate();
+
+            }
+            else
+            {
+                foreach (StorageFile file in args.Files)
+                {
+                    var fileitem = new FileItem(file) { };
+                    VM.OpenFile(fileitem);
+                }
+            }
         }
 
         protected override async void OnLaunched(LaunchActivatedEventArgs e)
@@ -44,46 +85,74 @@ namespace ConTeXt_UWP
 
                 if (rootFrame == null)
                 {
-                    Resources.TryGetValue("VM", out object Vm);
-                    if (Vm != null)
-                    {
-                        VM = Vm as ViewModel;
-                    }
-                    VM.Default = Settings.Default;
-
-                    StartUp();
-
-                    if (ApiInformation.IsApiContractPresent("Windows.ApplicationModel.FullTrustAppContract", 1))
-                    {
-                        await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Parameters");
-                    }
-
                     rootFrame = new Frame();
                     rootFrame.NavigationFailed += OnNavigationFailed;
                     if (e.PreviousExecutionState == ApplicationExecutionState.Terminated)
                     {
                     }
                     Window.Current.Content = rootFrame;
+                    await StartUp();
                 }
 
                 if (e.PrelaunchActivated == false)
                 {
                     if (rootFrame.Content == null)
                     {
-                        // rootFrame.Navigate(typeof(MainPage), e.Arguments);
+                        //rootFrame.Navigate(typeof(MainPage), e.Arguments);
+                        //await Windows.UI.Core.CoreWindow.GetForCurrentThread().Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                        //{
+                        //    MainPage = new MainPage();
+                        //    rootFrame.Content = MainPage;
+                        //});
                         MainPage = new MainPage();
                         rootFrame.Content = MainPage;
+                      
+                        
                     }
                     Window.Current.Activate();
                 }
+
+                MainPage.FirstStart();
             }
             catch (Exception ex)
             {
+                
                 VM.Message("OnLaunched: " + ex.Message);
             }
         }
 
 
+
+        private void App_BackRequested(object sender, BackRequestedEventArgs e)
+        {
+            //throw new NotImplementedException();
+        }
+
+        private void AppServiceConnection_RequestReceived(AppServiceConnection sender, AppServiceRequestReceivedEventArgs args)
+        {
+            var appServiceDeferral = args.GetDeferral();
+            VM.LOG("Background Service Message: " + args.Request.Message.Values.FirstOrDefault() as string);
+            appServiceDeferral.Complete();
+        }
+
+        private Frame CreateRootFrame()
+        {
+            // Do not repeat app initialization when the Window already has content,
+            // just ensure that the window is active
+            if (!(Window.Current.Content is Frame rootFrame))
+            {
+                // Create a Frame to act as the navigation context and navigate to the first page
+                rootFrame = new Frame
+                {
+                    Language = Windows.Globalization.ApplicationLanguages.Languages[0]
+                };
+                rootFrame.NavigationFailed += OnNavigationFailed;
+                // Place the frame in the current Window
+                Window.Current.Content = rootFrame;
+            }
+
+            return rootFrame;
+        }
 
         void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
         {
@@ -109,9 +178,9 @@ namespace ConTeXt_UWP
                     args.TaskInstance.Canceled += OnTaskCanceled;
 
                     //coreDispatcher = Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher;
-                    VM.appServiceConnection = details.AppServiceConnection;
+                    VM.AppServiceConnection = details.AppServiceConnection;
 
-                    VM.appServiceConnection.RequestReceived += AppServiceConnection_RequestReceived;
+                    VM.AppServiceConnection.RequestReceived += AppServiceConnection_RequestReceived;
 
                     //Connection.RequestReceived += (a, b) => { AppViewModel.LOG(b.Request.Message.Values.FirstOrDefault() as string); };
                     //currViewModel.appServiceConnection = Connection;
@@ -124,133 +193,46 @@ namespace ConTeXt_UWP
         private void OnTaskCanceled(IBackgroundTaskInstance sender, BackgroundTaskCancellationReason reason)
         {
         }
-
-        private void App_BackRequested(object sender, BackRequestedEventArgs e)
+        private async Task StartUp()
         {
-            //throw new NotImplementedException();
-        }
-
-        private void AppServiceConnection_RequestReceived(AppServiceConnection sender, AppServiceRequestReceivedEventArgs args)
-        {
-            var appServiceDeferral = args.GetDeferral();
-            VM.LOG("Background Service Message: " + args.Request.Message.Values.FirstOrDefault() as string);
-            appServiceDeferral.Complete();
-        }
-
-        protected override void OnCachedFileUpdaterActivated(CachedFileUpdaterActivatedEventArgs args)
-        {
-            base.OnCachedFileUpdaterActivated(args);
-        }
-
-        protected override async void OnFileActivated(FileActivatedEventArgs args)
-        {
-            // TODO: Handle file activation
-            // The number of files received is args.Files.Size
-            // The name of the first file is args.Files[0].Name
-            //Resources.TryGetValue("VM", out object Vm);
-            //if (Vm != null)
-            //{
-            //    VM = Vm as ViewModel;
-            //}
-            Frame rootFrame = Window.Current.Content as Frame;
-            if (rootFrame == null)
+            try
             {
                 Resources.TryGetValue("VM", out object Vm);
                 if (Vm != null)
                 {
                     VM = Vm as ViewModel;
                 }
+                else VM = new ViewModel();
                 VM.Default = Settings.Default;
-
-                VM.FileActivatedEvents.Add(args);
-
-                await StartUp();
 
                 if (ApiInformation.IsApiContractPresent("Windows.ApplicationModel.FullTrustAppContract", 1))
                 {
                     await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Parameters");
                 }
 
-                rootFrame = new Frame();
-                rootFrame.NavigationFailed += OnNavigationFailed;
-                Window.Current.Content = rootFrame;
+                CoreApplication.GetCurrentView().TitleBar.ExtendViewIntoTitleBar = true;
+                ApplicationViewTitleBar titleBar = ApplicationView.GetForCurrentView().TitleBar;
 
-                    if (rootFrame.Content == null)
-                    {
-                        // rootFrame.Navigate(typeof(MainPage), e.Arguments);
-                        MainPage = new MainPage();
-                        rootFrame.Content = MainPage;
-                    }
-                    Window.Current.Activate();
-                
-            }
-            else
-            {
-                foreach (StorageFile file in args.Files)
+                titleBar.ButtonBackgroundColor = Colors.Transparent;
+                titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+                titleBar.ButtonForegroundColor = titleBar.ButtonInactiveForegroundColor = Colors.White;
+                titleBar.BackgroundColor = Colors.Transparent;
+                SystemNavigationManager.GetForCurrentView().BackRequested += App_BackRequested;
+
+                StorageFolder localFolder = ApplicationData.Current.LocalFolder;
+
+                //if (VM.Default.)
+                string file = @"tex\texmf-mswin\bin\context.exe";
+                var storageFolder = ApplicationData.Current.LocalFolder;
+                string filePath = Path.Combine(storageFolder.Path, file);
+                //App.VM.LOG(filePath);
+
+                if (Windows.System.Profile.WindowsIntegrityPolicy.IsEnabled)
                 {
-                    var fileitem = new FileItem(file) { };
-                    VM.OpenFile(fileitem);
+                    var installing = new ContentDialog() { Title = "It seems that you are running Windows 10 in S mode.", Content = "You will not be able to use the ConTeXt compiler.", PrimaryButtonText = "Ok", DefaultButton = ContentDialogButton.Primary };
                 }
-            }
-        }
-        private Frame CreateRootFrame()
-        {
-            // Do not repeat app initialization when the Window already has content,
-            // just ensure that the window is active
-            if (!(Window.Current.Content is Frame rootFrame))
-            {
-                // Create a Frame to act as the navigation context and navigate to the first page
-                rootFrame = new Frame
-                {
-                    Language = Windows.Globalization.ApplicationLanguages.Languages[0]
-                };
-                rootFrame.NavigationFailed += OnNavigationFailed;
-                // Place the frame in the current Window
-                Window.Current.Content = rootFrame;
-            }
-
-            return rootFrame;
-        }
-        private async Task StartUp()
-        {
-            CoreApplication.GetCurrentView().TitleBar.ExtendViewIntoTitleBar = true;
-            ApplicationViewTitleBar titleBar = ApplicationView.GetForCurrentView().TitleBar;
-            //var DefaultTheme = new Windows.UI.ViewManagement.UISettings();
-
-            //var lightbrush = DefaultTheme.GetColorValue(Windows.UI.ViewManagement.UIColorType.Foreground);
-            //if (VM.Default.Theme == "Light")
-            //{
-            //    lightbrush = Colors.Black;
-            //}
-            //else if (VM.Default.Theme == "Dark")
-            //{
-            //    lightbrush = Colors.White;
-            //}
-
-            
-
-            titleBar.ButtonBackgroundColor = Colors.Transparent;
-            titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-            titleBar.ButtonForegroundColor = titleBar.ButtonInactiveForegroundColor = Colors.White;
-            titleBar.BackgroundColor = Colors.Transparent;
-            SystemNavigationManager.GetForCurrentView().BackRequested += App_BackRequested;
-
-            StorageFolder localFolder = ApplicationData.Current.LocalFolder;
-        
-            //if (VM.Default.)
-            string file = @"tex\texmf-mswin\bin\context.exe";
-            var storageFolder = ApplicationData.Current.LocalFolder;
-            string filePath = Path.Combine(storageFolder.Path, file);
-            //App.VM.LOG(filePath);
-           
-            if (Windows.System.Profile.WindowsIntegrityPolicy.IsEnabled)
-            {
-                var installing = new ContentDialog() { Title = "It seems that you are running Windows 10 in S mode.", Content = "You will not be able to use the ConTeXt compiler.", PrimaryButtonText = "Ok", DefaultButton = ContentDialogButton.Primary };
-            }
-            else
-            if (!VM.Default.DistributionInstalled && !File.Exists(filePath))
-            {
-                try
+                else
+                if (!VM.Default.DistributionInstalled && !File.Exists(filePath))
                 {
                     VM.IsSaving = true;
                     VM.IsPaused = false;
@@ -272,10 +254,10 @@ namespace ConTeXt_UWP
                     //    {
                     VM.Default.ContextDistributionPath = localFolder.Path;
                     //VM.Default.ContextDownloadLink = downloadlinktb.Text;
-                    var installing = new ContentDialog() { Title = "Please wait while installing. This can take up to 10 minutes. Do not close this window." };
-                    var prog = new Microsoft.UI.Xaml.Controls.ProgressBar() { IsIndeterminate = true };
-                    installing.Content = prog;
-                    installing.ShowAsync();
+                    //var installing = new ContentDialog() { Title = "Please wait while installing. This can take up to 10 minutes. Do not close this window." };
+                    //var prog = new Microsoft.UI.Xaml.Controls.ProgressBar() { IsIndeterminate = true };
+                    //installing.Content = prog;
+                    //installing.ShowAsync();
 
                     //var file = await localFolder.GetFileAsync("file.json");
                     //await file.DeleteAsync();
@@ -296,12 +278,12 @@ namespace ConTeXt_UWP
                     //VM.LOG("You can start editing in the meanwhile. Please go to \"Projects\" to add a project folder");
                     ValueSet request = new ValueSet();
                     request.Add("command", "install");
-                    while (VM.appServiceConnection == null)
+                    while (VM.AppServiceConnection == null)
                     {
                         await Task.Delay(200);
                     }
 
-                    AppServiceResponse response = await VM.appServiceConnection.SendMessageAsync(request);
+                    AppServiceResponse response = await VM.AppServiceConnection.SendMessageAsync(request);
                     //AppViewModel.LOG(response.Status.ToString() + " ... " + response.Message.FirstOrDefault().Key.ToString() + " Key Val " + response.Message.FirstOrDefault().Value.ToString());
                     // display the response key/value pairs
                     if (response != null)
@@ -312,37 +294,38 @@ namespace ConTeXt_UWP
                                 if ((bool)response.Message[key])
                                 {
                                     VM.LOG("ConTeXt distribution installed.");
-                                    installing.Title = "ConTeXt distribution installed!";
-                                    prog.ShowPaused = true;
+                                    //installing.Title = "ConTeXt distribution installed!";
+                                    //prog.ShowPaused = true;
                                 }
                                 else
                                 {
                                     VM.LOG("Installation error");
-                                    installing.Title = "Error. Please try again after a reinstall of this app. Make sure to have at least 200 MB of free space.";
-                                    prog.ShowError = true;
+                                    //installing.Title = "Error. Please try again after a reinstall of this app. Make sure to have at least 200 MB of free space.";
+                                    //prog.ShowError = true;
                                 }
-                                installing.PrimaryButtonText = "Ok";
-                                installing.IsPrimaryButtonEnabled = true;
-                                installing.DefaultButton = ContentDialogButton.Primary;
-                                installing.PrimaryButtonClick += (a,b) => { MainPage.FirstStart(); };
+                                //installing.PrimaryButtonText = "Ok";
+                                //installing.IsPrimaryButtonEnabled = true;
+                                //installing.DefaultButton = ContentDialogButton.Primary;
+                                //installing.PrimaryButtonClick += (a, b) => { MainPage.FirstStart(); };
+                                
                             }
                         }
 
-                    
+
                     VM.IsSaving = false;
                     VM.IsPaused = true;
                     VM.IsVisible = false;
                 }
-                catch (Exception ex)
-                {
-                    new MessageDialog(ex.Message, "App startup error").ShowAsync();
-                    VM.LOG("Error on Startup: " + ex.Message);
-                }
+
+                await VM.Startup();
+
+                VM.Default.DistributionInstalled = true;
             }
-
-            await VM.Startup();
-
-            VM.Default.DistributionInstalled = true;
+            catch (Exception ex)
+            {
+                VM.Message(ex.Message,"Error on app startup");
+                Debug.WriteLine(ex.Message);
+            }
         }
     }
 }

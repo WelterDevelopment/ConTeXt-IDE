@@ -7,15 +7,15 @@
   IgnorableNamespaces="uap mp">
 
   <Identity
-    Name="ConTeXt-IDE"
-    Publisher="CN=welte"
-    Version="1.0.0.0" />
+    Name="7614MasterDevelopment.ConTeXtIDE"
+    Publisher="CN=F3B9189F-4D2B-4342-889D-A9D7D5A98D3A"
+    Version="0.0.1.0" />
 
-  <mp:PhoneIdentity PhoneProductId="a5242b3d-6435-4578-956c-939153ab61c5" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+  <mp:PhoneIdentity PhoneProductId="699dbb2d-7c57-409e-a82b-81b8d9fcfda8" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>ConTeXt</DisplayName>
-    <PublisherDisplayName>welte</PublisherDisplayName>
+    <DisplayName>ConTeXt IDE</DisplayName>
+    <PublisherDisplayName>WDev</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 

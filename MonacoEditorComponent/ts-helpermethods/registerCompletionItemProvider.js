@@ -1,3 +1,4 @@
+///<reference path="../monaco-editor/monaco.d.ts" />
 var registerCompletionItemProvider = function (languageId, characters) {
     return monaco.languages.registerCompletionItemProvider(languageId, {
         triggerCharacters: characters,
@@ -17,3 +18,4 @@ var registerCompletionItemProvider = function (languageId, characters) {
         }
     });
 };
+//# sourceMappingURL=registerCompletionItemProvider.js.map

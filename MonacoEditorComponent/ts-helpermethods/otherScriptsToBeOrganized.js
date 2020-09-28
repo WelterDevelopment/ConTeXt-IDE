@@ -1,3 +1,4 @@
+///<reference path="../monaco-editor/monaco.d.ts" />
 var registerHoverProvider = function (languageId) {
     return monaco.languages.registerHoverProvider(languageId, {
         provideHover: function (model, position) {
@@ -29,6 +30,7 @@ var updateContext = function (key, value) {
     contexts[key].set(value);
 };
 var updateContent = function (content) {
+    // Need to ignore updates from us notifying of a change
     if (content != model.getValue()) {
         model.setValue(content);
     }
@@ -76,6 +78,7 @@ var changeTheme = function (theme, highcontrast) {
     monaco.editor.setTheme(newTheme);
 };
 var keyDown = function (event) {
+    //Debug.log("Key Down:" + event.keyCode + " " + event.ctrlKey);
     var result = Keyboard.keyDown(event.keyCode, event.ctrlKey, event.shiftKey, event.altKey, event.metaKey);
     if (result) {
         event.cancelBubble = true;
@@ -85,3 +88,4 @@ var keyDown = function (event) {
         return false;
     }
 };
+//# sourceMappingURL=otherScriptsToBeOrganized.js.map

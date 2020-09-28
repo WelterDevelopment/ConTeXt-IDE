@@ -42,6 +42,13 @@ namespace ConTeXt_UWP.Models
             set { Set(value); }
         }
 
+        public int Level
+        {
+            get { return Get(0); }
+            set { Set(value); }
+        }
+
+
         public IStorageItem File
         {
             get { return Get<IStorageItem>(null); }

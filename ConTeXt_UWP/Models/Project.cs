@@ -49,9 +49,9 @@ namespace ConTeXt_UWP.Models
             set
             {
                 Set(value);
-                if (Directory != null)
+                if (Directory != null && Directory.Count > 0)
                 {
-                    Directory.Where(x => x.FileName != value).ToList().ForEach(x => x.IsRoot = false);
+                    Directory.FirstOrDefault().Children?.Where(x => x.FileName != value).ToList().ForEach(x => x.IsRoot = false);
                     var df = Directory.Where(x => x.FileName == value);
                     if (df.Count() == 1)
                     {

@@ -33,9 +33,9 @@
 
     <Type Name="Windows.Foundation.IReference{Double}" Dynamic="Required All" Serialize="Required All" />
     
-    <!-- Add your application specific runtime directives here. -->
+    <!-- Add your application specific runtime directives here. 
 
-
+    <TypeInstantiation Name="Windows.Foundation.IReference{Double}" Arguments="Windows.Foundation.IReference" Dynamic="Required All"/>-->
   </Application>
   <Library>
     <Assembly Name="System.Private.Interop" Dynamic="Required All" Serialize="Required All" />

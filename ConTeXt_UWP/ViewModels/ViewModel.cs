@@ -84,7 +84,7 @@ namespace ConTeXt_UWP.ViewModels
             }
         }
 
-        public AppServiceConnection appServiceConnection { get; set; }
+        public AppServiceConnection AppServiceConnection { get; set; }
 
         public BackgroundTaskDeferral AppServiceDeferral { get; set; }
 
@@ -170,7 +170,7 @@ namespace ConTeXt_UWP.ViewModels
                 {
                     if (!d.Name.StartsWith("."))
                     {
-                        var SubFolder = new FileItem(d) { Type = FileItem.ExplorerItemType.Folder, FileName = d.Name, IsRoot = false };
+                        var SubFolder = new FileItem(d) { Type = FileItem.ExplorerItemType.Folder, FileName = d.Name, IsRoot = false, Level = level };
                         if (level > 0)
                             currFolder.Children.Add(SubFolder);
                         else
@@ -182,7 +182,7 @@ namespace ConTeXt_UWP.ViewModels
                 {
                     if (!f.Name.StartsWith(".") && !cancelWords.Contains(f.FileType))
                     {
-                        var fi = new FileItem(f) { File = f, Type = FileItem.ExplorerItemType.File, FileName = f.Name, IsRoot = false };
+                        var fi = new FileItem(f) { File = f, Type = FileItem.ExplorerItemType.File, FileName = f.Name, IsRoot = false, Level = level };
                         if (level > 0)
                             currFolder.Children.Add(fi);
                         else
@@ -300,7 +300,7 @@ namespace ConTeXt_UWP.ViewModels
                 {
                     { "save", true }
                 };
-                AppServiceResponse response = await appServiceConnection.SendMessageAsync(request);
+                AppServiceResponse response = await AppServiceConnection.SendMessageAsync(request);
                 // display the response key/value pairs
                 if (response != null)
                     foreach (string key in response.Message.Keys)

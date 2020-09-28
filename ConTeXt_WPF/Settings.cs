@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
+using Windows.ApplicationModel;
 using Windows.Storage;
 
 namespace ConTeXt_WPF
@@ -85,8 +86,8 @@ namespace ConTeXt_WPF
         int navigationViewPaneOpenLength = 250;
         public int NavigationViewPaneOpenLength { get => navigationViewPaneOpenLength; set => Set(ref navigationViewPaneOpenLength, value); }
 
-        string contextDistributionPath = "";
-        public string ContextDistributionPath { get => contextDistributionPath; set => Set(ref contextDistributionPath, value); }
+        string contextDistributionPath = ApplicationData.Current.LocalFolder.Path;
+        public string ContextDistributionPath { get => contextDistributionPath ?? ""; set => Set(ref contextDistributionPath, value); }
 
         string texFilePath = "";
         public string TexFilePath { get => texFilePath; set => Set(ref texFilePath, value); }
@@ -118,8 +119,8 @@ namespace ConTeXt_WPF
         bool suggestCommands = true;
         public bool SuggestCommands { get => suggestCommands; set => Set(ref suggestCommands, value); }
 
-        string packageID = @"";
-        public string PackageID { get => packageID; set => Set(ref packageID, value); }
+        string packageID = Package.Current.Id.FamilyName;
+        public string PackageID { get => packageID ?? ""; set => Set(ref packageID, value); }
 
         public static Settings FromJson(string json) => JsonConvert.DeserializeObject<Settings>(json);
 
